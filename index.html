@@ -1,0 +1,3171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wind actions — SANS 10160-3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#16212b; --muted:#5d6f80; --faint:#8496a6;
+  --paper:#e5eaef; --card:#fff; --rule:#ccd6e0; --rule-2:#e3e9ee;
+  --navy:#0e3763; --amber:#e8871c; --maroon:#7d2110;
+  --pos:#0d2f55; --neg:#cc5a17;
+  --sans:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --cond:'Barlow Condensed','Barlow',-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans); font-size:15px; line-height:1.45;
+  color:var(--ink); background:var(--paper);
+  font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--cond); font-weight:600; letter-spacing:.01em; margin:0}
+
+/* ---------- frame ---------- */
+header{
+  background:var(--ink); color:#e9eef3; padding:10px 20px;
+  display:flex; align-items:baseline; gap:20px; flex-wrap:wrap;
+  border-bottom:3px solid var(--navy);
+}
+header h1{font-size:23px; color:#fff; line-height:1.1}
+header .code{font-size:14px; color:#9db1c4; font-family:var(--cond); letter-spacing:.02em}
+header .live{margin-left:auto; display:flex; gap:22px; align-items:baseline}
+header .live b{font-size:21px; font-family:var(--cond); font-weight:600; color:#ffd79a}
+header .live span{font-size:13px; color:#9db1c4}
+.btn{
+  font:500 15px var(--cond); letter-spacing:.02em; cursor:pointer;
+  background:#2c4a6b; color:#fff; border:1px solid #40658c; border-radius:3px; padding:5px 13px;
+}
+.btn:hover{background:#37587d}
+
+nav{display:flex; gap:1px; background:var(--rule); border-bottom:1px solid var(--rule); overflow-x:auto}
+nav button{
+  font:500 16px/1 var(--cond); letter-spacing:.02em; white-space:nowrap;
+  background:#f4f7f9; color:var(--muted); border:0; padding:11px 17px; cursor:pointer;
+}
+nav button:hover{background:#fff; color:var(--ink)}
+nav button[aria-selected=true]{background:var(--card); color:var(--navy); box-shadow:inset 0 -3px 0 var(--amber)}
+
+main{display:grid; grid-template-columns:335px 1fr; gap:1px; background:var(--rule); min-height:calc(100vh - 108px)}
+aside{background:#f4f7f9; padding:16px 18px 40px; overflow-y:auto}
+section.results{background:var(--card); padding:20px 24px 50px; min-width:0}
+
+/* ---------- inputs ---------- */
+.group{margin-bottom:22px}
+.group > h3{
+  font-size:16px; color:var(--navy); border-bottom:1px solid var(--rule);
+  padding-bottom:4px; margin-bottom:10px;
+}
+.f{display:grid; grid-template-columns:1fr 96px; gap:6px 8px; align-items:center; margin-bottom:7px}
+.f label{font-size:13.5px; color:var(--muted); line-height:1.25}
+.f label i{font-style:normal; color:var(--faint)}
+.f input,.f select{
+  font:500 14px var(--sans); font-variant-numeric:tabular-nums;
+  width:100%; padding:5px 7px; border:1px solid var(--rule); border-radius:2px;
+  background:#fff; color:var(--ink);
+}
+.f.wide{grid-template-columns:1fr}
+.f.wide select,.f.wide input{width:100%}
+.f input:focus,.f select:focus{outline:2px solid var(--amber); outline-offset:-1px; border-color:var(--amber)}
+.f .unit{font-size:12px; color:var(--faint); grid-column:2; margin-top:-4px}
+.hint{font-size:12.5px; color:var(--faint); line-height:1.35; margin:-2px 0 10px}
+.pick{display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:10px}
+.pick button{
+  background:#fff; border:1px solid var(--rule); border-radius:3px; cursor:pointer;
+  padding:4px; display:flex; flex-direction:column; align-items:center; gap:2px;
+  font:500 13px var(--cond); color:var(--muted); letter-spacing:.02em;
+}
+.pick button svg{width:100%; height:52px}
+.pick button[aria-pressed=true]{border-color:var(--navy); background:#eaf1f8; color:var(--navy); box-shadow:inset 0 0 0 1px var(--navy)}
+
+/* ---------- results ---------- */
+.results h2{font-size:24px; margin-bottom:2px}
+.results h3{font-size:18px; color:var(--navy); margin:26px 0 8px}
+.lede{color:var(--muted); font-size:14px; margin:0 0 18px; max-width:70ch}
+
+.figs{display:flex; flex-wrap:wrap; gap:18px; margin:6px 0 4px}
+.fig{flex:1 1 380px; min-width:300px; border:1px solid var(--rule-2); border-radius:4px; background:#fbfcfd; padding:8px 10px 10px}
+.fig h4{font:600 15px var(--cond); letter-spacing:.02em; margin:0 0 2px; color:var(--ink)}
+.fig .cap{font-size:12.5px; color:var(--faint); margin-bottom:4px}
+.fig .body{display:flex; gap:8px; align-items:flex-start}
+.fig svg.iso{flex:1 1 auto; max-width:100%; height:auto}
+.legend{flex:0 0 auto; display:flex; flex-direction:column; gap:2px; padding-top:4px}
+.legend div{display:flex; align-items:center; gap:6px; font-size:12.5px; white-space:nowrap}
+.legend i{width:13px; height:13px; border:1px solid rgba(0,0,0,.28); display:block; flex:none}
+.legend b{font-weight:600; font-family:var(--cond); font-size:14px; letter-spacing:.02em}
+
+table{border-collapse:collapse; width:100%; font-size:13.5px; margin:4px 0 6px}
+th,td{padding:4px 8px; text-align:right; border-bottom:1px solid var(--rule-2)}
+th:first-child,td:first-child{text-align:left}
+thead th{
+  font:600 13px var(--cond); letter-spacing:.03em; color:var(--muted);
+  border-bottom:1px solid var(--rule); text-align:right;
+}
+thead th:first-child{text-align:left}
+tbody tr:hover{background:#f6f9fb}
+td.z{font-weight:600; font-family:var(--cond); font-size:15px}
+td.neg{color:var(--maroon)} td.pos{color:var(--navy)}
+.sw{display:inline-block; width:11px; height:11px; border:1px solid rgba(0,0,0,.25); margin-right:6px; vertical-align:-1px}
+
+.trail{border-left:3px solid var(--rule); padding-left:14px; margin:6px 0 14px; max-width:62ch}
+.trail div{display:grid; grid-template-columns:1fr auto; gap:10px; padding:3px 0; border-bottom:1px dotted var(--rule-2)}
+.trail span{color:var(--muted); font-size:13.5px}
+.trail span em{font-style:normal; color:var(--faint); font-size:12.5px; margin-left:6px}
+.trail b{font-family:var(--cond); font-size:17px; font-weight:600}
+.trail div.key b{color:var(--navy)}
+
+.cards{display:flex; gap:14px; flex-wrap:wrap; margin:10px 0 6px}
+.card{
+  flex:1 1 150px; border:1px solid var(--rule-2); border-top:3px solid var(--navy);
+  border-radius:3px; padding:8px 12px 10px; background:#fbfcfd;
+}
+.card b{display:block; font:600 26px/1.1 var(--cond); color:var(--navy)}
+.card span{font-size:12.5px; color:var(--muted)}
+
+.note{
+  font-size:13px; color:var(--muted); background:#f6f9fb; border-left:3px solid var(--amber);
+  padding:8px 12px; margin:12px 0; max-width:80ch;
+}
+.note b{color:var(--ink)}
+.warn{border-left-color:var(--maroon); background:#fdf4f1}
+.ok{color:#1f6b3a}
+
+.chart{width:100%; max-width:560px; height:auto; display:block}
+.ref{font-size:12.5px; color:var(--faint)}
+
+@media (max-width:860px){
+  main{grid-template-columns:1fr}
+  aside{max-height:none}
+  header .live{width:100%; margin-left:0}
+}
+
+/* ---------- print ---------- */
+.reportOnly{display:none}
+@media print{
+  nav,aside,.btn{display:none !important}
+  body{background:#fff; font-size:11pt}
+  main{display:block}
+  section.results{padding:0}
+  header{background:#fff; color:#000; border-bottom:2px solid #000}
+  header h1{color:#000} header .code,header .live span{color:#333}
+  header .live b{color:#000}
+  .fig{break-inside:avoid} table{break-inside:avoid}
+  .results h3{break-after:avoid}
+}
+
+/* ---------- view toggle ---------- */
+.vtoggle{display:flex; align-items:center; gap:6px; margin:14px 0 4px}
+.vtoggle button{
+  font:500 14px var(--cond); letter-spacing:.02em; cursor:pointer;
+  background:#fff; color:var(--muted); border:1px solid var(--rule); padding:4px 12px;
+}
+.vtoggle button:first-of-type{border-radius:3px 0 0 3px}
+.vtoggle button:nth-of-type(2){border-radius:0 3px 3px 0; border-left:0}
+.vtoggle button[aria-pressed=true]{background:var(--navy); border-color:var(--navy); color:#fff}
+.vtoggle span{font-size:12.5px; color:var(--faint); margin-left:8px}
+@media print{ .vtoggle button{display:none} .vtoggle span{margin-left:0} }
+
+/* ---------- report download bar ---------- */
+.docbar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:14px 0 6px}
+.docbar span{font-size:12.5px; color:var(--faint)}
+.btn.big{font-size:16px; padding:8px 18px; background:var(--navy); border-color:var(--navy)}
+.btn.big:hover{background:#17497e}
+.btn.ghost{background:#fff; color:var(--muted); border-color:var(--rule)}
+.btn.ghost:hover{background:#f4f7f9; color:var(--ink)}
+@media print{ .docbar{display:none} }
+svg.key{width:100%; max-width:440px; height:auto; display:block}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+  background:var(--ink); color:#fff; font:500 14px var(--sans);
+  padding:9px 18px; border-radius:4px; box-shadow:0 4px 18px rgba(20,33,45,.28);
+  z-index:99; opacity:1; transition:opacity .5s; max-width:80vw;
+}
+.toast.bad{background:var(--maroon)}
+@media print{ .toast{display:none} }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Wind actions</h1>
+  <span class="code">SANS 10160-3:2018 Ed 2.0 &nbsp;·&nbsp; Part 3</span>
+  <div class="live">
+    <span>v<sub>p</sub>(z<sub>e</sub>) <b id="liveVp">–</b> m/s</span>
+    <span>q<sub>p</sub>(z<sub>e</sub>) <b id="liveQp">–</b> kPa</span>
+    <button class="btn" onclick="saveProject()" title="Download this job as a project file">Save</button>
+    <button class="btn" onclick="document.getElementById('openFile').click()" title="Reopen a saved project file">Open</button>
+    <button class="btn" onclick="window.print()">Print</button>
+    <input type="file" id="openFile" accept=".json,application/json" hidden>
+  </div>
+</header>
+<nav id="nav"></nav>
+<main>
+  <aside id="side"></aside>
+  <section class="results" id="out"></section>
+</main>
+<script>
+// Code tables digitised from SANS 10160-3:2018 Ed 2.0 (Part 3: Wind actions)
+const TBL = {};
+// Table 6 - vertical walls. Row: h/d, then [A10,A1,B10,B1,C10,C1,D10,D1,E10,E1]
+TBL.T6 = [
+  [0,-1.2,-1.4,-0.8,-1.1,-0.5,-0.5,0.7,1,-0.3,-0.3],
+  [0.25,-1.2,-1.4,-0.8,-1.1,-0.5,-0.5,0.7,1,-0.3,-0.3],
+  [1,-1.2,-1.4,-0.8,-1.1,-0.5,-0.5,0.8,1,-0.5,-0.5],
+  [5,-1.2,-1.4,-0.8,-1.1,-0.5,-0.5,0.8,1,-0.7,-0.7],
+  [1000,-1.2,-1.4,-0.8,-1.1,-0.5,-0.5,0.8,1,-0.7,-0.7]
+];
+// Table 7 - flat roof, sharp eaves / parapets. Row: hp/h, then [F10,F1,G10,G1,H10,H1,Ineg10,Ineg1,Ipos10,Ipos1]
+TBL.T7_hp = [
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [0.0249,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [0.025,-1.6,-2.2,-1.1,-1.8,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [0.05,-1.4,-2,-0.9,-1.6,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [0.1,-1.2,-1.8,-0.8,-1.4,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [1,-1.2,-1.8,-0.8,-1.4,-0.7,-1.2,-0.2,-0.2,0.2,0.2]
+];
+// Table 7 - flat roof, curved eaves. Row: r/h
+TBL.T7_r = [
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [0.0049,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [0.05,-1,-1.5,-1.2,-1.8,-0.4,-0.4,-0.2,-0.2,0.2,0.2],
+  [0.1,-0.7,-1.2,-0.8,-1.4,-0.3,-0.3,-0.2,-0.2,0.2,0.2],
+  [0.2,-0.5,-0.8,-0.5,-0.8,-0.3,-0.3,-0.2,-0.2,0.2,0.2],
+  [1,-0.5,-0.8,-0.5,-0.8,-0.3,-0.3,-0.2,-0.2,0.2,0.2]
+];
+// Table 7 - flat roof, mansard eaves. Row: alpha
+TBL.T7_a = [
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [29.999,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2],
+  [30,-1,-1.5,-1,-1.5,-0.3,-0.3,-0.2,-0.2,0.2,0.2],
+  [45,-1.2,-1.8,-1.3,-1.9,-0.4,-0.4,-0.2,-0.2,0.2,0.2],
+  [60,-1.3,-1.9,-1.3,-1.9,-0.5,-0.5,-0.2,-0.2,0.2,0.2],
+  [90,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2]
+];
+// Table 8 - monopitch, theta=0 & 180. Row: pitch, then 0deg-case1 [F10,F1,G10,G1,H10,H1], 180deg [F..H], 0deg-case2(+) [F..H]
+TBL.T8 = [
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2],
+  [5,-1.7,-2.5,-1.2,-2,-0.6,-1.2,-2.3,-2.5,-1.3,-2,-0.8,-1.2,0,0,0,0,0,0],
+  [15,-0.9,-2,-0.8,-1.5,-0.3,-0.3,-2.5,-2.8,-1.3,-2,-0.9,-1.2,0.2,0.2,0.2,0.2,0.2,0.2],
+  [30,-0.5,-1.5,-0.5,-1.5,-0.2,-0.2,-1.1,-2.3,-0.8,-1.5,-0.8,-0.8,0.7,0.7,0.7,0.7,0.4,0.4],
+  [45,0,0,0,0,0,0,-0.6,-1.3,-0.7,-0.7,-0.5,-0.5,0.7,0.7,0.7,0.7,0.6,0.6],
+  [60,0.7,0.7,0.7,0.7,0.7,0.7,-0.5,-1,-0.5,-0.5,-0.5,-0.5,0.7,0.7,0.7,0.7,0.7,0.7],
+  [75,0.8,0.8,0.8,0.8,0.8,0.8,-0.5,-1,-0.5,-0.5,-0.5,-0.5,0.8,0.8,0.8,0.8,0.8,0.8]
+];
+// Table 9 - monopitch, theta=90. Row: pitch, then [Fup10,Fup1,Flow10,Flow1,G10,G1,H10,H1,I10,I1]
+TBL.T9 = [
+  [0,-1.8,-2.5,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2],
+  [5,-2.1,-2.6,-2.1,-2.4,-1.8,-2,-0.6,-1.2,-0.5,-0.5],
+  [15,-2.4,-2.9,-1.6,-2.4,-1.9,-2.5,-0.8,-1.2,-0.7,-1.2],
+  [30,-2.1,-2.9,-1.3,-2,-1.5,-2,-1,-1.3,-0.8,-1.2],
+  [45,-1.5,-2.4,-1.3,-2,-1.4,-2,-1,-1.3,-0.9,-1.2],
+  [60,-1.2,-2,-1.2,-2,-1.2,-2,-1,-1.3,-0.7,-1.2],
+  [75,-1.2,-2,-1.2,-2,-1.2,-2,-1,-1.3,-0.5,-0.5]
+];
+// Table 10 - duopitch, theta=0. Row: pitch, then case1 [F,G,H,I,J]x(10,1), then case2 [F,G,H,I,J]x(10,1)
+TBL.T10 = [
+  [-45,-0.6,-0.6,-0.6,-0.6,-0.8,-0.8,-0.7,-0.7,-1,-1.5,-0.6,-0.6,-0.6,-0.6,-0.8,-0.8,-0.7,-0.7,-1,-1.5],
+  [-30,-1.1,-2,-0.8,-1.5,-0.8,-0.8,-0.6,-0.6,-0.8,-1.4,-1.1,-2,-0.8,-1.5,-0.8,-0.8,-0.6,-0.6,-0.8,-1.4],
+  [-15,-2.5,-2.8,-1.3,-2,-0.9,-1.2,-0.5,-0.5,-0.7,-1.2,-2.5,-2.8,-1.3,-2,-0.9,-1.2,-0.5,-0.5,-0.7,-1.2],
+  [-5,-2.3,-2.5,-1.2,-2,-0.8,-1.2,-0.6,-0.6,-0.6,-0.6,-2.3,-2.5,-1.2,-2,-0.8,-1.2,0.2,0.2,0.2,0.2],
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,0.2,0.2,0.2,0.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,-0.2,-0.2],
+  [5,-1.7,-2.5,-1.2,-2,-0.6,-1.2,-0.6,-0.6,-0.6,-0.6,0,0,0,0,0,0,-0.6,-0.6,0.2,0.2],
+  [15,-0.9,-2,-0.8,-1.5,-0.3,-0.3,-0.4,-0.4,-1,-1.5,0.2,0.2,0.2,0.2,0.2,0.2,0,0,0,0],
+  [30,-0.5,-1.5,-0.5,-1.5,-0.2,-0.2,-0.4,-0.4,-0.5,-0.5,0.7,0.7,0.7,0.7,0.4,0.4,0,0,0,0],
+  [45,0,0,0,0,0,0,-0.2,-0.2,-0.3,-0.3,0.7,0.7,0.7,0.7,0.6,0.6,0,0,0,0],
+  [60,0.7,0.7,0.7,0.7,0.7,0.7,-0.2,-0.2,-0.3,-0.3,0.7,0.7,0.7,0.7,0.7,0.7,-0.2,-0.2,-0.3,-0.3],
+  [75,0.8,0.8,0.8,0.8,0.8,0.8,-0.2,-0.2,-0.3,-0.3,0.8,0.8,0.8,0.8,0.8,0.8,-0.2,-0.2,-0.3,-0.3]
+];
+// Table 11 - duopitch, theta=90. Row: pitch, then [F,G,H,I]x(10,1)
+TBL.T11 = [
+  [-45,-1.4,-2,-1.2,-2,-1,-1.3,-0.9,-1.2],
+  [-30,-1.5,-2.1,-1.2,-2,-1,-1.3,-0.9,-1.2],
+  [-15,-1.9,-2.5,-1.2,-2,-0.8,-1.2,-0.8,-1.2],
+  [-5,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.6,-1.2],
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2],
+  [5,-1.6,-2.2,-1.3,-2,-0.7,-1.2,-0.6,-0.6],
+  [15,-1.3,-2,-1.3,-2,-0.6,-1.2,-0.5,-0.5],
+  [30,-1.1,-1.5,-1.4,-2,-0.8,-1.2,-0.5,-0.5],
+  [45,-1.1,-1.5,-1.4,-2,-0.9,-1.2,-0.5,-0.5],
+  [60,-1.1,-1.5,-1.2,-2,-0.8,-1,-0.5,-0.5],
+  [75,-1.1,-1.5,-1.2,-2,-0.8,-1,-0.5,-0.5]
+];
+// Table 12 - hipped. Row: pitch, then case1 [F,G,H,I,J,K,L,M,N]x(10,1), then case2 [F,G,H]x(10,1)
+TBL.T12 = [
+  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,-0.2,-0.2,-0.2,-0.2,-0.7,-1.2,-0.7,-1.2,-0.7,-1.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2],
+  [5,-1.7,-2.5,-1.2,-2,-0.6,-1.2,-0.3,-0.3,-0.6,-0.6,-0.6,-0.6,-1.2,-2,-0.6,-1.2,-0.4,-0.4,0,0,0,0,0,0],
+  [15,-0.9,-2,-0.8,-1.5,-0.3,-0.3,-0.5,-0.5,-1,-1.5,-1.2,-2,-1.4,-2,-0.6,-1.2,-0.3,-0.3,0.2,0.2,0.2,0.2,0.2,0.2],
+  [30,-0.5,-1.5,-0.5,-1.5,-0.2,-0.2,-0.4,-0.4,-0.7,-1.2,-0.5,-0.5,-1.4,-2,-0.8,-1.2,-0.2,-0.2,0.5,0.5,0.7,0.7,0.4,0.4],
+  [45,0,0,0,0,0,0,-0.3,-0.3,-0.6,-0.6,-0.3,-0.3,-1.3,-2,-0.8,-1.2,-0.2,-0.2,0.7,0.7,0.7,0.7,0.6,0.6],
+  [60,0.7,0.7,0.7,0.7,0.7,0.7,-0.3,-0.3,-0.6,-0.6,-0.3,-0.3,-1.2,-2,-0.4,-0.4,-0.2,-0.2,0.7,0.7,0.7,0.7,0.7,0.7],
+  [75,0.8,0.8,0.8,0.8,0.8,0.8,-0.3,-0.3,-0.6,-0.6,-0.3,-0.3,-1.2,-2,-0.4,-0.4,-0.2,-0.2,0.8,0.8,0.8,0.8,0.8,0.8]
+];
+// Table 13 - monopitch canopies. Row: pitch, then max[cf,A,B,C], min phi=0[cf,A,B,C], min phi=1[cf,A,B,C]
+TBL.T13 = [
+  [0,0.2,0.5,1.8,1.1,-0.5,-0.6,-1.3,-1.4,-1.3,-1.5,-1.8,-2.2],
+  [5,0.4,0.8,2.1,1.3,-0.7,-1.1,-1.7,-1.8,-1.4,-1.6,-2.2,-2.5],
+  [10,0.5,1.2,2.4,1.6,-0.9,-1.5,-2,-2.1,-1.4,-2.1,-2.6,-2.7],
+  [15,0.7,1.4,2.7,1.8,-1.1,-1.8,-2.4,-2.5,-1.4,-1.6,-2.9,-3],
+  [20,0.8,1.7,2.9,2.1,-1.3,-2.2,-2.8,-2.9,-1.4,-1.6,-2.9,-3],
+  [25,1,2,3.1,2.3,-1.6,-2.6,-3.2,-3.2,-1.4,-1.5,-2.5,-2.8],
+  [30,1.2,2.2,3.2,2.4,-1.8,-3,-3.8,-3.6,-1.4,-1.5,-2.2,-2.7]
+];
+// Table 14 - duopitch canopies. Row: pitch, then max[cf,A,B,C,D], min phi=0[cf,A,B,C,D], min phi=1[cf,A,B,C,D]
+TBL.T14 = [
+  [-20,0.7,0.8,1.6,0.6,1.7,-0.7,-0.9,-1.3,-1.6,-0.6,-1.3,-1.5,-2.4,-2.4,-0.6],
+  [-15,0.5,0.6,1.5,0.7,1.4,-0.6,-0.8,-1.3,-1.6,-0.6,-1.4,-1.6,-2.7,-2.6,-0.6],
+  [-10,0.4,0.6,1.4,0.8,1.1,-0.6,-0.8,-1.3,-1.5,-0.6,-1.4,-1.6,-2.7,-2.6,-0.6],
+  [-5,0.3,0.5,1.5,0.8,0.8,-0.5,-0.7,-1.3,-1.6,-0.6,-1.3,-1.5,-2.4,-2.4,-0.6],
+  [0,0.2,0.5,1.8,1.1,0.5,-0.5,-0.6,-1.3,-1.4,-1.5,-1.3,-1.5,-1.8,-2.2,-1.5],
+  [5,0.3,0.6,1.8,1.3,0.4,-0.6,-0.6,-1.4,-1.4,-1.1,-1.3,-1.3,-2,-1.8,-1.5],
+  [10,0.4,0.7,1.8,1.4,0.4,-0.7,-0.7,-1.5,-1.4,-1.4,-1.3,-1.3,-2,-1.8,-1.8],
+  [15,0.4,0.9,1.9,1.4,0.4,-0.8,-0.9,-1.7,-1.4,-1.8,-1.3,-1.3,-2.2,-1.6,-2.1],
+  [20,0.6,1.1,1.9,1.5,0.4,-0.9,-1.2,-1.8,-1.4,-2,-1.3,-1.4,-2.2,-1.6,-2.1],
+  [25,0.7,1.2,1.9,1.6,0.5,-1,-1.4,-1.9,-1.4,-2,-1.3,-1.4,-2,-1.5,-2],
+  [30,0.9,1.3,1.9,1.6,0.7,-1,-1.4,-1.9,-1.4,-2,-1.3,-1.4,-1.8,-1.4,-2]
+];
+const PROVINCES = {"1": "Eastern Cape", "2": "Free State", "3": "Gauteng", "4": "Kwazulu-Natal", "5": "Limpopo", "6": "Mpumalanga", "7": "Northern Cape", "8": "North-West", "9": "Western Cape"};
+const MUNICIPALITIES = [["Aganang", 5, 36], ["Ba-Phalaborwa", 5, 32], ["Bela-Bela", 5, 36], ["Blouberg", 5, 32], ["Fetakgomo", 5, 36], ["Greater Giyani", 5, 32], ["Greater Letaba", 5, 32], ["Greater Tzaneen", 5, 36], ["Lepele-Nkumpi", 5, 36], ["Lephalale", 5, 32], ["Makhado", 5, 32], ["Makhuduthamaga", 5, 36], ["Maruleng", 5, 36], ["Modimolle", 5, 36], ["Mogalakwena", 5, 36], ["Molemole", 5, 36], ["Mookgopong", 5, 36], ["Musina", 5, 32], ["Mutale", 5, 32], ["Polokwane", 5, 36], ["Thabazimbi", 5, 36], ["Thulamela", 5, 32], ["City of Johannesburg", 3, 36], ["City of Tshwane", 3, 36], ["Ekurhuleni", 3, 36], ["Emfuleni", 3, 36], ["Lesedi", 3, 36], ["Merafong City", 3, 36], ["Midvaal", 3, 36], ["Mogale City", 3, 36], ["Nokeng tsa Taemane", 3, 36], ["Randfontein", 3, 36], ["West Rand", 3, 36], ["Westonaria", 3, 36], ["Albert Luthuli", 6, 36], ["Delmas", 6, 36], ["Dipaleseng", 6, 36], ["Dr JS Moroka", 6, 36], ["Emalahleni", 6, 36], ["Govan Mbeki", 6, 36], ["Highlands", 6, 36], ["Lekwa", 6, 36], ["Mbombela", 6, 32], ["Middelburg", 6, 36], ["Mkhondo", 6, 36], ["Msukaligwa", 6, 36], ["Nkomazi", 6, 32], ["Seme", 6, 36], ["Steve Tshwete", 6, 36], ["Thaba Chweu", 6, 36], ["Thembisile", 6, 36], ["Umjindi", 6, 36], ["City of Matlosana", 8, 36], ["Ditsobotla", 8, 36], ["Greater Taung", 8, 40], ["Kagisano", 8, 36], ["Kgetlengrivier", 8, 36], ["Klerksdorp", 8, 36], ["Lekwa-Teemane", 8, 40], ["Madibeng", 8, 36], ["Mafikeng", 8, 36], ["Maquassi Hills", 8, 40], ["Molopo", 8, 36], ["Moretele", 8, 36], ["Moses Kotane", 8, 36], ["Moshaweng", 8, 36], ["Naledi", 8, 40], ["Rustenburg", 8, 36], ["Schweizer-Reneke", 8, 40], ["Setla-Kgobi", 8, 36], ["Tlokwe City Council", 8, 36], ["Tswaing", 8, 36], ["Ventersdorp", 8, 36], ["Zeerust", 8, 36], ["Dihlabeng", 2, 40], ["Kopanong", 2, 40], ["Letsemeng", 2, 40], ["Mafube", 2, 40], ["Maluti a Phofung", 2, 40], ["Mangaung", 2, 40], ["Mantsopa", 2, 40], ["Masilonyana", 2, 40], ["Matjhabeng", 2, 40], ["Metsimaholo", 2, 40], ["Mohokare", 2, 40], ["Moqhaka", 2, 40], ["Nala", 2, 40], ["Naledi", 2, 40], ["Ngwathe", 2, 40], ["Nketoana", 2, 40], ["Phumelela", 2, 40], ["Setsoto", 2, 40], ["Tokologo", 2, 40], ["Tswelopele", 2, 40], ["Abaqulusi", 4, 36], ["Dannhauser", 4, 40], ["eDumbe", 4, 36], ["Emadlangeni", 4, 40], ["Emnambithi", 4, 40], ["eNdondakusuka", 4, 40], ["Endumeni", 4, 40], ["Ethekwini", 4, 36], ["Ezingoleni", 4, 36], ["Greater Kokstad", 4, 40], ["Hibiscus Coast", 4, 36], ["Hlabisa", 4, 36], ["Imbabazane", 4, 40], ["Impendle", 4, 40], ["Indaka", 4, 40], ["Ingwe", 4, 40], ["Jozini", 4, 32], ["Kwa Sani", 4, 40], ["KwaDukuza", 4, 36], ["Maphumulo", 4, 40], ["Matatiele", 4, 40], ["Mkhambathini", 4, 40], ["Mpofana", 4, 40], ["Msinga", 4, 40], ["Msunduzi", 4, 40], ["Mthonjaneni", 4, 36], ["Mtubatuba", 4, 32], ["Ndwedwe", 4, 36], ["Newcastle", 4, 40], ["Nkandla", 4, 40], ["Nongoma", 4, 36], ["Nqutu", 4, 40], ["Ntambanana", 4, 36], ["Okhahlamba", 4, 40], ["Richmond", 4, 40], ["The Big 5 False Bay", 4, 32], ["Ubuhlebezwe", 4, 40], ["Ulundi", 4, 36], ["Umdoni", 4, 36], ["Umhlabuyalingana", 4, 32], ["uMhlathuze", 4, 36], ["uMlalazi", 4, 36], ["uMngeni", 4, 40], ["uMshwathi", 4, 40], ["Umtshezi", 4, 40], ["UMuziwabantu", 4, 40], ["Umvoti", 4, 40], ["Umzumbe", 4, 36], ["UPhongolo", 4, 32], ["Vulamehlo", 4, 36], ["Kheis", 7, 40], ["Khara Hais", 7, 40], ["Dikgatlong", 7, 40], ["Emthanjeni", 7, 40], ["Gamagara", 7, 36], ["Ga-Segonyana", 7, 36], ["Hantam", 7, 36], ["Kai Garib", 7, 40], ["Kamiesberg", 7, 32], ["Kareeberg", 7, 40], ["Karoo Hoogland", 7, 40], ["Kgatelopele", 7, 36], ["Khâi-Ma", 7, 36], ["Magareng", 7, 40], ["Mier", 7, 36], ["Nama Khoi", 7, 32], ["Phokwane", 7, 40], ["Renosterberg", 7, 40], ["Richtersveld", 7, 32], ["Siyancuma", 7, 40], ["Siyathemba", 7, 40], ["Sol Plaatje", 7, 40], ["Thembelihle", 7, 40], ["Tsantsabane", 7, 36], ["Ubuntu", 7, 40], ["Umsobomvu", 7, 40], ["Beaufort West", 9, 40], ["Bergrivier", 9, 40], ["Bitou Municipality", 9, 36], ["Breede River/Winelands", 9, 40], ["Breede Valley", 9, 44], ["Cape Agulhas", 9, 44], ["Cederberg", 9, 36], ["City of Cape Town", 9, 40], ["Drakenstein", 9, 40], ["George", 9, 36], ["Kannaland", 9, 36], ["Knysna", 9, 36], ["Laingsburg", 9, 40], ["Langeberg", 9, 40], ["Matzikama", 9, 32], ["Mossel Bay", 9, 36], ["Oudtshoorn", 9, 36], ["Overstrand", 9, 44], ["Prince Albert", 9, 40], ["Saldanha Bay", 9, 40], ["Stellenbosch", 9, 40], ["Swartland", 9, 40], ["Swellendam", 9, 40], ["Theewaterskloof", 9, 40], ["Witzenberg", 9, 40], ["Amahlathi", 1, 40], ["Baviaans", 1, 36], ["Blue Crane Route", 1, 36], ["Buffalo City", 1, 40], ["Camdeboo", 1, 36], ["Elundini", 1, 44], ["Emalahleni", 1, 44], ["Engcobo", 1, 44], ["Gariep", 1, 40], ["Great Kei", 1, 40], ["Ikwezi", 1, 36], ["Ingquza Hill", 1, 40], ["Inkwanca", 1, 40], ["Intsika Yethu", 1, 44], ["Inxuba Yethemba", 1, 40], ["King Sabata Dalindye", 1, 44], ["Kouga", 1, 40], ["Kou-Kamma", 1, 36], ["Lukanji", 1, 44], ["Makana", 1, 40], ["Maletswai", 1, 40], ["Mbhashe", 1, 40], ["Mbizana", 1, 40], ["Mhlontlo", 1, 44], ["Mnquma", 1, 40], ["Ndlambe", 1, 40], ["Nelson Mandela", 1, 40], ["Ngqushwa", 1, 40], ["Nkonkobe", 1, 40], ["Ntabankulu", 1, 40], ["Nxuba", 1, 40], ["Nyandeni", 1, 44], ["Port St Johns", 1, 40], ["Qaukeni", 1, 40], ["Sakhisizwe", 1, 44], ["Senqu", 1, 40], ["Sunday's River Valley", 1, 40], ["Tsolwana", 1, 40], ["Umzimkhulu", 1, 40], ["Umzimvubu", 1, 40]];
+
+/* ============================================================
+   SANS 10160-3:2018 — calculation engine
+   All pressures in kPa, lengths in m, speeds in m/s, forces in kN
+   ============================================================ */
+
+const TERRAIN = {
+  A: { zg: 250, z0: 0, zc: 1, a: 0.070, desc: 'Flat, no obstacles (open sea, lake shores, flat treeless plains)' },
+  B: { zg: 300, z0: 0, zc: 2, a: 0.095, desc: 'Low vegetation, obstacles separated by at least 20 obstacle heights' },
+  C: { zg: 350, z0: 3, zc: 5, a: 0.120, desc: 'Regular cover, obstacles separated by max 20 obstacle heights (suburbs, forest)' },
+  D: { zg: 400, z0: 5, zc: 10, a: 0.150, desc: 'At least 15% covered by buildings with mean height over 15 m (city centres)' }
+};
+
+const AIR_DENSITY = [[0, 1.20], [500, 1.12], [1000, 1.06], [1500, 1.00], [2000, 0.94]];
+
+const FRICTION = { smooth: 0.01, rough: 0.02, veryRough: 0.04 };
+
+/* Figure 16 — internal pressure coefficient against opening ratio mu.
+   Digitised curves for h/d <= 0.25 and h/d >= 1.0 */
+const FIG16 = {
+  mu: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+  upper: [0.75, 0.71, 0.65, 0.56, 0.44, 0.29, 0.10, -0.10, -0.22, -0.28, -0.30], // h/d <= 0.25
+  lower: [0.75, 0.70, 0.63, 0.53, 0.40, 0.23, 0.02, -0.18, -0.35, -0.45, -0.50]  // h/d >= 1.0
+};
+
+/* ---------- generic helpers ---------- */
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+/** Piecewise-linear lookup in a table whose first column is the argument. */
+function tableLookup(rows, x, col) {
+  const n = rows.length;
+  if (x <= rows[0][0]) return rows[0][col];
+  if (x >= rows[n - 1][0]) return rows[n - 1][col];
+  for (let i = 1; i < n; i++) {
+    if (x <= rows[i][0]) {
+      const x0 = rows[i - 1][0], x1 = rows[i][0];
+      const v0 = rows[i - 1][col], v1 = rows[i][col];
+      if (v0 === null || v1 === null) return v0 === null ? v1 : v0;
+      return x1 === x0 ? v1 : lerp(v0, v1, (x - x0) / (x1 - x0));
+    }
+  }
+  return rows[n - 1][col];
+}
+
+/** Interpolate in a list of (x, y) pairs held as parallel arrays. */
+function interpArrays(xs, ys, x) {
+  if (x <= xs[0]) return ys[0];
+  if (x >= xs[xs.length - 1]) return ys[ys.length - 1];
+  for (let i = 1; i < xs.length; i++) {
+    if (x <= xs[i]) return lerp(ys[i - 1], ys[i], (x - xs[i - 1]) / (xs[i] - xs[i - 1]));
+  }
+  return ys[ys.length - 1];
+}
+
+/** Cpe for a loaded area A between Cpe,1 and Cpe,10 — Figure 5. */
+function cpeForArea(cpe10, cpe1, A) {
+  if (cpe10 === null || cpe1 === null) return cpe10 === null ? cpe1 : cpe10;
+  if (!(A > 0)) return cpe1;
+  if (A <= 1) return cpe1;
+  if (A >= 10) return cpe10;
+  return cpe1 + (cpe10 - cpe1) * Math.log10(A);
+}
+
+/* ---------- 7.2 / 7.3 / 7.4  peak wind speed pressure ---------- */
+
+/** Probability factor, cl 7.2.3 eq 2. K = 0.2, n = 0.5. */
+function cProb(returnPeriod) {
+  const K = 0.2, n = 0.5;
+  const p = 1 / Math.max(returnPeriod, 1.0001);
+  const num = 1 - K * Math.log(-Math.log(1 - p));
+  const den = 1 - K * Math.log(-Math.log(0.98));
+  return Math.pow(num / den, n);
+}
+
+/** Air density from site altitude — Table 4. */
+function airDensity(altitude) {
+  const xs = AIR_DENSITY.map(r => r[0]), ys = AIR_DENSITY.map(r => r[1]);
+  return interpArrays(xs, ys, clamp(altitude, 0, 2000));
+}
+
+/** Terrain roughness factor, cl 7.3.2.1 eq 5:  cr(z) = 1,36 ((z - z0)/(zg - z0))^a, z >= zc */
+function cRough(z, cat) {
+  const t = TERRAIN[cat];
+  const zEff = Math.max(z, t.zc);
+  return 1.36 * Math.pow(Math.max(zEff - t.z0, 1e-6) / (t.zg - t.z0), t.a);
+}
+
+/**
+ * Full site calculation.
+ * @returns {{cprob, vb, vbPeak, rho, at:(z)=>({cr,vp,qp})}}
+ */
+function sitePressure(o) {
+  const cprob = o.useCprob === false ? 1 : cProb(o.returnPeriod);
+  const vb = o.vb0 * cprob;
+  const vbPeak = vb; // 3 s gust map, cl 7.3.1.1 eq 4 ratio = 1.0
+  const rho = airDensity(o.altitude);
+  const at = z => {
+    const cr = cRough(z, o.terrain);
+    const vp = cr * o.c0 * vbPeak;
+    return { z, cr, vp, qp: 0.5 * rho * vp * vp / 1000 };
+  };
+  return { cprob, vb, vbPeak, rho, at };
+}
+
+/**
+ * Reference heights over the structure height — cl 8.3.2.1, Figure 7.
+ * Returns strips from the ground up: {zBot, zTop, ze}
+ */
+function referenceHeights(h, b, hStrip) {
+  if (h <= b) return [{ zBot: 0, zTop: h, ze: h }];
+  if (h <= 2 * b) return [{ zBot: 0, zTop: b, ze: b }, { zBot: b, zTop: h, ze: h }];
+  const parts = [{ zBot: 0, zTop: b, ze: b }];
+  const hs = Math.max(hStrip || 1, 0.1);
+  let z = b;
+  const zTopStart = h - b;
+  while (z < zTopStart - 1e-9) {
+    const zt = Math.min(z + hs, zTopStart);
+    parts.push({ zBot: z, zTop: zt, ze: zt });
+    z = zt;
+  }
+  parts.push({ zBot: z, zTop: h, ze: h });
+  return parts;
+}
+
+/* ---------- 8.3.2  vertical walls of rectangular buildings ---------- */
+
+/**
+ * Wall zones and coefficients for one wind direction.
+ * b = crosswind width, d = alongwind depth, h = height, A = loaded area.
+ */
+function wallZones(h, b, d, A) {
+  const e = Math.min(b, 2 * h);
+  const hd = h / d;
+  const zones = [];
+  if (e < d) {
+    zones.push({ id: 'A', x0: 0, x1: e / 5 });
+    zones.push({ id: 'B', x0: e / 5, x1: e });
+    zones.push({ id: 'C', x0: e, x1: d });
+  } else if (e < 5 * d) {
+    zones.push({ id: 'A', x0: 0, x1: e / 5 });
+    zones.push({ id: 'B', x0: e / 5, x1: d });
+  } else {
+    zones.push({ id: 'A', x0: 0, x1: d });
+  }
+  const col = { A: 1, B: 3, C: 5, D: 7, E: 9 };
+  const cpe = {};
+  ['A', 'B', 'C', 'D', 'E'].forEach(id => {
+    const c10 = tableLookup(TBL.T6, hd, col[id]);
+    const c1 = tableLookup(TBL.T6, hd, col[id] + 1);
+    cpe[id] = { cpe10: c10, cpe1: c1, cpe: cpeForArea(c10, c1, A) };
+  });
+  // cl 8.3.2.4 lack of correlation between windward and leeward faces
+  let corr = 1.0;
+  if (hd <= 1) corr = 0.85;
+  else if (hd < 5) corr = lerp(0.85, 1.0, (hd - 1) / 4);
+  return { e, hd, zones, cpe, corr };
+}
+
+/* ---------- 8.3.3  flat roofs ---------- */
+
+function flatRoofZones(h, b, d) {
+  const e = Math.min(b, 2 * h);
+  return {
+    e,
+    F: { widthEach: e / 4, depth: e / 10 },
+    G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
+    H: { depth: Math.max(e / 2 - e / 10, 0) },
+    I: { depth: Math.max(d - e / 2, 0) }
+  };
+}
+
+function flatRoofCpe(edge, A) {
+  // edge: {type:'sharp'|'parapet'|'curved'|'mansard', hp_h, r_h, alpha}
+  let rows = TBL.T7_hp, x = 0;
+  if (edge.type === 'parapet') { rows = TBL.T7_hp; x = edge.hp_h; }
+  else if (edge.type === 'curved') { rows = TBL.T7_r; x = edge.r_h; }
+  else if (edge.type === 'mansard') { rows = TBL.T7_a; x = edge.alpha; }
+  const pick = (c10, c1) => ({ cpe10: tableLookup(rows, x, c10), cpe1: tableLookup(rows, x, c1) });
+  const out = {};
+  [['F', 1, 2], ['G', 3, 4], ['H', 5, 6]].forEach(([id, a, b2]) => {
+    const p = pick(a, b2);
+    out[id] = { ...p, cpe: cpeForArea(p.cpe10, p.cpe1, A) };
+  });
+  const ineg = pick(7, 8), ipos = pick(9, 10);
+  out.I = {
+    cpe10: ineg.cpe10, cpe1: ineg.cpe1,
+    cpe: cpeForArea(ineg.cpe10, ineg.cpe1, A),
+    cpePos: cpeForArea(ipos.cpe10, ipos.cpe1, A)
+  };
+  return out;
+}
+
+/* ---------- 8.3.4  monopitch roofs ---------- */
+
+function monoZones(h, b, d) {
+  const e = Math.min(b, 2 * h);
+  return {
+    e,
+    d0: { F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 }, H: { depth: Math.max(d - e / 10, 0) } },
+    d90: {
+      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
+      H: { depth: Math.max(e / 2 - e / 10, 0) }, I: { depth: Math.max(d - e / 2, 0) }
+    }
+  };
+}
+
+function monoCpe(alpha, A) {
+  const g = (c10, c1) => {
+    const a = tableLookup(TBL.T8, alpha, c10), b = tableLookup(TBL.T8, alpha, c1);
+    return { cpe10: a, cpe1: b, cpe: cpeForArea(a, b, A) };
+  };
+  const g9 = (c10, c1) => {
+    const a = tableLookup(TBL.T9, alpha, c10), b = tableLookup(TBL.T9, alpha, c1);
+    return { cpe10: a, cpe1: b, cpe: cpeForArea(a, b, A) };
+  };
+  return {
+    deg0neg: { F: g(1, 2), G: g(3, 4), H: g(5, 6) },
+    deg180: { F: g(7, 8), G: g(9, 10), H: g(11, 12) },
+    deg0pos: { F: g(13, 14), G: g(15, 16), H: g(17, 18) },
+    deg90: { Fup: g9(1, 2), Flow: g9(3, 4), G: g9(5, 6), H: g9(7, 8), I: g9(9, 10) }
+  };
+}
+
+/* ---------- 8.3.5  duopitch roofs ---------- */
+
+function duoZones(h, b, d) {
+  const e = Math.min(b, 2 * h);
+  return {
+    e,
+    d0: {
+      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
+      H: { depth: Math.max(d / 2 - e / 10, 0) }, J: { depth: e / 10 }, I: { depth: Math.max(d / 2 - e / 10, 0) }
+    },
+    d90: {
+      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b / 2 - e / 4, 0), depth: e / 10 },
+      H: { depth: Math.max(e / 2 - e / 10, 0) }, I: { depth: Math.max(d - e / 2, 0) }
+    }
+  };
+}
+
+function duoCpe(alpha, A) {
+  const g = (t, c10, c1) => {
+    const a = tableLookup(t, alpha, c10), b = tableLookup(t, alpha, c1);
+    return { cpe10: a, cpe1: b, cpe: cpeForArea(a, b, A) };
+  };
+  return {
+    deg0neg: { F: g(TBL.T10, 1, 2), G: g(TBL.T10, 3, 4), H: g(TBL.T10, 5, 6), I: g(TBL.T10, 7, 8), J: g(TBL.T10, 9, 10) },
+    deg0pos: { F: g(TBL.T10, 11, 12), G: g(TBL.T10, 13, 14), H: g(TBL.T10, 15, 16), I: g(TBL.T10, 17, 18), J: g(TBL.T10, 19, 20) },
+    deg90: { F: g(TBL.T11, 1, 2), G: g(TBL.T11, 3, 4), H: g(TBL.T11, 5, 6), I: g(TBL.T11, 7, 8) }
+  };
+}
+
+/* ---------- 8.3.6  hipped roofs ---------- */
+
+function hipCpe(alpha0, alpha90, A) {
+  const g = (al, c10, c1) => {
+    const a = tableLookup(TBL.T12, al, c10), b = tableLookup(TBL.T12, al, c1);
+    return { cpe10: a, cpe1: b, cpe: cpeForArea(a, b, A) };
+  };
+  const ids = ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+  const case1 = (al) => {
+    const o = {};
+    ids.forEach((id, i) => { o[id] = g(al, 1 + 2 * i, 2 + 2 * i); });
+    return o;
+  };
+  const case2 = (al) => ({ F: g(al, 19, 20), G: g(al, 21, 22), H: g(al, 23, 24) });
+  return { deg0: case1(alpha0), deg0pos: case2(alpha0), deg90: case1(alpha90) };
+}
+
+function hipZones(h, b, d) {
+  const e = Math.min(b, 2 * h);
+  return {
+    e,
+    d0: {
+      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
+      H: { depth: Math.max(d / 2 - e / 10, 0) }, I: { depth: Math.max(d / 2 - e / 10, 0) },
+      J: { width: e / 10 }, K: { depth: e / 10 }, L: { depth: e / 10 }, M: { depth: Math.max(d - e / 10, 0) }
+    },
+    d90: {
+      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
+      H: { depth: Math.max(e / 2 - e / 10, 0) }, I: { depth: Math.max(d - e / 2, 0) },
+      J: { width: e / 10 }, L: { depth: e / 10 }, M: { depth: Math.max(e / 2 - e / 10, 0) }, N: { depth: Math.max(d - e / 2, 0) }
+    }
+  };
+}
+
+/* ---------- 8.3.9  internal pressure ---------- */
+
+function cpiFromMu(mu, hd) {
+  const up = interpArrays(FIG16.mu, FIG16.upper, clamp(mu, 0, 1));
+  const lo = interpArrays(FIG16.mu, FIG16.lower, clamp(mu, 0, 1));
+  if (hd <= 0.25) return { cpi: up, upper: up, lower: lo };
+  if (hd >= 1) return { cpi: lo, upper: up, lower: lo };
+  return { cpi: lerp(up, lo, (hd - 0.25) / 0.75), upper: up, lower: lo };
+}
+
+/**
+ * @param faces array of 4 {area, openArea, cpe:[cpe for wind 0,90,180,270]}
+ * @param hd h/d for each of the four wind directions
+ */
+function internalPressure(faces, hdByDir) {
+  const dirs = [0, 90, 180, 270];
+  const totalOpen = faces.reduce((s, f) => s + f.openArea, 0);
+  return dirs.map((dir, di) => {
+    // dominant face test, cl 8.3.9.4
+    let dominant = -1, ratio = 0;
+    faces.forEach((f, i) => {
+      const others = totalOpen - f.openArea;
+      const r = others > 0 ? f.openArea / others : (f.openArea > 0 ? Infinity : 0);
+      if (r >= 2 && r > ratio) { ratio = r; dominant = i; }
+    });
+    if (dominant >= 0) {
+      const cpeD = faces[dominant].cpe[di];
+      const factor = ratio >= 3 ? 0.90 : 0.75;
+      return { dir, mode: 'dominant', face: dominant + 1, ratio, factor, cpi: factor * cpeD };
+    }
+    if (totalOpen <= 0) return { dir, mode: 'none', cpi: null };
+    const negArea = faces.reduce((s, f) => s + (f.cpe[di] <= 0 ? f.openArea : 0), 0);
+    const mu = negArea / totalOpen;
+    const r = cpiFromMu(mu, hdByDir[di]);
+    return { dir, mode: 'mu', mu, ...r };
+  });
+}
+
+/* ---------- 8.4  canopy roofs ---------- */
+
+function canopyMono(alpha, phi, A) {
+  const L = (c) => tableLookup(TBL.T13, alpha, c);
+  const mn = (c0, c1) => lerp(L(c0), L(c1), clamp(phi, 0, 1));
+  return {
+    cf: { max: L(1), min: mn(5, 9) },
+    zones: {
+      A: { max: L(2), min: mn(6, 10) },
+      B: { max: L(3), min: mn(7, 11) },
+      C: { max: L(4), min: mn(8, 12) }
+    }
+  };
+}
+
+function canopyDuo(alpha, phi) {
+  const L = (c) => tableLookup(TBL.T14, alpha, c);
+  const mn = (c0, c1) => lerp(L(c0), L(c1), clamp(phi, 0, 1));
+  return {
+    cf: { max: L(1), min: mn(6, 11) },
+    zones: {
+      A: { max: L(2), min: mn(7, 12) },
+      B: { max: L(3), min: mn(8, 13) },
+      C: { max: L(4), min: mn(9, 14) },
+      D: { max: L(5), min: mn(10, 15) }
+    }
+  };
+}
+
+/* ---------- 8.5  free-standing walls, parapets, signboards ---------- */
+
+const T16 = {
+  // solidity 1.0, no return corners: L/h -> [A,B,C,D]
+  solid: [[3, 2.3, 1.4, 1.2, 1.2], [5, 2.9, 1.8, 1.4, 1.2], [10, 3.4, 2.1, 1.7, 1.2]],
+  withCorners: [2.1, 1.8, 1.4, 1.2], // return corner length >= h
+  porous: [1.2, 1.2, 1.2, 1.2]       // solidity 0.8
+};
+
+function freeWall(h, L, Lc, phi) {
+  const Lh = L / h;
+  const noCorner = [1, 2, 3, 4].map(c => tableLookup(T16.solid, Lh, c));
+  const t = clamp(Lc / h, 0, 1);
+  const solid = noCorner.map((v, i) => lerp(v, T16.withCorners[i], t));
+  const ph = clamp(phi, 0.8, 1);
+  const cp = solid.map((v, i) => lerp(T16.porous[i], v, (ph - 0.8) / 0.2));
+  const zones = [];
+  if (Lh <= 2) {
+    zones.push({ id: 'A', x0: 0, x1: 0.3 * h }, { id: 'B', x0: 0.3 * h, x1: 2 * h });
+    if (L > 2 * h) zones.push({ id: 'C', x0: 2 * h, x1: L });
+  } else {
+    zones.push({ id: 'A', x0: 0, x1: 0.3 * h }, { id: 'B', x0: 0.3 * h, x1: 2 * h }, { id: 'C', x0: 2 * h, x1: Math.min(4 * h, L) });
+    if (L > 4 * h) zones.push({ id: 'D', x0: 4 * h, x1: L });
+  }
+  return { Lh, zones, cpNet: { A: cp[0], B: cp[1], C: cp[2], D: cp[3] }, noCorner, solid };
+}
+
+function signboard(hSign, b, hg) {
+  const zg = hg;
+  const applies = zg >= hSign / 4;
+  const ze = hg + hSign / 2;
+  const Aref = hSign * b;
+  const cf = 1.8;
+  return { applies, ze, Aref, cf, ecc: b / 4 };
+}
+
+/* ---------- 7.5.3.6 / 8.6  friction ---------- */
+
+function frictionForce(h, b, d, cfr, qp) {
+  const start = Math.min(2 * b, 4 * h);         // no friction within this distance of the windward edge
+  const roofLen = Math.max(d - start, 0);
+  const Aroof = roofLen * b;
+  const Awalls = 2 * roofLen * h;
+  const Afr = Aroof + Awalls;
+  const wfr = cfr * qp;
+  const areaPar = 2 * d * h + b * d;            // side walls + roof
+  const areaPerp = 2 * b * h;                   // windward + leeward walls
+  return {
+    start, Afr, Aroof, Awalls, wfr, Ffr: wfr * Afr,
+    areaPar, areaPerp, ratio: areaPerp > 0 ? areaPar / areaPerp : Infinity,
+    ignorable: areaPar <= 4 * areaPerp
+  };
+}
+
+/* ---------- Annex B.3  topography ---------- */
+
+function topographyFactor(o) {
+  // o: {shape:'cliff'|'hill', H, Lu, Ld, x, z}   x < 0 upwind of the crest
+  const { H, Lu, Ld, x, z } = o;
+  const phi = H / Lu;
+  const Le = phi > 0.3 ? H / 0.3 : Lu;
+  const phiEff = Math.min(phi, 0.3);
+  const zLe = z / Le;
+  const done = (s, note) => ({ phi, phiEff, Le, zLe, s, c0: 1 + 2 * s * phiEff, note: note || '' });
+
+  if (phi < 0.05) return done(0, 'Upwind slope flatter than 1:20 — topography may be ignored (cl B.3.2).');
+  if (zLe > 2) return done(0, 'z/Le > 2 — the site is above the zone of influence.');
+
+  // A and B are functions of z/Le; the exponential decays along the wind
+  const r = zLe;
+  const A1 = 0.1552 * r ** 4 - 0.8575 * r ** 3 + 1.8133 * r ** 2 - 1.9115 * r + 1.0124;
+
+  if (x < 0) { // upwind section, all shapes
+    const xr = x / Lu;
+    if (xr < -1.5) return done(0, 'More than 1.5 Lu upwind of the crest.');
+    const B = 0.3542 * r ** 2 - 1.0577 * r + 2.6456;
+    return done(clamp(A1 * Math.exp(B * xr), 0, 1.2));
+  }
+  if (o.shape === 'hill') { // downwind of a hill or ridge
+    const xr = x / Ld;
+    if (xr > 2) return done(0, 'More than 2 Ld downwind of the crest.');
+    const B = -0.3056 * r ** 2 + 1.0212 * r - 1.7637;
+    return done(clamp(A1 * Math.exp(B * xr), 0, 1.2));
+  }
+  // downwind of a cliff or escarpment
+  const xr = x / Le;
+  if (xr > 3.5) return done(0, 'More than 3.5 Le downwind of the crest.');
+  const lx = Math.log10(clamp(xr, 0.1, 3.5));
+  const lz = Math.log10(clamp(zLe, 0.1, 2));
+  const A = -1.3420 * lz ** 3 - 0.8222 * lz ** 2 + 0.4609 * lz - 0.0791;
+  const B = -1.0196 * lz ** 3 - 0.8910 * lz ** 2 + 0.5343 * lz - 0.1156;
+  const C = 0.8030 * lz ** 3 + 0.4236 * lz ** 2 - 0.5738 * lz + 0.1606;
+  return done(clamp(A * lx * lx + B * lx + C, 0, 1.2));
+}
+
+/* ============================================================
+   Illustration engine
+   A scene is a list of planar SURFACES. Each surface carries a
+   polygon, an outward normal and a set of ZONES that tile it.
+   The bodies drawn are convex, so back-face culling alone gives
+   correct occlusion — no translucency, no floating blocks.
+   ============================================================ */
+
+const VIEW = { az: 36 * Math.PI / 180, el: -24 * Math.PI / 180 };
+
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+function norm(a) { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+function maxDepth(pts, F) {
+  let m = -Infinity;
+  for (const p of pts) { const d = dot(p, F); if (d > m) m = d; }
+  return m;
+}
+function centroid(pts) { return mul(pts.reduce((a, p) => add(a, p), [0, 0, 0]), 1 / pts.length); }
+
+const LIGHT = norm([-0.42, -0.5, 0.76]);
+
+/* ---------- colour ---------- */
+
+function mixHex(c1, c2, t) {
+  const p = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const a = p(c1), b = p(c2);
+  return '#' + a.map((x, i) => Math.round(x + (b[i] - x) * t).toString(16).padStart(2, '0')).join('');
+}
+function tint(hex, f) {
+  return '#' + [1, 3, 5].map(i => {
+    const c = parseInt(hex.slice(i, i + 2), 16) * f;
+    return Math.max(0, Math.min(255, Math.round(c))).toString(16).padStart(2, '0');
+  }).join('');
+}
+function planarArea(poly) {
+  let s = [0, 0, 0];
+  for (let i = 0; i < poly.length; i++) s = add(s, cross(poly[i], poly[(i + 1) % poly.length]));
+  return Math.hypot(s[0], s[1], s[2]) / 2;
+}
+function perimeter(poly) {
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const d = sub(poly[(i + 1) % poly.length], poly[i]);
+    s += Math.hypot(d[0], d[1], d[2]);
+  }
+  return s;
+}
+/**
+ * Pull a zone back from the edges of the surface it sits on, working in the
+ * surface's own plane. Boundaries between zones on the same surface are left
+ * alone; only the outer edges move. This is what stops a block on one face
+ * from running into a block on the face next to it.
+ */
+function insetFromSurfaceEdge(zonePoly, surfPoly, n, m) {
+  if (!(m > 1e-9)) return zonePoly;
+  const o = zonePoly[0];
+  let u = sub(zonePoly[1], o);
+  if (Math.hypot(u[0], u[1], u[2]) < 1e-9) return zonePoly;
+  u = norm(u);
+  const v = cross(n, u);
+  const to2 = p => [dot(sub(p, o), u), dot(sub(p, o), v)];
+  const to3 = p => add(add(o, mul(u, p[0])), mul(v, p[1]));
+  const Z = zonePoly.map(to2), Sf = surfPoly.map(to2);
+  const c = [Sf.reduce((a, p) => a + p[0], 0) / Sf.length, Sf.reduce((a, p) => a + p[1], 0) / Sf.length];
+  let poly = Z;
+  for (let i = 0; i < Sf.length; i++) {
+    const a = Sf[i], b = Sf[(i + 1) % Sf.length];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (L < 1e-9) continue;
+    let A = -(b[1] - a[1]) / L, B = (b[0] - a[0]) / L;
+    let C = -(A * a[0] + B * a[1]);
+    if (A * c[0] + B * c[1] + C < 0) { A = -A; B = -B; C = -C; }
+    poly = clipHalf(poly, A, B, C - m);
+    if (poly.length < 3) return null;
+  }
+  return poly.map(to3);
+}
+function pointInPoly(pt, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    if (((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function luminance(hex) {
+  const p = i => parseInt(hex.slice(i, i + 2), 16) / 255;
+  return 0.2126 * p(1) + 0.7152 * p(3) + 0.0722 * p(5);
+}
+
+const RAMP_SUCTION = ['#fdf7e6', '#fbe8b4', '#f8d383', '#f3b459', '#ea8f3e', '#dc6a30', '#b93f22'];
+const RAMP_PRESSURE = ['#e4eff8', '#bcd7ec', '#82b2da', '#4d88bd', '#2b6196'];
+
+function rampColour(stops, t) {
+  t = Math.max(0, Math.min(1, t));
+  const n = stops.length - 1, i = Math.min(Math.floor(t * n), n - 1);
+  return mixHex(stops[i], stops[i + 1], t * n - i);
+}
+// Coefficients bunch up at the low end, so the ramp is eased to pull those
+// values apart instead of leaving half the zones in the same pale yellow.
+const EASE = t => Math.pow(Math.max(0, Math.min(1, t)), 0.80);
+function pressureColour(v, maxNeg, maxPos) {
+  if (v === null || v === undefined || !isFinite(v)) return '#cfd8e0';
+  if (v < 0) return rampColour(RAMP_SUCTION, EASE(maxNeg > 0 ? Math.abs(v) / maxNeg : 0));
+  if (v > 0) return rampColour(RAMP_PRESSURE, EASE(maxPos > 0 ? v / maxPos : 0));
+  return '#e6ebef';
+}
+
+/* ---------- 2D polygon clipping (Sutherland–Hodgman) ---------- */
+
+/** Keep the part of poly where a·x + b·y + c >= 0. */
+function clipHalf(poly, a, b, c) {
+  if (!poly || poly.length < 3) return [];
+  const f = p => a * p[0] + b * p[1] + c;
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const P = poly[i], Q = poly[(i + 1) % poly.length];
+    const fp = f(P), fq = f(Q);
+    if (fp >= -1e-9) out.push(P);
+    if ((fp > 1e-9 && fq < -1e-9) || (fp < -1e-9 && fq > 1e-9)) {
+      const t = fp / (fp - fq);
+      out.push([P[0] + (Q[0] - P[0]) * t, P[1] + (Q[1] - P[1]) * t]);
+    }
+  }
+  return out.length >= 3 ? out : [];
+}
+/** Band lo <= axis <= hi.  axis 0 = x, 1 = y. */
+function clipBand(poly, axis, lo, hi) {
+  let p = poly;
+  if (lo !== null && isFinite(lo)) p = clipHalf(p, axis === 0 ? 1 : 0, axis === 0 ? 0 : 1, -lo);
+  if (hi !== null && isFinite(hi)) p = clipHalf(p, axis === 0 ? -1 : 0, axis === 0 ? 0 : -1, hi);
+  return p;
+}
+/** Keep the side of line p1→p2 containing `inside`, with the cut moved `off` toward `inside`. */
+function clipLine(poly, p1, p2, inside, off) {
+  let a = -(p2[1] - p1[1]), b = p2[0] - p1[0];
+  const l = Math.hypot(a, b) || 1; a /= l; b /= l;
+  let c = -(a * p1[0] + b * p1[1]);
+  if (a * inside[0] + b * inside[1] + c < 0) { a = -a; b = -b; c = -c; }
+  return clipHalf(poly, a, b, c - (off || 0));
+}
+function polyArea(p) {
+  if (!p || p.length < 3) return 0;
+  let s = 0;
+  for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; s += p[i][0] * q[1] - q[0] * p[i][1]; }
+  return Math.abs(s) / 2;
+}
+const lift = (poly, zf) => poly.map(p => [p[0], p[1], zf(p[0], p[1])]);
+
+/* ---------- surfaces ---------- */
+
+function surface(poly3, n, opts = {}) {
+  return { poly: poly3, n: norm(n), zones: [], ...opts };
+}
+function addZone(surf, id, plan, zf, v) {
+  if (!plan || plan.length < 3 || v === undefined || v === null || !isFinite(v)) return;
+  if (polyArea(plan) < 1e-7) return;
+  surf.zones.push({ id, poly: lift(plan, zf), v });
+}
+/** Vertical surface built from a 2D outline in (s, z); `map` turns s into x,y. */
+function vertSurface(outline, map, n) {
+  return surface(outline.map(p => map(p[0], p[1])), n);
+}
+function addVertZone(surf, id, outline2d, map, v) {
+  if (!outline2d || outline2d.length < 3 || v === undefined || v === null || !isFinite(v)) return;
+  if (polyArea(outline2d) < 1e-7) return;
+  surf.zones.push({ id, poly: outline2d.map(p => map(p[0], p[1])), v });
+}
+
+/* ---------- renderer ---------- */
+
+function renderScene(scene, o = {}) {
+  const W = o.width || 430, H = o.height || 290;
+  const sa = Math.sin(VIEW.az), ca = Math.cos(VIEW.az), se = Math.sin(VIEW.el), ce = Math.cos(VIEW.el);
+  const R = [-sa, ca, 0], U = [-se * ca, -se * sa, ce], F = [ce * ca, ce * sa, se];
+
+  const surfaces = (scene.surfaces || []).filter(s => s.poly.length >= 3);
+  const vals = [];
+  surfaces.forEach(s => s.zones.forEach(z => { if (isFinite(z.v)) vals.push(z.v); }));
+  const maxNeg = o.scale ? o.scale.neg : Math.max(0, ...vals.map(v => -v), 0);
+  const maxPos = o.scale ? o.scale.pos : Math.max(0, ...vals.map(v => v), 0);
+
+  const allPts = surfaces.flatMap(s => s.poly);
+  if (!allPts.length) return { svg: `<svg viewBox="0 0 ${W} ${H}"></svg>`, maxNeg, maxPos, zones: [] };
+  const ext = i => [Math.min(...allPts.map(p => p[i])), Math.max(...allPts.map(p => p[i]))];
+  const [x0, x1] = ext(0), [y0, y1] = ext(1), [z0, z1] = ext(2);
+  const span = Math.max(x1 - x0, y1 - y0, z1 - z0, 1e-6);
+  // Blocks are sized off the elevation, not the plan, so a long low building
+  // does not end up with towers standing on its roof.
+  const blockRef = Math.min(0.38 * Math.max(z1 - z0, 1e-6), 0.10 * span);
+
+  const visible = surfaces.filter(s => dot(s.n, F) < -0.008);
+  visible.sort((a, b) => ((a.order || 0) - (b.order || 0)) || (maxDepth(b.poly, F) - maxDepth(a.poly, F)));
+
+  const items = [];
+  const push = (poly, fill, stroke, sw, extra) => items.push({ poly, fill, stroke, sw, ...extra });
+  const blocks = o.mode === 'blocks';
+  const peak = Math.max(maxNeg, maxPos, 1e-9);
+
+  // Surfaces are drawn far to near. Each surface is finished — body, outline,
+  // then its own pressure blocks — before moving to the next one, so blocks
+  // never jump in front of a surface that is nearer the eye.
+  visible.forEach((s, si) => {
+    const shade = 0.72 + 0.34 * Math.max(0, dot(s.n, LIGHT));
+    if (!s.zones.length) {
+      push(s.poly, tint(s.body || '#aab6c2', shade), null, 0);
+    } else {
+      s.zones.forEach((z, zi) => {
+        const base = pressureColour(z.v, maxNeg, maxPos);
+        push(z.poly, tint(base, shade), 'rgba(255,255,255,.55)', 0.9,
+          { label: z.id, gid: si + '.' + zi, base: tint(base, shade), tag: z.id + ':face' });
+      });
+    }
+    push(s.poly, null, null, 0, { outline: true });
+    if (!blocks || !s.zones.length) return;
+
+    const faces = [];
+    s.zones.forEach((z, zi) => {
+      // A block standing on one face sticks out into the space in front of the
+      // faces next to it, so the footprint is pulled back from the edges of its
+      // own surface by roughly the height it stands. Blocks then never meet.
+      const per = perimeter(z.poly);
+      const rin = per > 1e-9 ? 2 * planarArea(z.poly) / per : 0;
+      let t = (Math.abs(z.v) / peak) * blockRef;
+      t = Math.min(t, 1.35 * rin);                    // narrow zones get short blocks, not slabs
+      if (t < span * 0.003 || rin < span * 0.002) return;
+      const m = Math.min(0.62 * t, 0.40 * rin);
+      const foot = insetFromSurfaceEdge(z.poly, s.poly, s.n, m);
+      if (!foot || foot.length < 3) return;
+      const off = mul(s.n, t);
+      const top = foot.map(p => add(p, off));
+      const mid = add(centroid(foot), mul(s.n, t / 2));
+      const base = pressureColour(z.v, maxNeg, maxPos);
+      for (let i = 0; i < foot.length; i++) {
+        const j = (i + 1) % foot.length;
+        const quad = [foot[i], foot[j], top[j], top[i]];
+        const c = centroid(quad);
+        let n = cross(sub(foot[j], foot[i]), off);
+        if (Math.hypot(n[0], n[1], n[2]) < 1e-12) continue;
+        n = norm(n);
+        if (dot(n, sub(c, mid)) < 0) n = mul(n, -1);   // point away from the block's core
+        if (dot(n, F) > -0.004) continue;              // inward face — hidden inside the block
+        const lit = 0.72 + 0.34 * Math.max(0, dot(n, LIGHT));
+        faces.push({
+          poly: quad, fill: tint(base, lit * 0.97), stroke: 'rgba(22,33,43,.3)', sw: 0.55,
+          depth: maxDepth(quad, F), tag: z.id + ':side'
+        });
+      }
+      faces.push({
+        poly: top, fill: tint(base, shade * 1.06), stroke: 'rgba(22,33,43,.4)', sw: 0.8,
+        depth: maxDepth(top, F), label: z.id, gid: si + '.' + zi, cap: true, tag: z.id + ':cap',
+        base: tint(base, shade * 1.06)
+      });
+    });
+    faces.sort((a, b) => b.depth - a.depth);
+    faces.forEach(f => items.push(f));
+  });
+
+  const arrow = windArrow(o.wind, [x0, x1], [y0, y1], span);
+  const ground = scene.footprint ? scene.footprint.map(p => [p[0], p[1], z0]) : null;
+
+  const proj = p => [dot(p, R), -dot(p, U)];
+  const gather = items.flatMap(i => i.poly.map(proj));
+  if (arrow) arrow.forEach(p => gather.push(proj(p)));
+  if (ground) ground.forEach(p => gather.push(proj(p)));
+  const pad = 14;
+  const gx = [Math.min(...gather.map(p => p[0])), Math.max(...gather.map(p => p[0]))];
+  const gy = [Math.min(...gather.map(p => p[1])), Math.max(...gather.map(p => p[1]))];
+  const k = Math.min((W - 2 * pad) / Math.max(gx[1] - gx[0], 1e-6), (H - 2 * pad) / Math.max(gy[1] - gy[0], 1e-6));
+  const ox = pad + ((W - 2 * pad) - (gx[1] - gx[0]) * k) / 2 - gx[0] * k;
+  const oy = pad + ((H - 2 * pad) - (gy[1] - gy[0]) * k) / 2 - gy[0] * k;
+  const SP = p => { const q = proj(p); return [q[0] * k + ox, q[1] * k + oy]; };
+  const pstr = poly => poly.map(p => SP(p).map(v => v.toFixed(1)).join(',')).join(' ');
+
+  let out = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="iso">`;
+  if (ground) out += `<polygon points="${pstr(ground)}" fill="#16212b" opacity=".08"/>`;
+
+  const labels = [];
+  const draw = it => {
+    if (it.outline) {
+      out += `<polygon points="${pstr(it.poly)}" fill="none" stroke="#32465a" stroke-width="1.1" stroke-linejoin="round"/>`;
+      return;
+    }
+    out += `<polygon points="${pstr(it.poly)}" fill="${it.fill}"`
+      + (it.tag ? ` data-zone="${it.tag}"` : '')
+      + (it.stroke ? ` stroke="${it.stroke}" stroke-width="${it.sw}" stroke-linejoin="round"` : '') + `/>`;
+    if (it.label && o.label !== false) {
+      const scr = it.poly.map(SP);
+      let a = 0;
+      for (let i = 0; i < scr.length; i++) { const q = scr[(i + 1) % scr.length]; a += scr[i][0] * q[1] - q[0] * scr[i][1]; }
+      const area = Math.abs(a) / 2;
+      if (area > 5) {   // everything is a candidate; placement decides inline or leader
+        const c = scr.reduce((s, p) => [s[0] + p[0], s[1] + p[1]], [0, 0]).map(v => v / scr.length);
+        labels.push({ x: c[0], y: c[1] + 4.5, t: it.label, area, scr, cx: c[0], cy: c[1],
+          gid: it.gid, cap: !!it.cap, dark: luminance(it.base || '#ffffff') > 0.52 });
+      }
+    }
+  };
+  items.forEach(draw);
+  // Every separate region gets its own letter, so a zone that appears at four
+  // corners is named four times. A label on a long thin region may slide along
+  // it to dodge a neighbour, and one too small to hold text gets a leader.
+  const byId = new Map();
+  labels.forEach(l => {
+    const key = l.gid === undefined ? l.t : l.gid;
+    const p = byId.get(key);
+    const better = !p || (l.cap !== p.cap ? l.cap : l.area > p.area);   // a block top beats the flat zone under it
+    if (better) byId.set(key, l);
+  });
+  const placed = [];
+  const clear = (x, y) => !placed.some(p => Math.abs(p.x - x) < 18 && Math.abs(p.y - y) < 15);
+
+  [...byId.values()].sort((a, b) => b.area - a.area).forEach(l => {
+    if (l.area >= 200) {
+      let A = l.scr[0], B = l.scr[0], best = -1;
+      for (let i = 0; i < l.scr.length; i++) for (let j = i + 1; j < l.scr.length; j++) {
+        const dd = Math.hypot(l.scr[i][0] - l.scr[j][0], l.scr[i][1] - l.scr[j][1]);
+        if (dd > best) { best = dd; A = l.scr[i]; B = l.scr[j]; }
+      }
+      const ux = best > 1e-6 ? (B[0] - A[0]) / best : 1, uy = best > 1e-6 ? (B[1] - A[1]) / best : 0;
+      for (const f of [0, 0.2, -0.2, 0.32, -0.32, 0.42, -0.42]) {
+        const x = l.x + f * best * ux, y = l.y + f * best * uy;
+        if (f !== 0 && !pointInPoly([x, y - 4.5], l.scr)) continue;
+        if (!clear(x, y)) continue;
+        placed.push({ ...l, x, y });
+        return;
+      }
+    }
+    let dx = l.cx - W / 2, dy = l.cy - H / 2;
+    const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+    for (const dist of [26, 40, 54, 68, 82]) {
+      const x = Math.max(13, Math.min(W - 13, l.cx + dx * dist));
+      const y = Math.max(17, Math.min(H - 6, l.cy + dy * dist));
+      if (!clear(x, y)) continue;
+      placed.push({ ...l, x, y, dark: true, leader: [l.cx, l.cy] });
+      return;
+    }
+  });
+
+  placed.forEach(l => {
+    if (l.leader) {
+      const ang = Math.atan2(l.y - 4.5 - l.leader[1], l.x - l.leader[0]);
+      out += `<line x1="${l.leader[0].toFixed(1)}" y1="${l.leader[1].toFixed(1)}"`
+        + ` x2="${(l.x - Math.cos(ang) * 8).toFixed(1)}" y2="${(l.y - 4.5 - Math.sin(ang) * 8).toFixed(1)}"`
+        + ` stroke="#33465a" stroke-width="1" />`;
+      out += `<circle cx="${l.leader[0].toFixed(1)}" cy="${l.leader[1].toFixed(1)}" r="1.7" fill="#33465a"/>`;
+    }
+    const at = `x="${l.x.toFixed(1)}" y="${l.y.toFixed(1)}" text-anchor="middle"`
+      + ` font-family="Barlow Condensed, Barlow, sans-serif" font-size="14.5" font-weight="600"`;
+    out += `<text ${at} fill="none" stroke="${l.dark ? 'rgba(255,255,255,.9)' : 'rgba(8,16,24,.55)'}"`
+      + ` stroke-width="3" stroke-linejoin="round">${l.t}</text>`;
+    out += `<text ${at} fill="${l.dark ? '#15202b' : '#ffffff'}">${l.t}</text>`;
+  });
+  if (arrow) out += `<polygon points="${pstr(arrow)}" fill="#16212b" stroke="#fff" stroke-width="1.1" stroke-linejoin="round"/>`;
+  out += '</svg>';
+
+  const zones = [];
+  surfaces.forEach(s => s.zones.forEach(z => { if (!zones.some(q => q.id === z.id)) zones.push({ id: z.id, v: z.v }); }));
+  return { svg: out, maxNeg, maxPos, zones };
+}
+
+function windArrow(wind, xr, yr, span) {
+  if (!wind) return null;
+  const L = span * 0.30, w = span * 0.034, head = span * 0.092, z = 0;
+  const mk = pts => pts.map(p => [p[0], p[1], z]);
+  if (wind === '0') {
+    const y = (yr[0] + yr[1]) / 2, x = xr[0] - span * 0.15;
+    return mk([[x - L, y - w], [x - head, y - w], [x - head, y - w * 2.3], [x, y],
+    [x - head, y + w * 2.3], [x - head, y + w], [x - L, y + w]]);
+  }
+  if (wind === '180') {
+    const y = yr[0] - span * 0.19, xt = (xr[0] + xr[1]) / 2 - L / 2;
+    return mk([[xt + L, y - w], [xt + head, y - w], [xt + head, y - w * 2.3], [xt, y],
+    [xt + head, y + w * 2.3], [xt + head, y + w], [xt + L, y + w]]);
+  }
+  const x = (xr[0] + xr[1]) / 2, y = yr[0] - span * 0.15;
+  return mk([[x - w, y - L], [x - w, y - head], [x - w * 2.3, y - head], [x, y],
+  [x + w * 2.3, y - head], [x + w, y - head], [x + w, y - L]]);
+}
+
+/* ============================================================
+   Flat zone key — a dimensioned plan of the roof zones, drawn
+   from the same clipped geometry as the 3D view so the two can
+   never disagree.
+   ============================================================ */
+
+function renderZoneKey(g, dir, roofV, o = {}) {
+  const sc = buildingScene(g, dir, null, roofV);
+  const zones = [];
+  sc.surfaces.forEach(s => { if (Math.abs(s.n[2]) > 0.01) s.zones.forEach(z => zones.push(z)); });
+  const W = o.width || 430, H = o.height || 300;
+  const mL = 52, mR = 26, mT = 30, mB = 46;
+  const d = g.d, b = g.b, h = g.h;
+  const across = dir === '90' ? d : b;
+  const e = Math.min(across, 2 * h);
+  const k = Math.min((W - mL - mR) / d, (H - mT - mB) / b);
+  const X = x => mL + x * k;
+  const Y = y => H - mB - y * k;                     // plan with y up the page
+  const pstr = poly => poly.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ');
+
+  const vals = zones.map(z => z.v).filter(isFinite);
+  const mn = o.scale ? o.scale.neg : Math.max(0, ...vals.map(v => -v), 0);
+  const mx = o.scale ? o.scale.pos : Math.max(0, ...vals.map(v => v), 0);
+
+  let out = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="key">`;
+  out += `<rect x="${X(0)}" y="${Y(b)}" width="${(d * k).toFixed(1)}" height="${(b * k).toFixed(1)}" fill="#fbfcfd"/>`;
+  zones.forEach(z => {
+    const col = pressureColour(z.v, mn, mx);
+    out += `<polygon points="${pstr(z.poly)}" fill="${col}" fill-opacity=".9" stroke="#fff" stroke-width="1"/>`;
+  });
+  out += `<rect x="${X(0)}" y="${Y(b)}" width="${(d * k).toFixed(1)}" height="${(b * k).toFixed(1)}" fill="none" stroke="#33465a" stroke-width="1.2"/>`;
+
+  // one letter per region, at the centroid, skipping anything too small to read
+  zones.forEach(z => {
+    const cx = z.poly.reduce((s, p) => s + X(p[0]), 0) / z.poly.length;
+    const cy = z.poly.reduce((s, p) => s + Y(p[1]), 0) / z.poly.length;
+    let a = 0;
+    for (let i = 0; i < z.poly.length; i++) {
+      const j = (i + 1) % z.poly.length;
+      a += X(z.poly[i][0]) * Y(z.poly[j][1]) - X(z.poly[j][0]) * Y(z.poly[i][1]);
+    }
+    const dark = luminance(pressureColour(z.v, mn, mx)) > 0.52;
+    let tx = cx, ty = cy + 4, leader = null;
+    if (Math.abs(a) / 2 < 150) {                       // too small to hold a letter: put it outside
+      const left = cx < (X(0) + X(d)) / 2;
+      tx = left ? X(0) - 16 : X(d) + 16;
+      ty = cy + 4;
+      leader = [cx, cy];
+    }
+    if (leader) {
+      out += `<line x1="${leader[0].toFixed(1)}" y1="${leader[1].toFixed(1)}" x2="${tx.toFixed(1)}" y2="${(ty - 4).toFixed(1)}" stroke="#33465a" stroke-width="0.9"/>`;
+      out += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="600"`
+        + ` font-family="Barlow Condensed, sans-serif" fill="#15202b">${z.id}</text>`;
+      return;
+    }
+    out += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="13"`
+      + ` font-weight="600" font-family="Barlow Condensed, sans-serif" fill="none"`
+      + ` stroke="${dark ? 'rgba(255,255,255,.85)' : 'rgba(8,16,24,.5)'}" stroke-width="3">${z.id}</text>`
+      + `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="13"`
+      + ` font-weight="600" font-family="Barlow Condensed, sans-serif" fill="${dark ? '#15202b' : '#fff'}">${z.id}</text>`;
+  });
+
+  // dimension ticks on the two edges
+  const tick = (px, py, tx, ty, label, anchor) =>
+    `<line x1="${px}" y1="${py}" x2="${tx}" y2="${ty}" stroke="#8496a6" stroke-width="1"/>`
+    + `<text x="${tx}" y="${ty + (anchor === 'below' ? 12 : 4)}" font-size="10" fill="#5d6f80"`
+    + ` text-anchor="${anchor === 'below' ? 'middle' : 'end'}">${label}</text>`;
+  const xMarks = [], yMarks = [];
+  if (dir === '90') {
+    yMarks.push([e / 10, 'e/10'], [e / 2, 'e/2']);
+    xMarks.push([e / 4, 'e/4'], [d - e / 4, 'd−e/4']);
+  } else if (dir === '180') {
+    xMarks.push([d - e / 10, 'd−e/10']);
+    yMarks.push([e / 4, 'e/4'], [b - e / 4, 'b−e/4']);
+  } else {
+    xMarks.push([e / 10, 'e/10'], [e / 2, 'e/2']);
+    yMarks.push([e / 4, 'e/4'], [b - e / 4, 'b−e/4']);
+  }
+  xMarks.forEach(([v, l]) => { if (v > 0 && v < d) out += tick(X(v), Y(0), X(v), Y(0) + 7, l, 'below'); });
+  yMarks.forEach(([v, l]) => { if (v > 0 && v < b) out += tick(X(0), Y(v), X(0) - 7, Y(v), l, 'left'); });
+
+  // overall dimensions and the wind arrow
+  out += `<text x="${((X(0) + X(d)) / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10.5" fill="#5d6f80">d = ${fmtNum(d)} m</text>`;
+  out += `<text x="${(X(d) + 14).toFixed(1)}" y="${((Y(0) + Y(b)) / 2).toFixed(1)}" text-anchor="middle" font-size="10.5"`
+    + ` fill="#5d6f80" transform="rotate(-90 ${(X(d) + 14).toFixed(1)} ${((Y(0) + Y(b)) / 2).toFixed(1)})">b = ${fmtNum(b)} m</text>`;
+  const ax = dir === '90' ? X(d / 2) : X(0) - 14, ay = dir === '90' ? Y(0) + 22 : Y(b / 2);
+  const arr = dir === '90'
+    ? `M${ax},${ay} L${ax},${ay - 16} M${ax},${ay - 16} l-4,5 M${ax},${ay - 16} l4,5`
+    : `M${ax - 16},${ay} L${ax},${ay} M${ax},${ay} l-5,-4 M${ax},${ay} l-5,4`;
+  out += `<path d="${arr}" stroke="#16212b" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  out += `<text x="${(W / 2).toFixed(1)}" y="14" text-anchor="middle" font-size="11" fill="#5d6f80">`
+    + `plan on the roof · wind at ${dir}° · e = min(${dir === '90' ? 'd' : 'b'}, 2h) = ${fmtNum(e)} m</text>`;
+  out += '</svg>';
+  return out;
+}
+const fmtNum = v => (Math.round(v * 100) / 100).toFixed(2);
+
+/* ============================================================
+   Scene builders
+   x: 0..d (along wind at 0°)   y: 0..b   z: up
+   Every zone is obtained by clipping the surface's plan polygon,
+   so zones always tile their surface exactly.
+   ============================================================ */
+
+function profileOf(type, h, d, alpha, alpha90) {
+  const t = Math.tan((alpha || 0) * Math.PI / 180);
+  if (type === 'flat') return { he: h, rise: 0, t: 0, zAt: () => h, ridge: null };
+  if (type === 'mono') {
+    const rise = d * t;
+    return { he: h - rise, rise, t, zAt: x => (h - rise) + x * t, ridge: null };
+  }
+  const rise = (d / 2) * t, he = h - rise;
+  const p = { he, rise, t, ridge: d / 2, zAt: x => he + Math.min(x, d - x) * t };
+  if (type === 'hip') p.yRidge = rise / Math.max(Math.tan((alpha90 || alpha || 1) * Math.PI / 180), 1e-6);
+  return p;
+}
+
+function lineCoef(p1, p2, inside) {
+  let a = -(p2[1] - p1[1]), b = p2[0] - p1[0];
+  const l = Math.hypot(a, b) || 1; a /= l; b /= l;
+  let c = -(a * p1[0] + b * p1[1]);
+  if (a * inside[0] + b * inside[1] + c < 0) { a = -a; b = -b; c = -c; }
+  return [a, b, c];
+}
+/** Strip of width w on the `inside` of the line p1→p2. */
+function nearLine(poly, p1, p2, inside, w) {
+  const [a, b, c] = lineCoef(p1, p2, inside);
+  return clipHalf(clipHalf(poly, a, b, c), -a, -b, -c + w);
+}
+/** Everything further than w from the line, on the `inside`. */
+function farLine(poly, p1, p2, inside, w) {
+  const [a, b, c] = lineCoef(p1, p2, inside);
+  return clipHalf(poly, a, b, c - w);
+}
+const cenOf = pts => [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
+
+/** Zone from a rectangular window over a surface's plan polygon. */
+function zoneRect(surf, plan, zf, id, v, xlo, xhi, ylo, yhi) {
+  let p = clipBand(plan, 0, xlo === undefined ? null : xlo, xhi === undefined ? null : xhi);
+  p = clipBand(p, 1, ylo === undefined ? null : ylo, yhi === undefined ? null : yhi);
+  addZone(surf, id, p, zf, v);
+}
+
+/* ---------- walls ---------- */
+
+function wallOutline(prof, d, h) {
+  // (s, z) outline of a side wall running along x
+  const pts = [[0, 0], [d, 0], [d, prof.zAt(d)]];
+  if (prof.ridge !== null && prof.ridge > 0 && prof.ridge < d) pts.push([prof.ridge, h]);
+  pts.push([0, prof.zAt(0)]);
+  return pts;
+}
+
+function addWallSurfaces(out, g, dir, W, prof) {
+  const { h, b, d } = g;
+  const hip = g.type === 'hip';
+  const sideOutline = hip ? [[0, 0], [d, 0], [d, prof.he], [0, prof.he]] : wallOutline(prof, d, h);
+  const endTop = x => hip ? prof.he : prof.zAt(x);
+  const endOutline = x => [[0, 0], [b, 0], [b, endTop(x)], [0, endTop(x)]];
+
+  const sideMap = y => (s, z) => [s, y, z];
+  const endMap = x => (s, z) => [x, s, z];
+
+  const s0 = vertSurface(sideOutline, sideMap(0), [0, -1, 0]);
+  const s1 = vertSurface(sideOutline, sideMap(b), [0, 1, 0]);
+  const e0 = vertSurface(endOutline(0), endMap(0), [-1, 0, 0]);
+  const e1 = vertSurface(endOutline(d), endMap(d), [1, 0, 0]);
+  out.push(s0, s1, e0, e1);
+  if (!W) return;
+
+  const along = dir === '90' ? b : d;
+  const across = dir === '90' ? d : b;
+  const e = Math.min(across, 2 * h);
+  const segs = [];
+  if (e < along) segs.push(['A', 0, e / 5], ['B', e / 5, e], ['C', e, along]);
+  else if (e < 5 * along) segs.push(['A', 0, e / 5], ['B', e / 5, along]);
+  else segs.push(['A', 0, along]);
+
+  const band = (outline, lo, hi) => clipBand(outline, 0, lo, hi);
+  if (dir === '90') {
+    segs.forEach(([id, a0, a1]) => {
+      addVertZone(e0, id, band(endOutline(0), a0, a1), endMap(0), W[id]);
+      addVertZone(e1, id, band(endOutline(d), a0, a1), endMap(d), W[id]);
+    });
+    addVertZone(s0, 'D', sideOutline, sideMap(0), W.D);
+    addVertZone(s1, 'E', sideOutline, sideMap(b), W.E);
+  } else if (dir === '180') {
+    segs.forEach(([id, a0, a1]) => {
+      addVertZone(s0, id, band(sideOutline, d - a1, d - a0), sideMap(0), W[id]);
+      addVertZone(s1, id, band(sideOutline, d - a1, d - a0), sideMap(b), W[id]);
+    });
+    addVertZone(e1, 'D', endOutline(d), endMap(d), W.D);
+    addVertZone(e0, 'E', endOutline(0), endMap(0), W.E);
+  } else {
+    segs.forEach(([id, a0, a1]) => {
+      addVertZone(s0, id, band(sideOutline, a0, a1), sideMap(0), W[id]);
+      addVertZone(s1, id, band(sideOutline, a0, a1), sideMap(b), W[id]);
+    });
+    addVertZone(e0, 'D', endOutline(0), endMap(0), W.D);
+    addVertZone(e1, 'E', endOutline(d), endMap(d), W.E);
+  }
+}
+
+/* ---------- the building ---------- */
+
+function buildingScene(g, dir, W, P) {
+  const { type, h, b, d } = g;
+  const prof = profileOf(type, h, d, g.alpha, g.alpha90);
+  const surfaces = [];
+  addWallSurfaces(surfaces, g, dir, W, prof);
+  const R = P || {};
+  const e = Math.min(dir === '90' ? d : b, 2 * h);
+  const e4 = e / 4, e10 = e / 10, e2 = e / 2;
+  const rect = [[0, 0], [d, 0], [d, b], [0, b]];
+
+  if (type === 'hip') {
+    hipRoofSurfaces(surfaces, g, dir, R, prof, e);
+  } else if (type === 'flat') {
+    const s = surface(lift(rect, () => h), [0, 0, 1]);
+    surfaces.push(s);
+    const zf = () => h;
+    if (dir === '90') {
+      zoneRect(s, rect, zf, 'F', R.F, 0, e4, 0, e10);
+      zoneRect(s, rect, zf, 'F', R.F, d - e4, d, 0, e10);
+      zoneRect(s, rect, zf, 'G', R.G, e4, d - e4, 0, e10);
+      zoneRect(s, rect, zf, 'H', R.H, null, null, e10, e2);
+      zoneRect(s, rect, zf, 'I', R.I, null, null, e2, b);
+    } else {
+      zoneRect(s, rect, zf, 'F', R.F, 0, e10, 0, e4);
+      zoneRect(s, rect, zf, 'F', R.F, 0, e10, b - e4, b);
+      zoneRect(s, rect, zf, 'G', R.G, 0, e10, e4, b - e4);
+      zoneRect(s, rect, zf, 'H', R.H, e10, e2);
+      zoneRect(s, rect, zf, 'I', R.I, e2, d);
+    }
+  } else if (type === 'mono') {
+    const zf = x => prof.zAt(x);
+    const s = surface(lift(rect, zf), [-prof.t, 0, 1]);
+    surfaces.push(s);
+    if (dir === '90') {
+      zoneRect(s, rect, zf, 'Flow', R.Flow, 0, e4, 0, e10);
+      zoneRect(s, rect, zf, 'Fup', R.Fup, d - e4, d, 0, e10);
+      zoneRect(s, rect, zf, 'G', R.G, e4, d - e4, 0, e10);
+      zoneRect(s, rect, zf, 'H', R.H, null, null, e10, e2);
+      zoneRect(s, rect, zf, 'I', R.I, null, null, e2, b);
+    } else if (dir === '180') {
+      zoneRect(s, rect, zf, 'F', R.F, d - e10, d, 0, e4);
+      zoneRect(s, rect, zf, 'F', R.F, d - e10, d, b - e4, b);
+      zoneRect(s, rect, zf, 'G', R.G, d - e10, d, e4, b - e4);
+      zoneRect(s, rect, zf, 'H', R.H, 0, d - e10);
+    } else {
+      zoneRect(s, rect, zf, 'F', R.F, 0, e10, 0, e4);
+      zoneRect(s, rect, zf, 'F', R.F, 0, e10, b - e4, b);
+      zoneRect(s, rect, zf, 'G', R.G, 0, e10, e4, b - e4);
+      zoneRect(s, rect, zf, 'H', R.H, e10, d);
+    }
+  } else {   // duo
+    const zw = x => prof.he + x * prof.t, zl = x => prof.he + (d - x) * prof.t;
+    const planW = [[0, 0], [d / 2, 0], [d / 2, b], [0, b]];
+    const planL = [[d / 2, 0], [d, 0], [d, b], [d / 2, b]];
+    const sw = surface(lift(planW, zw), [-prof.t, 0, 1]);
+    const sl = surface(lift(planL, zl), [prof.t, 0, 1]);
+    surfaces.push(sw, sl);
+    if (dir === '90') {
+      zoneRect(sw, planW, zw, 'F', R.F, 0, e4, 0, e10);
+      zoneRect(sw, planW, zw, 'G', R.G, e4, d / 2, 0, e10);
+      zoneRect(sw, planW, zw, 'H', R.H, null, null, e10, e2);
+      zoneRect(sw, planW, zw, 'I', R.I, null, null, e2, b);
+      zoneRect(sl, planL, zl, 'F', R.F, d - e4, d, 0, e10);
+      zoneRect(sl, planL, zl, 'G', R.G, d / 2, d - e4, 0, e10);
+      zoneRect(sl, planL, zl, 'H', R.H, null, null, e10, e2);
+      zoneRect(sl, planL, zl, 'I', R.I, null, null, e2, b);
+    } else {
+      zoneRect(sw, planW, zw, 'F', R.F, 0, e10, 0, e4);
+      zoneRect(sw, planW, zw, 'F', R.F, 0, e10, b - e4, b);
+      zoneRect(sw, planW, zw, 'G', R.G, 0, e10, e4, b - e4);
+      zoneRect(sw, planW, zw, 'H', R.H, e10, d / 2);
+      zoneRect(sl, planL, zl, 'J', R.J, d / 2, d / 2 + e10);
+      zoneRect(sl, planL, zl, 'I', R.I, d / 2 + e10, d);
+    }
+  }
+  return { surfaces, footprint: [[0, 0], [d, 0], [d, b], [0, b]] };
+}
+
+/* ---------- hipped roof ---------- */
+
+function hipRoofSurfaces(out, g, dir, R, prof, e) {
+  const { h, b, d } = g;
+  const yr = Math.min(Math.max(prof.yRidge || 0.001, 1e-3), b / 2 - 1e-3);
+  const e4 = e / 4, e10 = e / 10, e2 = e / 2;
+  const zMain = x => prof.he + (h - prof.he) * (Math.min(x, d - x) / (d / 2));
+  const zEnd = (x, y) => prof.he + (h - prof.he) * (Math.min(y, b - y) / yr);
+
+  const planW = [[0, 0], [d / 2, yr], [d / 2, b - yr], [0, b]];
+  const planL = [[d, 0], [d, b], [d / 2, b - yr], [d / 2, yr]];
+  const planE0 = [[0, 0], [d, 0], [d / 2, yr]];
+  const planE1 = [[0, b], [d / 2, b - yr], [d, b]];
+  const t90 = (h - prof.he) / yr;
+  const sw = surface(lift(planW, zMain), [-prof.t, 0, 1]);
+  const sl = surface(lift(planL, zMain), [prof.t, 0, 1]);
+  const s0 = surface(lift(planE0, zEnd), [0, -t90, 1]);
+  const s1 = surface(lift(planE1, zEnd), [0, t90, 1]);
+  out.push(sw, sl, s0, s1);
+
+  const endZones = (surf, plan, A, apex, B, mainId, stripId) => {
+    const c = cenOf(plan);
+    addZone(surf, mainId, farLine(farLine(plan, A, apex, c, e10), B, apex, c, e10), zEnd, R[mainId]);
+    addZone(surf, stripId, nearLine(plan, A, apex, c, e10), zEnd, R[stripId]);
+    addZone(surf, stripId, nearLine(plan, B, apex, c, e10), zEnd, R[stripId]);
+  };
+
+  if (dir === '90') {
+    // windward hip end at y = 0
+    const strip = clipBand(planE0, 1, 0, e10);
+    addZone(s0, 'F', clipBand(strip, 0, 0, e4), zEnd, R.F);
+    addZone(s0, 'F', clipBand(strip, 0, d - e4, d), zEnd, R.F);
+    addZone(s0, 'G', clipBand(strip, 0, e4, d - e4), zEnd, R.G);
+    const rest0 = clipBand(planE0, 1, e10, null);
+    if (rest0.length >= 3) {
+      const c = cenOf(planE0), apex = planE0[2];
+      addZone(s0, 'M', farLine(farLine(rest0, planE0[0], apex, c, e10), planE0[1], apex, c, e10), zEnd, R.M);
+      addZone(s0, 'L', nearLine(rest0, planE0[0], apex, c, e10), zEnd, R.L);
+      addZone(s0, 'L', nearLine(rest0, planE0[1], apex, c, e10), zEnd, R.L);
+    }
+    endZones(s1, planE1, planE1[0], planE1[1], planE1[2], 'N', 'L');
+    [[sw, planW, d / 2 - e10, d / 2], [sl, planL, d / 2, d / 2 + e10]].forEach(([surf, plan, j0, j1]) => {
+      const core = surf === sw ? clipBand(plan, 0, null, d / 2 - e10) : clipBand(plan, 0, d / 2 + e10, null);
+      addZone(surf, 'F', clipBand(plan, 1, null, e10), zMain, R.F);   // windward eaves wedge
+      addZone(surf, 'J', clipBand(clipBand(plan, 0, j0, j1), 1, e10, null), zMain, R.J);
+      addZone(surf, 'H', clipBand(core, 1, e10, e2), zMain, R.H);
+      addZone(surf, 'I', clipBand(core, 1, e2, null), zMain, R.I);
+    });
+  } else {
+    zoneRect(sw, planW, zMain, 'F', R.F, 0, e10, 0, e4);
+    zoneRect(sw, planW, zMain, 'F', R.F, 0, e10, b - e4, b);
+    zoneRect(sw, planW, zMain, 'G', R.G, 0, e10, e4, b - e4);
+    zoneRect(sw, planW, zMain, 'H', R.H, e10, d / 2);
+    zoneRect(sl, planL, zMain, 'J', R.J, d / 2, d / 2 + e10);
+    zoneRect(sl, planL, zMain, 'I', R.I, d / 2 + e10, d);
+    // hip ends: strip along each hip ridge is L, a cap at the apex is K, the rest is M
+    [[s0, planE0], [s1, planE1]].forEach(([surf, plan], i) => {
+      const apex = i === 0 ? plan[2] : plan[1];
+      const A = plan[0], Bp = i === 0 ? plan[1] : plan[2];
+      const c = cenOf(plan);
+      const cap = i === 0 ? clipBand(plan, 1, yr - e10, null) : clipBand(plan, 1, null, b - yr + e10);
+      const rest = i === 0 ? clipBand(plan, 1, null, yr - e10) : clipBand(plan, 1, b - yr + e10, null);
+      if (R.K !== undefined && cap.length >= 3) addZone(surf, 'K', cap, zEnd, R.K);
+      const base = (R.K !== undefined && cap.length >= 3) ? rest : plan;
+      if (base.length >= 3) {
+        addZone(surf, 'M', farLine(farLine(base, A, apex, c, e10), Bp, apex, c, e10), zEnd, R.M);
+        addZone(surf, 'L', nearLine(base, A, apex, c, e10), zEnd, R.L);
+        addZone(surf, 'L', nearLine(base, Bp, apex, c, e10), zEnd, R.L);
+      }
+    });
+  }
+}
+
+/* ---------- boxes, canopies, plates ---------- */
+
+function boxSurfaces(x0, x1, y0, y1, z0, z1, body, noTop) {
+  const o = { body: body || '#9fb0bf' };
+  const f = [
+    surface([[x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [x0, y0, z1]], [-1, 0, 0], o),
+    surface([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], [1, 0, 0], o),
+    surface([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], [0, -1, 0], o),
+    surface([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], [0, 1, 0], o),
+    surface([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], [0, 0, 1], o)
+  ];
+  return noTop ? f.slice(0, 4) : f;
+}
+
+function canopyScene(kind, g, Z) {
+  const { h, b, d } = g;
+  const t = Math.max(Math.min(b, d) * 0.035, 1e-3);
+  const tan = Math.tan((g.alpha || 0) * Math.PI / 180);
+  const surfaces = [];
+  const mono = kind === 'mono';
+  const zTop = mono ? x => (h - d * tan) + x * tan : x => (h - (d / 2) * tan) + Math.min(x, d - x) * tan;
+  const halves = mono
+    ? [[[[0, 0], [d, 0], [d, b], [0, b]], [-tan, 0, 1]]]
+    : [[[[0, 0], [d / 2, 0], [d / 2, b], [0, b]], [-tan, 0, 1]],
+    [[[d / 2, 0], [d, 0], [d, b], [d / 2, b]], [tan, 0, 1]]];
+
+  const b10 = b / 10, d10 = d / 10;
+  halves.forEach(([plan, n]) => {
+    const s = surface(lift(plan, zTop), n);
+    surfaces.push(s);
+    // underside and edges, plain
+    surfaces.push(surface(lift(plan, x => zTop(x) - t).reverse(), [-n[0], -n[1], -1], { body: '#9fb0bf' }));
+    const R = (id, v, xl, xh, yl, yh) => zoneRect(s, plan, zTop, id, v, xl, xh, yl, yh);
+    R('C', Z.C, 0, d10, 0, b10); R('C', Z.C, 0, d10, b - b10, b);
+    R('C', Z.C, d - d10, d, 0, b10); R('C', Z.C, d - d10, d, b - b10, b);
+    R('B', Z.B, 0, d10, b10, b - b10); R('B', Z.B, d - d10, d, b10, b - b10);
+    R('B', Z.B, d10, d - d10, 0, b10); R('B', Z.B, d10, d - d10, b - b10, b);
+    const mid = (!mono && Z.D !== undefined && plan[0][0] >= d / 2 - 1e-9) ? 'D' : 'A';
+    R(mid, Z[mid], d10, d - d10, b10, b - b10);
+  });
+  // Slab edges. The two that run along x must follow the roof profile — on a
+  // duo-pitch that means through the ridge. Cutting them straight from eaves to
+  // eaves left a flat band hanging in space under the ridge.
+  const profX = mono ? [0, d] : [0, d / 2, d];
+  const edgeY = (yv, n) => surfaces.push(surface(
+    profX.map(x => [x, yv, zTop(x)])
+      .concat(profX.slice().reverse().map(x => [x, yv, zTop(x) - t])), n, { body: '#c2ced9' }));
+  const edgeX = (xv, n) => surfaces.push(surface(
+    [[xv, 0, zTop(xv)], [xv, b, zTop(xv)], [xv, b, zTop(xv) - t], [xv, 0, zTop(xv) - t]],
+    n, { body: '#c2ced9' }));
+  edgeX(0, [-1, 0, 0]); edgeX(d, [1, 0, 0]);
+  edgeY(0, [0, -1, 0]); edgeY(b, [0, 1, 0]);
+
+  // Columns stop at the underside of the slab, and are set far enough in from
+  // its edge that the slab covers them in this view: at a shallow viewing angle
+  // you can see past the edge by about the slab thickness over tan(elevation).
+  // order = -1 keeps them behind the slab whatever the depth sort decides.
+  const cw = Math.max(Math.min(b, d) * 0.028, 1e-3);
+  const reach = t / Math.max(Math.tan(Math.abs(VIEW.el)), 0.2);
+  const ix = Math.min(Math.max(d * 0.14, reach + cw * 1.5), d * 0.34);
+  const iy = Math.min(Math.max(b * 0.12, reach + cw * 1.5), b * 0.34);
+  [[ix, iy], [d - ix, iy], [ix, b - iy], [d - ix, b - iy]]
+    .forEach(([cx, cy]) => boxSurfaces(cx - cw, cx + cw, cy - cw, cy + cw, 0, zTop(cx) - t, '#aebccb', true)
+      .forEach(su => { su.order = -1; surfaces.push(su); }));
+
+  return { surfaces, footprint: [[0, 0], [d, 0], [d, b], [0, b]] };
+}
+
+/** Vertical plate (free-standing wall, parapet, signboard) with zones along its length. */
+function plateScene(zones, values, h, L, t, zBase, post) {
+  const surfaces = [];
+  const front = [[0, zBase], [L, zBase], [L, zBase + h], [0, zBase + h]];
+  const fMap = (s, z) => [0, s, z], bMap = (s, z) => [t, s, z];
+  const sf = vertSurface(front, fMap, [-1, 0, 0]);
+  const sb = vertSurface(front, bMap, [1, 0, 0]);
+  surfaces.push(sf, sb);
+  zones.forEach(z => {
+    const w = clipBand(front, 0, z.x0, z.x1);
+    addVertZone(sf, z.id, w, fMap, values[z.id]);
+    addVertZone(sb, z.id, w, bMap, values[z.id]);
+  });
+  surfaces.push(surface([[0, 0, zBase], [t, 0, zBase], [t, 0, zBase + h], [0, 0, zBase + h]], [0, -1, 0], { body: '#b9c6d2' }));
+  surfaces.push(surface([[0, L, zBase], [t, L, zBase], [t, L, zBase + h], [0, L, zBase + h]], [0, 1, 0], { body: '#b9c6d2' }));
+  surfaces.push(surface([[0, 0, zBase + h], [t, 0, zBase + h], [t, L, zBase + h], [0, L, zBase + h]], [0, 0, 1], { body: '#c6d2dc' }));
+  if (post && zBase > 0) {
+    // The post runs up into the board rather than stopping flush underneath it,
+    // so its top face is buried behind the panel instead of showing as a step in
+    // front of it. order = -1 keeps it behind the board whatever the depth sort.
+    const pw = Math.min(t * 0.9, L * 0.035);
+    const top = zBase + Math.min(0.12 * h, zBase);
+    boxSurfaces(0, t, L / 2 - pw, L / 2 + pw, 0, top, '#9fb0bf')
+      .forEach(su => { su.order = -1; surfaces.push(su); });
+  }
+  return { surfaces, footprint: [[0, 0], [t, 0], [t, L], [0, L]] };
+}
+
+/* ============================================================
+   Resultant forces from the zone pressures on the envelope
+   ============================================================ */
+
+/**
+ * Sum the surface pressures over a scene into a resultant force.
+ * Pressure acting on a surface pushes along -n, so the force on the
+ * structure from a zone is  -(we - qp*cpi) * area * n.
+ * @returns {roof:[Fx,Fy,Fz], walls:[...], area:{roof,walls}} in kN
+ */
+function sceneResultants(scene, qp, cpi) {
+  const R = { roof: [0, 0, 0], walls: [0, 0, 0], areaRoof: 0, areaWalls: 0 };
+  scene.surfaces.forEach(s => s.zones.forEach(z => {
+    if (!isFinite(z.v)) return;
+    const A = planarArea(z.poly);
+    const w = z.v - qp * (cpi || 0);
+    const vertical = Math.abs(s.n[2]) > 0.01;
+    const t = vertical ? R.roof : R.walls;
+    for (let i = 0; i < 3; i++) t[i] += -w * A * s.n[i];
+    if (vertical) R.areaRoof += A; else R.areaWalls += A;
+  }));
+  return R;
+}
+
+/** Roof and wall resultants for one wind direction, for both internal pressure cases. */
+function envelopeForces(g, dir, wallV, roofV, qp, cpiPos, cpiNeg) {
+  const sc = buildingScene(g, dir, wallV, roofV);
+  const along = dir === '90' ? 1 : 0;
+  const pack = cpi => {
+    const r = sceneResultants(sc, qp, cpi);
+    return {
+      cpi,
+      roofVert: r.roof[2], roofAlong: r.roof[along],
+      wallAlong: r.walls[along], areaRoof: r.areaRoof,
+      totalAlong: r.roof[along] + r.walls[along]
+    };
+  };
+  return { pos: pack(cpiPos), neg: pack(cpiNeg) };
+}
+
+/* ============================================================
+   Word (.docx) output
+   A .docx is a ZIP of XML parts. Everything here is built by
+   hand so the tool stays a single file with no dependencies
+   and keeps working offline.
+   ============================================================ */
+
+/* ---------- ZIP (stored, no compression — Word accepts it) ---------- */
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/** @param files [{name, text}] or [{name, bytes}] -> Uint8Array of a ZIP archive */
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+
+  files.forEach(f => {
+    const name = enc.encode(f.name);
+    const data = f.bytes ? f.bytes : enc.encode(f.text);
+    const crc = crc32(data);
+
+    const local = new Uint8Array(30 + name.length);
+    const lv = new DataView(local.buffer);
+    lv.setUint32(0, 0x04034b50, true);
+    lv.setUint16(4, 20, true);
+    lv.setUint16(8, 0, true);            // stored
+    lv.setUint16(12, 0x21, true);        // 1980-01-01
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, data.length, true);
+    lv.setUint32(22, data.length, true);
+    lv.setUint16(26, name.length, true);
+    local.set(name, 30);
+
+    const cen = new Uint8Array(46 + name.length);
+    const cv = new DataView(cen.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(10, 0, true);
+    cv.setUint16(14, 0x21, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, data.length, true);
+    cv.setUint32(24, data.length, true);
+    cv.setUint16(28, name.length, true);
+    cv.setUint32(42, offset, true);
+    cen.set(name, 46);
+
+    parts.push(local, data);
+    central.push(cen);
+    offset += local.length + data.length;
+  });
+
+  const cenSize = central.reduce((s, c) => s + c.length, 0);
+  const end = new Uint8Array(22);
+  const ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cenSize, true);
+  ev.setUint32(16, offset, true);
+
+  const all = [...parts, ...central, end];
+  const total = all.reduce((s, a) => s + a.length, 0);
+  const out = new Uint8Array(total);
+  let p = 0;
+  all.forEach(a => { out.set(a, p); p += a.length; });
+  return out;
+}
+
+/* ---------- OOXML helpers ---------- */
+
+const xesc = s => String(s === null || s === undefined ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/\u2013|\u2014/g, '-').replace(/[−–—]/g, '-');
+
+function wRun(text, o = {}) {
+  const pr = '<w:rPr>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '')
+    + (o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : '')
+    + (o.color ? `<w:color w:val="${o.color}"/>` : '')
+    + (o.caps ? '<w:caps/>' : '') + '</w:rPr>';
+  return `<w:r>${pr}<w:t xml:space="preserve">${xesc(text)}</w:t></w:r>`;
+}
+
+function wPara(runs, o = {}) {
+  const pr = '<w:pPr>'
+    + (o.align ? `<w:jc w:val="${o.align}"/>` : '')
+    + `<w:spacing w:before="${o.before === undefined ? 0 : o.before}" w:after="${o.after === undefined ? 100 : o.after}"/>`
+    + (o.keep ? '<w:keepNext/>' : '')
+    + (o.rule ? '<w:pBdr><w:bottom w:val="single" w:sz="8" w:space="3" w:color="0E3763"/></w:pBdr>' : '')
+    + (o.ind ? `<w:ind w:left="${o.ind}" w:hanging="${o.hanging || 0}"/>` : '')
+    + '</w:pPr>';
+  return `<w:p>${pr}${Array.isArray(runs) ? runs.join('') : runs}</w:p>`;
+}
+
+const wBreak = () => '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+const wSpace = (h) => wPara('', { after: h === undefined ? 160 : h });
+
+function wHead(n, text) {
+  return wPara(wRun(text, { b: true, sz: n === 1 ? 26 : 22, color: n === 1 ? '0E3763' : '25384B' }),
+    { before: n === 1 ? 300 : 220, after: n === 1 ? 120 : 90, keep: true, rule: n === 1 });
+}
+
+function wCell(text, o = {}) {
+  const shd = o.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>` : '';
+  const body = (Array.isArray(text) ? text : [text]).map(t =>
+    wPara(wRun(t, { b: o.b, sz: o.sz || 18 }), { align: o.align, after: 20 })).join('');
+  return `<w:tc><w:tcPr><w:tcW w:w="${o.w || 0}" w:type="dxa"/>${shd}`
+    + `<w:vAlign w:val="center"/></w:tcPr>${body}</w:tc>`;
+}
+
+/**
+ * @param cols  [{w, label, align}]
+ * @param rows  [[cell, ...]]  cell may be a string or {t, b, align}
+ */
+function wTable(cols, rows) {
+  const borders = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']
+    .map(s => `<w:${s} w:val="single" w:sz="4" w:space="0" w:color="A7B4C0"/>`).join('');
+  const head = `<w:tr><w:trPr><w:tblHeader/></w:trPr>`
+    + cols.map(c => wCell(c.label, { w: c.w, b: true, fill: 'E7EEF4', align: c.align })).join('')
+    + '</w:tr>';
+  const body = rows.map(r => '<w:tr>' + r.map((cell, i) => {
+    const o = typeof cell === 'object' && cell !== null ? cell : { t: cell };
+    return wCell(o.t, { w: cols[i].w, b: o.b, align: o.align || cols[i].align });
+  }).join('') + '</w:tr>').join('');
+  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>${borders}</w:tblBorders>`
+    + `<w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="80" w:type="dxa"/>`
+    + `<w:bottom w:w="40" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr>`
+    + `<w:tblGrid>${cols.map(c => `<w:gridCol w:w="${c.w}"/>`).join('')}</w:tblGrid>${head}${body}</w:tbl>`;
+}
+
+let TABLE_N = 0;
+function wCaption(text) {
+  TABLE_N++;
+  return wPara(wRun(`Table ${TABLE_N} — ${text}`, { b: true, sz: 17, color: '44586B' }),
+    { before: 140, after: 60, keep: true });
+}
+
+const wBullet = t => wPara(wRun('•   ' + t, { sz: 18 }), { ind: 340, hanging: 340, after: 60 });
+
+/* ---------- figures ---------- */
+
+let DRAW_ID = 0, FIG_N = 0;
+
+/** Rasterise an inline SVG through a canvas. Browser only. */
+function svgToPng(svg, scale) {
+  return new Promise((resolve, reject) => {
+    const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    const w = m ? +m[1] : 420, h = m ? +m[2] : 280;
+    const sized = svg.replace('<svg ', `<svg width="${w}" height="${h}" `);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = Math.round(w * scale); c.height = Math.round(h * scale);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        const b64 = c.toDataURL('image/png').split(',')[1];
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        resolve({ bytes, w, h });
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error('SVG could not be rasterised'));
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sized);
+  });
+}
+
+/** Which illustrations the report carries, in order. */
+function reportFigureSpecs() {
+  const g = S.g, q = qpRef(), c = roofCoeffs();
+  const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
+  const roofAt = dir => g.type === 'flat' ? V(c.flat)
+    : g.type === 'mono' ? V(dir === '90' ? c.deg90 : dir === '180' ? c.deg180 : c.deg0neg)
+      : g.type === 'duo' ? V(dir === '90' ? c.deg90 : c.deg0neg)
+        : V(dir === '90' ? c.deg90 : c.deg0);
+  const specs = [
+    { key: 'w0', wind: '0', scene: buildingScene(g, '0', wallP('0').p, roofAt('0')),
+      cap: 'External pressure zones — wind at 0°' },
+    { key: 'w90', wind: '90', scene: buildingScene(g, '90', wallP('90').p, roofAt('90')),
+      cap: 'External pressure zones — wind at 90°' }
+  ];
+  if (g.type === 'mono') specs.push({ key: 'w180', wind: '180',
+    scene: buildingScene(g, '180', null, roofAt('180')), cap: 'External pressure zones — wind at 180°' });
+  const figRef = { flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type];
+  specs.push({ key: 'k0', svg: renderZoneKey(g, '0', roofAt('0'), { width: 440, height: 300 }),
+    cap: `Roof zone key, wind at 0° — layout to ${figRef}` });
+  specs.push({ key: 'k90', svg: renderZoneKey(g, '90', roofAt('90'), { width: 440, height: 300 }),
+    cap: `Roof zone key, wind at 90° — layout to ${figRef}` });
+  if (String(S.doc.incCanopy) === 'true') {
+    const cn = S.can, qc = qpAt(cn.h);
+    const r = cn.kind === 'mono' ? canopyMono(+cn.alpha, +cn.phi, 10) : canopyDuo(+cn.alpha, +cn.phi);
+    const Z = {}; Object.keys(r.zones).forEach(k => Z[k] = r.zones[k].min * qc);
+    specs.push({ key: 'can', wind: '0', scene: canopyScene(cn.kind, { h: +cn.h, b: +cn.b, d: +cn.d, alpha: +cn.alpha }, Z),
+      cap: 'Canopy net pressure zones — maximum uplift' });
+  }
+  if (String(S.doc.incFree) === 'true') {
+    const f = S.fw;
+    if (f.mode === 'sign') {
+      const sb = signboard(+f.sh, +f.sb, +f.shg), qs = qpAt(sb.ze);
+      specs.push({ key: 'free', wind: '0', cap: 'Signboard — net pressure',
+        scene: plateScene([{ id: 'A', x0: 0, x1: +f.sb }], { A: sb.cf * qs }, +f.sh, +f.sb,
+          Math.min(f.sb, f.sh) * 0.06, +f.shg, true) });
+    } else {
+      const h = +f.h, zRef = f.mode === 'parapet' ? +f.hb + h : h, qw = qpAt(zRef);
+      const r = freeWall(h, +f.L, +f.Lc, +f.phi), v = {};
+      Object.keys(r.cpNet).forEach(k => v[k] = r.cpNet[k] * qw);
+      specs.push({ key: 'free', wind: '0', cap: 'Free-standing wall — net pressure zones',
+        scene: plateScene(r.zones, v, h, +f.L, Math.min(h, f.L) * 0.08, f.mode === 'parapet' ? +f.hb : 0, false) });
+    }
+  }
+  return specs;
+}
+
+async function collectFigures() {
+  const out = [];
+  for (const sp of reportFigureSpecs()) {
+    const r = sp.svg ? { svg: sp.svg } : renderScene(sp.scene, { wind: sp.wind, width: 460, height: 300, mode: S.view });
+    const png = await svgToPng(r.svg, 2.5);
+    out.push({ key: sp.key, cap: sp.cap, bytes: png.bytes, w: png.w, h: png.h });
+  }
+  return out;
+}
+
+function wImage(relId, name, wCm, hCm) {
+  DRAW_ID++;
+  const cx = Math.round(wCm * 360000), cy = Math.round(hCm * 360000);
+  return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="80" w:after="40"/><w:keepNext/></w:pPr>`
+    + `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">`
+    + `<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/>`
+    + `<wp:docPr id="${DRAW_ID}" name="${xesc(name)}"/>`
+    + `<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>`
+    + `<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">`
+    + `<pic:pic><pic:nvPicPr><pic:cNvPr id="${DRAW_ID}" name="${xesc(name)}"/><pic:cNvPicPr/></pic:nvPicPr>`
+    + `<pic:blipFill><a:blip r:embed="${relId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`
+    + `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm>`
+    + `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`
+    + `</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+}
+
+/** Figure with a numbered caption, or nothing at all if the image is missing. */
+function wFigure(fig) {
+  if (!fig) return '';
+  FIG_N++;
+  const wCm = 12.6, hCm = wCm * fig.h / fig.w;
+  return wImage(fig.rel, fig.key + '.png', wCm, hCm)
+    + wPara(wRun(`Figure ${FIG_N} — ${fig.cap}`, { sz: 17, i: true, color: '44586B' }),
+      { align: 'center', after: 160 });
+}
+
+/* ---------- the report ---------- */
+
+function reportSections(FG) {
+  const g = S.g, st = site(), q = qpRef(), t = TERRAIN[S.terrain];
+  const parts = referenceHeights(g.h, g.b, g.hStrip);
+  const w0 = wallZones(g.h, g.b, g.d, g.A), w90 = wallZones(g.h, g.d, g.b, g.A);
+  const c = roofCoeffs();
+  const d = S.doc;
+  const F = (v, dp) => fmt(v, dp);
+  const Vq = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
+  let x = '';
+
+  /* --- title page --- */
+  x += wSpace(600);
+  x += wPara(wRun('Wind actions — design report', { b: true, sz: 40, color: '0E3763' }), { align: 'center', after: 60 });
+  x += wPara(wRun('SANS 10160-3:2018 Ed 2.0 — Basis of structural design and actions for buildings '
+    + 'and industrial structures, Part 3: Wind actions', { sz: 20, color: '44586B' }), { align: 'center', after: 500 });
+  x += wTable(
+    [{ w: 2600, label: 'Item' }, { w: 6200, label: 'Detail' }],
+    [['Project', d.project || '—'], ['Client', d.client || '—'], ['Structure', d.structure || '—'],
+    ['Job number', d.job || '—'], ['Prepared by', d.by || '—'], ['Checked by', d.checked || '—'],
+    ['Revision', d.rev || '—'], ['Date', d.date || '—']]);
+  x += wSpace(400);
+  x += wPara(wRun('This report sets out the derivation of wind actions on the structure described above. '
+    + 'Peak wind speed pressure, external and internal pressure coefficients and the resulting surface '
+    + 'pressures are determined in accordance with SANS 10160-3. Partial factors and load combinations '
+    + 'are covered by SANS 10160-1 and are not applied in this report.', { sz: 18 }), { after: 200 });
+  x += wBreak();
+
+  /* --- 1 basis --- */
+  x += wHead(1, '1  Basis of design');
+  x += wPara(wRun('Wind actions are determined as peak wind speed pressure multiplied by pressure '
+    + 'coefficients appropriate to the form of the structure and the wind direction under consideration. '
+    + 'Coefficients are taken from the tables of SANS 10160-3 and interpolated on roof pitch, height-to-depth '
+    + 'ratio and loaded area as the relevant table permits. The illustrations show the zone layout and are '
+    + 'shaded by surface pressure; zone extents are given numerically alongside each table.', { sz: 18 }));
+  x += wCaption('Design basis');
+  x += wTable([{ w: 3400, label: 'Item' }, { w: 3200, label: 'Value' }, { w: 2200, label: 'Reference' }], [
+    ['Design standard', 'SANS 10160-3:2018 Ed 2.0', '—'],
+    ['Mean return period', `${F(S.T, 0)} years`, 'cl 7.2.3'],
+    ['Terrain category', `${S.terrain} — ${t.desc}`, 'Table 1'],
+    ['Topography factor c0', F(S.c0, 3), 'cl 7.3.3 / Annex B'],
+    ['Site altitude', `${F(S.altitude, 0)} m above sea level`, 'Table 4'],
+    ['Air density', `${F(st.rho, 3)} kg/m³`, 'Table 4'],
+    ['Loaded area for Cpe', `${F(g.A, 1)} m²`, 'Figure 5']
+  ]);
+
+  /* --- 2 site --- */
+  x += wHead(1, '2  Site and basic wind speed');
+  x += wCaption('Site location and fundamental basic wind speed');
+  x += wTable([{ w: 3400, label: 'Item' }, { w: 5400, label: 'Value' }], [
+    ['Province', PROVINCES[S.province] || '—'],
+    ['Municipality', S.muni || '—'],
+    ['Fundamental basic wind speed vb,0', `${F(S.vb0, 1)} m/s  (3 s gust, Figure 1)`]
+  ]);
+  x += wHead(2, '2.1  Peak wind speed pressure');
+  x += wCaption('Derivation of qp at the reference height ze = h');
+  x += wTable([{ w: 1500, label: 'Symbol' }, { w: 3700, label: 'Description' },
+  { w: 1500, label: 'Value', align: 'right' }, { w: 900, label: 'Unit' }, { w: 1200, label: 'Clause' }], [
+    ['vb,0', 'Fundamental basic wind speed', { t: F(S.vb0, 2), align: 'right' }, 'm/s', 'Figure 1'],
+    ['cprob', `Probability factor for a ${F(S.T, 0)} year return period`, { t: F(st.cprob, 4), align: 'right' }, '—', 'eq 2'],
+    ['vb', 'Basic wind speed  vb = cprob · vb,0', { t: F(st.vb, 2), align: 'right' }, 'm/s', 'eq 1'],
+    ['zg / α', `Terrain ${S.terrain} gradient height and exponent`, { t: `${t.zg} / ${t.a}`, align: 'right' }, 'm / —', 'Table 1'],
+    ['cr(ze)', 'Terrain roughness factor  1,36 ((z − z0)/zg)^α', { t: F(st.at(g.h).cr, 4), align: 'right' }, '—', 'eq 5'],
+    ['c0(ze)', 'Topography factor', { t: F(S.c0, 3), align: 'right' }, '—', 'cl 7.3.3'],
+    ['vp(ze)', 'Peak wind speed  vp = cr · c0 · vb,peak', { t: F(st.at(g.h).vp, 2), align: 'right' }, 'm/s', 'eq 3'],
+    ['ρ', 'Air density at site altitude', { t: F(st.rho, 3), align: 'right' }, 'kg/m³', 'Table 4'],
+    [{ t: 'qp(ze)', b: true }, { t: 'Peak wind speed pressure  qp = ½ ρ vp²', b: true },
+    { t: F(q, 4), align: 'right', b: true }, { t: 'kPa', b: true }, 'eq 6']
+  ]);
+
+  x += wHead(2, '2.2  Reference heights');
+  x += wPara(wRun('The structure is divided over its height in accordance with cl 8.3.2.1 and Figure 7.', { sz: 18 }));
+  x += wCaption('Reference heights and corresponding peak pressure');
+  x += wTable([{ w: 1400, label: 'Part' }, { w: 2200, label: 'From, m', align: 'right' },
+  { w: 2200, label: 'To, m', align: 'right' }, { w: 1500, label: 'ze, m', align: 'right' },
+  { w: 1500, label: 'qp, kPa', align: 'right' }],
+    parts.map((p, i) => [String(i + 1), F(p.zBot, 2), F(p.zTop, 2), F(p.ze, 2), F(st.at(p.ze).qp, 4)]));
+
+  /* --- 3 geometry --- */
+  x += wHead(1, '3  Structure geometry');
+  x += wCaption('Governing dimensions');
+  x += wTable([{ w: 4200, label: 'Item' }, { w: 4600, label: 'Value' }], [
+    ['Height to highest point h', `${F(g.h, 3)} m`],
+    ['Width b (across wind at 0°)', `${F(g.b, 3)} m`],
+    ['Depth d (along wind at 0°)', `${F(g.d, 3)} m`],
+    ['Roof form', (ROOFS.find(r => r[0] === g.type) || ['', ''])[1]
+      + (g.type !== 'flat' ? `, pitch α = ${F(g.alpha, 1)}°` : '')
+      + (g.type === 'hip' ? `, hip end α90 = ${F(g.alpha90, 1)}°` : '')],
+    ['e = min(b, 2h), wind at 0°', `${F(w0.e, 3)} m`],
+    ['e = min(d, 2h), wind at 90°', `${F(w90.e, 3)} m`],
+    ['h/d, wind at 0° / 90°', `${F(w0.hd, 3)} / ${F(w90.hd, 3)}`]
+  ]);
+
+  /* --- 4 walls --- */
+  const coefCols = [{ w: 1100, label: 'Zone' }, { w: 1500, label: 'Cpe,10', align: 'right' },
+  { w: 1500, label: 'Cpe,1', align: 'right' }, { w: 1600, label: 'Cpe (A)', align: 'right' },
+  { w: 1600, label: 'we, kPa', align: 'right' }, { w: 1500, label: 'w net, kPa', align: 'right' }];
+  const coefRows = (obj, keys) => (keys || Object.keys(obj)).filter(k => obj[k]).map(k => {
+    const o = obj[k], we = o.cpe * q;
+    const net = we - q * (we < 0 ? S.cpiPos : S.cpiNeg);
+    return [{ t: k, b: true }, F(o.cpe10, 2), F(o.cpe1, 2), F(o.cpe, 3), F(we, 3), F(net, 3)];
+  });
+
+  x += wHead(1, '4  External pressure coefficients — vertical walls');
+  x += wPara(wRun('Coefficients from Table 6, interpolated on h/d. Zones A to C are measured back from the '
+    + 'windward corner along each side wall; D is the windward face and E the leeward face. The net column '
+    + `uses the more onerous of Cpi = +${F(S.cpiPos, 2)} and ${F(S.cpiNeg, 2)}.`, { sz: 18 }));
+  x += wFigure(FG.w0);
+  x += wCaption('Vertical walls — wind at 0°');
+  x += wTable(coefCols, coefRows(w0.cpe, ['A', 'B', 'C', 'D', 'E']));
+  x += wPara(wRun('Zone widths: ' + w0.zones.map(z => `${z.id} = ${F(z.x1 - z.x0, 2)} m`).join(', ')
+    + `;  e = ${F(w0.e, 3)} m.`, { sz: 17, i: true }));
+  x += wFigure(FG.w90);
+  x += wCaption('Vertical walls — wind at 90°');
+  x += wTable(coefCols, coefRows(w90.cpe, ['A', 'B', 'C', 'D', 'E']));
+  x += wPara(wRun('Zone widths: ' + w90.zones.map(z => `${z.id} = ${F(z.x1 - z.x0, 2)} m`).join(', ')
+    + `;  e = ${F(w90.e, 3)} m.`, { sz: 17, i: true }));
+
+  /* --- 5 roof --- */
+  x += wHead(1, '5  External pressure coefficients — roof');
+  const sets = g.type === 'flat' ? [['Both directions', c.flat]]
+    : g.type === 'mono' ? [['Wind at 0°, suction case', c.deg0neg], ['Wind at 0°, pressure case', c.deg0pos],
+    ['Wind at 180°', c.deg180], ['Wind at 90°', c.deg90]]
+      : g.type === 'duo' ? [['Wind at 0°, case 1', c.deg0neg], ['Wind at 0°, case 2', c.deg0pos], ['Wind at 90°', c.deg90]]
+        : [['Wind at 0°, case 1', c.deg0], ['Wind at 0°, case 2', c.deg0pos], ['Wind at 90°', c.deg90]];
+  const src = { flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[g.type];
+  x += wPara(wRun(`Coefficients from ${src}, interpolated on `
+    + (g.type === 'flat' ? 'the eaves detail' : 'roof pitch') + ` and on the loaded area A = ${F(g.A, 1)} m².`, { sz: 18 }));
+  x += wFigure(FG.w180);
+  x += wFigure(FG.k0);
+  x += wFigure(FG.k90);
+  sets.forEach(([name, obj]) => { x += wCaption(`Roof — ${name}`); x += wTable(coefCols, coefRows(obj)); });
+  if (g.type === 'flat' && c.flat && c.flat.I) {
+    x += wPara(wRun(`Zone I carries both signs: ${F(c.flat.I.cpe, 2)} and +${F(c.flat.I.cpePos, 2)}. `
+      + 'Both cases are to be checked.', { sz: 17, i: true }));
+  }
+
+  /* --- 6 internal --- */
+  x += wHead(1, '6  Internal pressure');
+  x += wPara(wRun('Internal pressure is taken in accordance with cl 8.3.9. Where the distribution of openings '
+    + 'cannot be established, cl 8.3.9.6 note 2 requires the more onerous of Cpi = +0,2 and −0,3 to be considered.', { sz: 18 }));
+  x += wPara(wRun('Case adopted: ' + (S.cpiMode === 'zero'
+    ? 'Cpi = 0, appropriate to a structure open on all sides.'
+    : S.cpiMode === 'pair' ? 'the +0,2 / −0,3 pair of cl 8.3.9.6 note 2.'
+      : 'values entered directly by the engineer.'), { sz: 18 }));
+  x += wCaption('Internal pressure adopted');
+  x += wTable([{ w: 3600, label: 'Case' }, { w: 2600, label: 'Cpi', align: 'right' },
+  { w: 2600, label: 'wi = qp · Cpi, kPa', align: 'right' }], [
+    ['Positive internal pressure', F(S.cpiPos, 2), F(S.cpiPos * q, 3)],
+    ['Negative internal pressure', F(S.cpiNeg, 2), F(S.cpiNeg * q, 3)]
+  ]);
+
+  /* --- 7 overall force --- */
+  x += wHead(1, '7  Overall horizontal force on the walls');
+  const Fw = (w, area) => (w.cpe.D.cpe - w.cpe.E.cpe) * w.corr * q * area;
+  x += wCaption('Resultant horizontal force from windward and leeward wall pressure');
+  x += wTable([{ w: 1600, label: 'Wind' }, { w: 1500, label: 'Cpe,D', align: 'right' },
+  { w: 1500, label: 'Cpe,E', align: 'right' }, { w: 1700, label: 'Correlation', align: 'right' },
+  { w: 1500, label: 'Aref, m²', align: 'right' }, { w: 1500, label: 'Fw, kN', align: 'right' }], [
+    ['0°', F(w0.cpe.D.cpe, 3), F(w0.cpe.E.cpe, 3), F(w0.corr, 2), F(g.b * g.h, 1), F(Fw(w0, g.b * g.h), 1)],
+    ['90°', F(w90.cpe.D.cpe, 3), F(w90.cpe.E.cpe, 3), F(w90.corr, 2), F(g.d * g.h, 1), F(Fw(w90, g.d * g.h), 1)]
+  ]);
+  x += wPara(wRun('The correlation factor of cl 8.3.2.4 applies to the overall force only, not to the zone '
+    + 'pressures tabulated above. The structural factor cs·cd is not included.', { sz: 17, i: true }));
+
+  /* --- 8 resultant forces --- */
+  x += wHead(1, '8  Resultant forces on the envelope');
+  x += wPara(wRun('Each zone pressure is resolved on the plane of its own surface and summed over the '
+    + 'envelope, so a pitched roof keeps the correct split between vertical and horizontal components. '
+    + 'Positive vertical force is uplift. Internal pressure is included. Friction from clause 9 is '
+    + 'additional to the along-wind totals.', { sz: 18 }));
+  const rv0 = g.type === 'flat' ? Vq(c.flat) : g.type === 'mono' ? Vq(c.deg0neg)
+    : g.type === 'duo' ? Vq(c.deg0neg) : Vq(c.deg0);
+  const rv90 = g.type === 'flat' ? Vq(c.flat) : Vq(c.deg90);
+  const ef0 = envelopeForces(g, '0', wallP('0').p, rv0, q, S.cpiPos, S.cpiNeg);
+  const ef90 = envelopeForces(g, '90', wallP('90').p, rv90, q, S.cpiPos, S.cpiNeg);
+  const fr = (n, ee) => [{ t: n, b: true }, F(ee.cpi, 2), F(ee.areaRoof, 1),
+  { t: F(ee.roofVert, 1), b: true }, F(ee.roofAlong, 1), F(ee.wallAlong, 1), F(ee.totalAlong, 1)];
+  x += wCaption('Resultant forces, kN (positive vertical is uplift)');
+  x += wTable([{ w: 2100, label: 'Wind / case' }, { w: 900, label: 'Cpi', align: 'right' },
+  { w: 1300, label: 'Roof area m²', align: 'right' }, { w: 1300, label: 'Roof vert.', align: 'right' },
+  { w: 1300, label: 'Roof along', align: 'right' }, { w: 1300, label: 'Walls along', align: 'right' },
+  { w: 1400, label: 'Total along', align: 'right' }], [
+    fr('0°, Cpi positive', ef0.pos), fr('0°, Cpi negative', ef0.neg),
+    fr('90°, Cpi positive', ef90.pos), fr('90°, Cpi negative', ef90.neg)
+  ]);
+  const govUp = Math.max(ef0.pos.roofVert, ef0.neg.roofVert, ef90.pos.roofVert, ef90.neg.roofVert);
+  x += wPara(wRun(`Governing roof uplift: ${F(govUp, 1)} kN over ${F(ef0.pos.areaRoof, 1)} m² of roof `
+    + 'surface. This is to be set against the permanent load in the design of holding-down details. '
+    + 'The structural factor cs·cd is not included.', { sz: 17, i: true }));
+
+  /* --- 9 friction --- */
+  x += wHead(1, '9  Friction forces');
+  const cfr = FRICTION[S.fric];
+  const f0 = frictionForce(g.h, g.b, g.d, cfr, q), f90 = frictionForce(g.h, g.d, g.b, cfr, q);
+  x += wPara(wRun('Friction acts on surfaces parallel to the wind beyond min(2b, 4h) from the windward edge, '
+    + 'and may be disregarded where the total area parallel to the wind does not exceed four times the area '
+    + 'normal to it (cl 7.5.3.6).', { sz: 18 }));
+  x += wCaption(`Friction, cfr = ${F(cfr, 2)}, wfr = ${F(cfr * q, 4)} kPa`);
+  x += wTable([{ w: 1300, label: 'Wind' }, { w: 1800, label: 'Starts at, m', align: 'right' },
+  { w: 1700, label: 'Afr, m²', align: 'right' }, { w: 2100, label: 'Parallel / normal', align: 'right' },
+  { w: 1900, label: 'Ffr, kN', align: 'right' }], [
+    ['0°', F(f0.start, 2), F(f0.Afr, 1), F(f0.ratio, 2) + (f0.ignorable ? '  (may be ignored)' : ''), F(f0.Ffr, 2)],
+    ['90°', F(f90.start, 2), F(f90.Afr, 1), F(f90.ratio, 2) + (f90.ignorable ? '  (may be ignored)' : ''), F(f90.Ffr, 2)]
+  ]);
+
+  /* --- optional appendices --- */
+  let app = 0;
+  if (String(S.doc.incCanopy) === 'true') {
+    app++;
+    const cn = S.can, qc = qpAt(cn.h);
+    const r = cn.kind === 'mono' ? canopyMono(+cn.alpha, +cn.phi, 10) : canopyDuo(+cn.alpha, +cn.phi);
+    const area = cn.b * cn.d / Math.cos(cn.alpha * Math.PI / 180);
+    x += wBreak();
+    x += wHead(1, `Appendix ${String.fromCharCode(64 + app)}  Canopy roof`);
+    x += wPara(wRun(`${cn.kind === 'mono' ? 'Mono' : 'Duo'}-pitch canopy to cl 8.4 and `
+      + `${cn.kind === 'mono' ? 'Table 13' : 'Table 14'}. Net coefficients combine the pressure on the upper and `
+      + 'lower surfaces and are therefore not combined with internal pressure. '
+      + `Dimensions: h = ${F(cn.h, 2)} m, b = ${F(cn.b, 2)} m, d = ${F(cn.d, 2)} m, α = ${F(cn.alpha, 1)}°, `
+      + `degree of blockage φ = ${F(cn.phi, 2)}.  qp(h) = ${F(qc, 4)} kPa.`, { sz: 18 }));
+    x += wFigure(FG.can);
+    x += wCaption('Canopy net pressure coefficients');
+    x += wTable([{ w: 1400, label: 'Zone' }, { w: 1900, label: 'cp,net max', align: 'right' },
+    { w: 1900, label: 'cp,net min', align: 'right' }, { w: 1800, label: 'w max, kPa', align: 'right' },
+    { w: 1800, label: 'w min, kPa', align: 'right' }],
+      Object.keys(r.zones).map(k => [{ t: k, b: true }, F(r.zones[k].max, 2), F(r.zones[k].min, 2),
+      F(r.zones[k].max * qc, 3), F(r.zones[k].min * qc, 3)]));
+    x += wCaption('Canopy overall force');
+    x += wTable([{ w: 2400, label: 'Case' }, { w: 1800, label: 'cf', align: 'right' },
+    { w: 2200, label: 'Aref, m²', align: 'right' }, { w: 2400, label: 'Fw, kN', align: 'right' }], [
+      ['Downward', F(r.cf.max, 2), F(area, 1), F(r.cf.max * qc * area, 1)],
+      ['Uplift', F(r.cf.min, 2), F(area, 1), F(r.cf.min * qc * area, 1)]
+    ]);
+    x += wPara(wRun(`The centre of pressure is taken at d/4 = ${F(cn.d / 4, 2)} m from the windward edge for the `
+      + 'overall design of the structure (cl 8.4.5). Zone coefficients apply to roofing elements and their fixings.', { sz: 17, i: true }));
+  }
+
+  if (String(S.doc.incFree) === 'true') {
+    app++;
+    const f = S.fw;
+    x += wBreak();
+    x += wHead(1, `Appendix ${String.fromCharCode(64 + app)}  ${f.mode === 'sign' ? 'Signboard' : f.mode === 'parapet' ? 'Parapet' : 'Free-standing wall'}`);
+    if (f.mode === 'sign') {
+      const sb = signboard(+f.sh, +f.sb, +f.shg), qs = qpAt(sb.ze), Fs = sb.cf * qs * sb.Aref;
+      x += wPara(wRun('Signboard to cl 8.5.3. A board separated from the ground by at least h/4 takes a force '
+        + 'coefficient of 1,8 applied at mid-height with a horizontal eccentricity of ±b/4.'
+        + (sb.applies ? '' : ' The lower edge is less than h/4 above ground, so cl 8.5.3 does not apply and the '
+          + 'board is to be treated as a free-standing wall.'), { sz: 18 }));
+      x += wFigure(FG.free);
+      x += wCaption('Signboard forces');
+      x += wTable([{ w: 4400, label: 'Item' }, { w: 4400, label: 'Value', align: 'right' }], [
+        ['Board height h / width b', `${F(f.sh, 2)} / ${F(f.sb, 2)} m`],
+        ['Height of lower edge above ground', `${F(f.shg, 2)} m`],
+        ['Reference height ze = hg + h/2', `${F(sb.ze, 2)} m`],
+        ['qp(ze)', `${F(qs, 4)} kPa`],
+        ['Reference area Aref', `${F(sb.Aref, 1)} m²`],
+        ['Force coefficient cf', F(sb.cf, 1)],
+        [{ t: 'Resultant force Fw', b: true }, { t: `${F(Fs, 1)} kN`, b: true }],
+        ['Horizontal eccentricity e = ±b/4', `± ${F(sb.ecc, 2)} m`],
+        ['Torsional moment Fw · e', `± ${F(Fs * sb.ecc, 1)} kNm`],
+        [{ t: 'Moment at ground level Fw · ze', b: true }, { t: `${F(Fs * sb.ze, 1)} kNm`, b: true }]
+      ]);
+    } else {
+      const h = +f.h, zRef = f.mode === 'parapet' ? +f.hb + h : h;
+      const qw = qpAt(zRef), r = freeWall(h, +f.L, +f.Lc, +f.phi);
+      x += wPara(wRun(`To cl 8.5.1 and Table 16. Height h = ${F(h, 2)} m, length L = ${F(f.L, 2)} m, `
+        + `L/h = ${F(r.Lh, 2)}, return corner ${F(f.Lc, 2)} m, solidity ratio φ = ${F(f.phi, 2)}. `
+        + `Reference height ze = ${F(zRef, 2)} m, qp = ${F(qw, 4)} kPa. Zones are measured from the windward free end.`, { sz: 18 }));
+      x += wFigure(FG.free);
+      x += wCaption('Free-standing wall net pressure coefficients');
+      x += wTable([{ w: 1300, label: 'Zone' }, { w: 1800, label: 'From, m', align: 'right' },
+      { w: 1800, label: 'To, m', align: 'right' }, { w: 1900, label: 'cp,net', align: 'right' },
+      { w: 2000, label: 'w, kPa', align: 'right' }],
+        r.zones.map(z => [{ t: z.id, b: true }, F(z.x0, 2), F(z.x1, 2), F(r.cpNet[z.id], 2), F(r.cpNet[z.id] * qw, 3)]));
+    }
+  }
+
+  /* --- limitations --- */
+  x += wBreak();
+  x += wHead(1, 'Assumptions and limitations');
+  [
+    'Pressure coefficients are external pressure coefficients to SANS 10160-3. Partial factors, load '
+    + 'combinations and accompanying actions are covered by SANS 10160-1 and are not applied here.',
+    'The structural factor cs·cd has not been evaluated. Structures sensitive to dynamic response require '
+    + 'separate consideration.',
+    'Vaulted and domed roofs (cl 8.3.8) are not covered by this calculation.',
+    'Internal pressure coefficients derived from Figure 16 are read from a digitised form of that figure and '
+    + 'are accurate to approximately ±0,02. Where a design is governed by internal pressure, the figure in the '
+    + 'standard should be read directly.',
+    'Zone boundaries for hipped roofs and for canopy roofs are indicative. Zone extents are to be set out from '
+    + 'Figures 12, 19 and 20 as applicable. Tabulated coefficients are unaffected.',
+    'Friction is taken on surfaces parallel to the wind beyond min(2b, 4h) from the windward edge in accordance '
+    + 'with cl 7.5.3.6.',
+    'This report is produced by a calculation aid. The input, the assumptions and the results are to be '
+    + 'verified by the responsible engineer before use in design.'
+  ].forEach(b => { x += wBullet(b); });
+
+  x += wSpace(300);
+  x += wTable([{ w: 2900, label: 'Prepared by' }, { w: 2900, label: 'Checked by' }, { w: 3000, label: 'Date' }],
+    [[{ t: (S.doc.by || ' ') + '\n' }, { t: (S.doc.checked || ' ') }, { t: (S.doc.date || ' ') }],
+    ['Signature:', 'Signature:', `Revision ${S.doc.rev || '—'}`]]);
+  return x;
+}
+
+/* ---------- assemble the package ---------- */
+
+async function buildDocx() {
+  TABLE_N = 0; FIG_N = 0; DRAW_ID = 0;
+
+  // Figures are optional: if the browser will not rasterise them the report is
+  // still produced, just without the illustrations.
+  let media = [];
+  try { media = await collectFigures(); } catch (e) { media = []; }
+  const F = {};
+  media.forEach((m, i) => { F[m.key] = { ...m, rel: `rId${3 + i}`, file: `image${i + 1}.png` }; });
+
+  const body = reportSections(F);
+  const sect = '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/>'
+    + '<w:pgSz w:w="11906" w:h="16838"/>'
+    + '<w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/>'
+    + '</w:sectPr>';
+  const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+    + 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+    + 'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+    + 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+    + 'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+  const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+
+  const footerText = [S.doc.job ? `${S.doc.job} — ` : '', S.doc.project || 'Wind actions',
+  '  |  SANS 10160-3:2018  |  '].join('');
+  const footer = `${head}<w:ftr ${NS}>`
+    + `<w:p><w:pPr><w:jc w:val="center"/><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="A7B4C0"/></w:pBdr></w:pPr>`
+    + `<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="5D6F80"/></w:rPr><w:t xml:space="preserve">${xesc(footerText)}</w:t></w:r>`
+    + `<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="5D6F80"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r>`
+    + `<w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>`
+    + `<w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r>`
+    + `<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="5D6F80"/></w:rPr><w:t>1</w:t></w:r>`
+    + `<w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>`
+    + `</w:p></w:ftr>`;
+
+  const styles = `${head}<w:styles ${NS}><w:docDefaults><w:rPrDefault><w:rPr>`
+    + '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="20"/><w:szCs w:val="20"/>'
+    + '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="100"/></w:pPr></w:pPrDefault>'
+    + '</w:docDefaults></w:styles>';
+
+  const imgRels = media.map((m, i) =>
+    `<Relationship Id="rId${3 + i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image${i + 1}.png"/>`).join('');
+
+  const files = [
+    {
+      name: '[Content_Types].xml', text: `${head}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
+        + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        + '<Default Extension="xml" ContentType="application/xml"/>'
+        + '<Default Extension="png" ContentType="image/png"/>'
+        + '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        + '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
+        + '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'
+        + '</Types>'
+    },
+    {
+      name: '_rels/.rels', text: `${head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+        + '</Relationships>'
+    },
+    {
+      name: 'word/_rels/document.xml.rels', text: `${head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'
+        + imgRels + '</Relationships>'
+    },
+    { name: 'word/styles.xml', text: styles },
+    { name: 'word/footer1.xml', text: footer },
+    { name: 'word/document.xml', text: `${head}<w:document ${NS}><w:body>${body}${sect}</w:body></w:document>` }
+  ];
+  media.forEach((m, i) => files.push({ name: `word/media/image${i + 1}.png`, bytes: m.bytes }));
+  return zipStore(files);
+}
+
+async function downloadDocx(btn) {
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Preparing report…'; }
+  try {
+    const bytes = await buildDocx();
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const name = ((S.doc.job ? S.doc.job + ' ' : '') + (S.doc.project || 'Wind actions') + ' - wind report')
+      .replace(/[\\/:*?"<>|]/g, '-').slice(0, 90) + '.docx';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+
+/* ============================================================
+   Project file — save and reopen a job
+   ============================================================ */
+
+const PROJECT_FORMAT = 'sans-wind-3';
+
+function projectBlob() {
+  return JSON.stringify({
+    format: PROJECT_FORMAT, version: 1,
+    saved: new Date().toISOString(),
+    standard: 'SANS 10160-3:2018 Ed 2.0',
+    state: S
+  }, null, 2);
+}
+
+function projectName(ext) {
+  const base = (S.doc.job ? S.doc.job + ' ' : '') + (S.doc.project || S.doc.structure || 'Wind actions');
+  return base.replace(/[\\/:*?"<>|]/g, '-').trim().slice(0, 90) + ext;
+}
+
+function saveProject() {
+  const blob = new Blob([projectBlob()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = projectName('.windproj.json');
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  toast('Project saved as ' + a.download);
+}
+
+/** Copy saved values into the live state, key by key, ignoring anything unknown. */
+function mergeState(dst, src) {
+  if (!src || typeof src !== 'object') return;
+  Object.keys(dst).forEach(k => {
+    if (!(k in src)) return;
+    const a = dst[k], b = src[k];
+    if (b === null || b === undefined) return;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      for (let i = 0; i < a.length && i < b.length; i++) if (typeof b[i] !== 'object') a[i] = b[i];
+    } else if (a && typeof a === 'object' && typeof b === 'object') {
+      mergeState(a, b);
+    } else if (typeof b !== 'object') {
+      dst[k] = b;
+    }
+  });
+}
+
+function openProject(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const o = JSON.parse(r.result);
+      if (!o || o.format !== PROJECT_FORMAT) {
+        toast('That file is not a SANS Wind project file.', true);
+        return;
+      }
+      mergeState(S, o.state);
+      renderAll();
+      toast('Opened ' + (S.doc.project || file.name));
+    } catch (e) {
+      toast('The project file could not be read: ' + e.message, true);
+    }
+  };
+  r.onerror = () => toast('The file could not be read.', true);
+  r.readAsText(file);
+}
+
+function toast(msg, bad) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; }, 2600);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+
+const S = {
+  tab: 'site',
+  province: 3, muni: 'City of Johannesburg', vb0: 36, T: 50,
+  terrain: 'B', altitude: 0, c0: 1, useTopo: false,
+  topo: { shape: 'cliff', H: 40, Lu: 200, Ld: 400, x: 0, z: 5 },
+  g: { type: 'duo', h: 6.757, b: 50, d: 25, alpha: 8, alpha90: 10, A: 10, hStrip: 1 },
+  edge: { type: 'sharp', hp: 0, r: 0, mansard: 30 },
+  cpiPos: 0.2, cpiNeg: -0.3,
+  op: { area: [100, 100, 100, 100], open: [10, 10, 10, 0] },
+  can: { kind: 'mono', h: 3.5, b: 10, d: 5, alpha: 10, phi: 0 },
+  fw: { mode: 'wall', h: 2, L: 20, Lc: 0, phi: 1, hb: 10, sh: 5, sb: 6, shg: 2 },
+  fric: 'smooth', view: 'shaded', cpiMode: 'pair', preset: '',
+  doc: {
+    project: '', client: '', structure: '', job: '', by: '', checked: '', rev: 'A',
+    date: new Date().toISOString().slice(0, 10), incCanopy: true, incFree: true
+  }
+};
+
+const TABS = [
+  ['site', 'Site & pressure'], ['walls', 'Walls'], ['roof', 'Roof'],
+  ['internal', 'Internal pressure'], ['canopy', 'Canopies'],
+  ['free', 'Free-standing & signs'], ['friction', 'Friction'], ['report', 'Report']
+];
+
+const ROOFS = [['flat', 'Flat'], ['mono', 'Mono-pitch'], ['duo', 'Duo-pitch'], ['hip', 'Hipped']];
+
+/** Familiar city names for the larger municipalities, shown in the picker. */
+const CITY = {
+  'City of Tshwane': 'Pretoria', 'City of Johannesburg': 'Johannesburg', 'City of Cape Town': 'Cape Town',
+  'Ethekwini': 'Durban', 'Nelson Mandela': 'Gqeberha', 'Buffalo City': 'East London',
+  'Mangaung': 'Bloemfontein', 'Msunduzi': 'Pietermaritzburg', 'Mbombela': 'Nelspruit',
+  'Emfuleni': 'Vereeniging', 'Ekurhuleni': 'East Rand', 'Sol Plaatje': 'Kimberley',
+  'Matjhabeng': 'Welkom', 'Mogale City': 'Krugersdorp', 'Merafong City': 'Carletonville',
+  'Madibeng': 'Brits', 'Steve Tshwete': 'Middelburg', 'Govan Mbeki': 'Secunda',
+  'uMhlathuze': 'Richards Bay', 'Drakenstein': 'Paarl', 'Saldanha Bay': 'Saldanha',
+  'Bitou Municipality': 'Plettenberg Bay', 'Makana': 'Makhanda'
+};
+
+/** Quick-start geometries. */
+const PRESETS = [
+  ['', 'Start from a preset…'],
+  ['warehouse', 'Gable warehouse — duo-pitch'],
+  ['leanto', 'Lean-to shed — mono-pitch'],
+  ['block', 'Flat-roof block'],
+  ['house', 'Hipped-roof house'],
+  ['portal', 'Low-pitch portal frame']
+];
+const PRESET_G = {
+  warehouse: { type: 'duo', h: 8.5, b: 60, d: 24, alpha: 10, alpha90: 10, A: 10 },
+  leanto: { type: 'mono', h: 5.0, b: 20, d: 8, alpha: 7, alpha90: 7, A: 10 },
+  block: { type: 'flat', h: 12.0, b: 30, d: 20, alpha: 0, alpha90: 0, A: 10 },
+  house: { type: 'hip', h: 7.0, b: 16, d: 10, alpha: 30, alpha90: 30, A: 10 },
+  portal: { type: 'duo', h: 7.0, b: 40, d: 20, alpha: 5, alpha90: 5, A: 10 }
+};
+const CPI_MODES = [
+  ['pair', '+0,2 / −0,3 — cl 8.3.9.6 note 2'],
+  ['zero', 'C__pi__ = 0 — open structure'],
+  ['custom', 'Enter values directly']
+];
+
+const fmt = (v, dp = 2) => (v === null || v === undefined || !isFinite(v)) ? '–' : v.toFixed(dp);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sgn = v => v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
+
+/* ---------- derived values ---------- */
+
+function site() {
+  return sitePressure({ vb0: S.vb0, returnPeriod: S.T, terrain: S.terrain, c0: S.c0, altitude: S.altitude });
+}
+function qpAt(z) { return site().at(z).qp; }
+function qpRef() { return qpAt(S.g.h); }
+
+/** roof coefficients for the active roof type, keyed by wind direction */
+function roofCoeffs() {
+  const { type, alpha, alpha90, A } = S.g;
+  if (type === 'flat') {
+    const e = S.edge;
+    const spec = e.type === 'parapet' ? { type: 'parapet', hp_h: e.hp / S.g.h }
+      : e.type === 'curved' ? { type: 'curved', r_h: e.r / S.g.h }
+        : e.type === 'mansard' ? { type: 'mansard', alpha: e.mansard } : { type: 'sharp' };
+    const c = flatRoofCpe(spec, A);
+    return { flat: c };
+  }
+  if (type === 'mono') return monoCpe(alpha, A);
+  if (type === 'duo') return duoCpe(alpha, A);
+  return hipCpe(alpha, alpha90, A);
+}
+
+function wallP(dir) {
+  const { h, b, d, A } = S.g;
+  const w = dir === '90' ? wallZones(h, d, b, A) : wallZones(h, b, d, A);
+  const q = qpRef(), o = {};
+  ['A', 'B', 'C', 'D', 'E'].forEach(k => o[k] = w.cpe[k].cpe * q);
+  return { w, p: o };
+}
+
+/* ---------- small helpers for output ---------- */
+
+function legendOf(r) {
+  return '<div class="legend">' + r.zones.slice().sort((a, b) => a.v - b.v).map(z =>
+    `<div><i style="background:${pressureColour(z.v, r.maxNeg, r.maxPos)}"></i><b>${z.id}</b> ${fmt(z.v, 3)} kPa</div>`
+  ).join('') + '</div>';
+}
+
+function figure(title, cap, scene, wind, scale) {
+  const r = renderScene(scene, { wind, width: 415, height: 275, mode: S.view, scale });
+  return `<div class="fig"><h4>${title}</h4><div class="cap">${cap}</div>
+    <div class="body">${r.svg}${legendOf(r)}</div></div>`;
+}
+
+/** Draw a set of figures on one shared colour scale, with the view toggle above them. */
+function figs(list) {
+  let neg = 0, pos = 0;
+  list.forEach(f => f.scene.surfaces.forEach(s => s.zones.forEach(z => {
+    if (isFinite(z.v)) { neg = Math.max(neg, -z.v); pos = Math.max(pos, z.v); }
+  })));
+  const scale = { neg, pos };
+  const toggle = `<div class="vtoggle">` + [['shaded', 'Zone colours'], ['blocks', 'Pressure blocks']].map(([k, n]) =>
+    `<button data-view="${k}" aria-pressed="${S.view === k}">${n}</button>`).join('')
+    + `<span>colour scale shared across these views: ${fmt(-neg, 2)} to +${fmt(pos, 2)} kPa</span></div>`;
+  return toggle + '<div class="figs">' + list.map(f => figure(f.t, f.c, f.scene, f.w, scale)).join('') + '</div>';
+}
+
+function thumb(type) {
+  const g = { type, h: 10, b: 24, d: 14, alpha: 25, alpha90: 30 };
+  return renderScene(buildingScene(g, '0', null, null), { width: 118, height: 60, label: false }).svg;
+}
+function canopyThumb(kind) {
+  return renderScene(canopyScene(kind, { h: 4, b: 14, d: 9, alpha: 12 }, {}), { width: 118, height: 60, label: false }).svg;
+}
+
+function coeffRows(obj, q, keys) {
+  return (keys || Object.keys(obj)).filter(k => obj[k]).map(k => {
+    const c = obj[k], we = c.cpe * q;
+    return `<tr><td class="z"><span class="sw" style="background:${pressureColour(we, 1, 1)}"></span>${k}</td>
+      <td>${fmt(c.cpe10)}</td><td>${fmt(c.cpe1)}</td><td>${fmt(c.cpe)}</td>
+      <td class="${sgn(we)}">${fmt(we, 3)}</td>
+      <td class="${sgn(we - q * S.cpiPos)}">${fmt(we - q * S.cpiPos, 3)}</td>
+      <td class="${sgn(we - q * S.cpiNeg)}">${fmt(we - q * S.cpiNeg, 3)}</td></tr>`;
+  }).join('');
+}
+const COEFF_HEAD = `<thead><tr><th>Zone</th><th>C<sub>pe,10</sub></th><th>C<sub>pe,1</sub></th>
+  <th>C<sub>pe</sub>(A)</th><th>w<sub>e</sub> kPa</th><th>net, C<sub>pi</sub>=+0.2</th><th>net, C<sub>pi</sub>=−0.3</th></tr></thead>`;
+
+/* ---------- sidebar ---------- */
+
+function fld(path, label, opts = {}) {
+  const v = path.split('.').reduce((o, k) => o[k], S);
+  const id = 'f_' + path.replace(/\./g, '_');
+  if (opts.options) {
+    return `<div class="f ${opts.wide ? 'wide' : ''}"><label for="${id}">${label}</label>
+      <select id="${id}" data-path="${path}">${opts.options.map(o =>
+      `<option value="${esc(o[0])}"${String(o[0]) === String(v) ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></div>`;
+  }
+  if (opts.text) {
+    return `<div class="f wide"><label for="${id}">${label}</label>
+      <input id="${id}" type="${opts.date ? 'date' : 'text'}" value="${esc(v)}" data-path="${path}"
+      placeholder="${opts.ph || ''}"></div>`;
+  }
+  return `<div class="f"><label for="${id}">${label}${opts.unit ? ` <i>${opts.unit}</i>` : ''}</label>
+    <input id="${id}" type="number" step="${opts.step || 'any'}" value="${v}" data-path="${path}" data-num="1"></div>`;
+}
+
+function buildingFields() {
+  return `<div class="group"><h3>Building</h3>
+    ${fld('preset', 'Preset', { wide: true, options: PRESETS })}
+    <div class="pick">${ROOFS.map(([k, n]) =>
+    `<button data-set="g.type" data-val="${k}" aria-pressed="${S.g.type === k}">${thumb(k)}${n}</button>`).join('')}</div>
+    ${fld('g.h', 'Height h to highest point', { unit: 'm' })}
+    ${fld('g.b', 'Width b — across wind at 0°', { unit: 'm' })}
+    ${fld('g.d', 'Depth d — along wind at 0°', { unit: 'm' })}
+    ${S.g.type !== 'flat' ? fld('g.alpha', 'Roof pitch α', { unit: '°' }) : ''}
+    ${S.g.type === 'hip' ? fld('g.alpha90', 'Hip end pitch α₉₀', { unit: '°' }) : ''}
+    ${S.g.type === 'flat' ? fld('edge.type', 'Eaves detail', {
+      wide: true, options: [['sharp', 'Sharp eaves'], ['parapet', 'With parapet'], ['curved', 'Curved eaves'], ['mansard', 'Mansard eaves']]
+    }) : ''}
+    ${S.g.type === 'flat' && S.edge.type === 'parapet' ? fld('edge.hp', 'Parapet height h<sub>p</sub>', { unit: 'm' }) : ''}
+    ${S.g.type === 'flat' && S.edge.type === 'curved' ? fld('edge.r', 'Eaves radius r', { unit: 'm' }) : ''}
+    ${S.g.type === 'flat' && S.edge.type === 'mansard' ? fld('edge.mansard', 'Mansard angle α', { unit: '°' }) : ''}
+    ${fld('g.A', 'Loaded area A of the element', { unit: 'm²' })}
+    <p class="hint">A ≤ 1 m² uses C<sub>pe,1</sub>, A ≥ 10 m² uses C<sub>pe,10</sub>, between the two it is interpolated on log A (Figure 5).</p>
+  </div>`;
+}
+
+function cpiFields() {
+  return `<div class="group"><h3>Internal pressure used</h3>
+    ${fld('cpiMode', 'Case', { wide: true, options: CPI_MODES.map(m => [m[0], m[1].replace('__pi__', 'pi')]) })}
+    ${fld('cpiPos', 'C<sub>pi</sub> positive case')}
+    ${fld('cpiNeg', 'C<sub>pi</sub> negative case')}
+    <p class="hint">Defaults are the +0.2 / −0.3 pair of cl 8.3.9.6 note 2. Work out site-specific values on the internal pressure tab.</p>
+  </div>`;
+}
+
+function sidebar() {
+  const munis = MUNICIPALITIES.filter(m => m[1] === +S.province)
+    .map(m => [m[0], CITY[m[0]] ? `${m[0]} (${CITY[m[0]]})` : m[0]]);
+  let h = `<div class="group"><h3>Site</h3>
+    ${fld('province', 'Province', { wide: true, options: Object.entries(PROVINCES).filter(p => +p[0] > 0) })}
+    ${fld('muni', 'Municipality', { wide: true, options: munis })}
+    ${fld('vb0', 'v<sub>b,0</sub> fundamental basic wind speed', { unit: 'm/s' })}
+    ${fld('T', 'Mean return period', { unit: 'years' })}
+    ${fld('altitude', 'Site altitude above sea level', { unit: 'm' })}
+    ${fld('terrain', 'Terrain category', {
+    wide: true, options: Object.keys(TERRAIN).map(k => [k, `${k} — ${TERRAIN[k].desc.slice(0, 42)}…`])
+  })}
+    <p class="hint">${TERRAIN[S.terrain].desc}</p>
+    ${fld('useTopo', 'Topography', { wide: true, options: [[false, 'c₀ entered directly'], [true, 'Calculate from Annex B.3']] })}
+    ${String(S.useTopo) === 'false' ? fld('c0', 'Topography factor c₀') : `
+      ${fld('topo.shape', 'Feature', { wide: true, options: [['cliff', 'Cliff or escarpment'], ['hill', 'Hill or ridge']] })}
+      ${fld('topo.H', 'Height of feature H', { unit: 'm' })}
+      ${fld('topo.Lu', 'Upwind slope length L<sub>u</sub>', { unit: 'm' })}
+      ${fld('topo.Ld', 'Downwind slope length L<sub>d</sub>', { unit: 'm' })}
+      ${fld('topo.x', 'Distance from crest x', { unit: 'm' })}
+      ${fld('topo.z', 'Height above local ground z', { unit: 'm' })}`}
+  </div>`;
+
+  if (['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) h += buildingFields();
+  if (['walls', 'roof'].includes(S.tab)) h += cpiFields();
+  if (S.tab === 'site') h += `<div class="group"><h3>Reference heights</h3>${fld('g.hStrip', 'Strip height when h > 2b', { unit: 'm' })}</div>`;
+
+  if (S.tab === 'report') {
+    h += `<div class="group"><h3>Report title block</h3>
+      ${fld('doc.project', 'Project', { text: true, ph: 'Project name' })}
+      ${fld('doc.client', 'Client', { text: true })}
+      ${fld('doc.structure', 'Structure', { text: true, ph: 'e.g. Warehouse A' })}
+      ${fld('doc.job', 'Job number', { text: true })}
+      ${fld('doc.by', 'Prepared by', { text: true })}
+      ${fld('doc.checked', 'Checked by', { text: true })}
+      ${fld('doc.rev', 'Revision', { text: true })}
+      ${fld('doc.date', 'Date', { text: true, date: true })}
+      ${fld('doc.incCanopy', 'Include canopy appendix', { wide: true, options: [[false, 'No'], [true, 'Yes']] })}
+      ${fld('doc.incFree', 'Include free-standing appendix', { wide: true, options: [[false, 'No'], [true, 'Yes']] })}
+    </div>`;
+  }
+  if (S.tab === 'internal') {
+    h += `<div class="group"><h3>Faces and openings</h3>`;
+    ['Face 1 — windward at 0°', 'Face 2 — at 90°', 'Face 3 — at 180°', 'Face 4 — at 270°'].forEach((n, i) => {
+      h += `<p class="hint" style="margin:8px 0 2px;color:var(--muted)"><b>${n}</b></p>
+        ${fld(`op.area.${i}`, 'Total area of face', { unit: 'm²' })}
+        ${fld(`op.open.${i}`, 'Area of openings', { unit: 'm²' })}`;
+    });
+    h += `</div>`;
+  }
+  if (S.tab === 'canopy') {
+    h += `<div class="group"><h3>Canopy</h3>
+      <div class="pick">${[['mono', 'Mono-pitch'], ['duo', 'Duo-pitch']].map(([k, n]) =>
+      `<button data-set="can.kind" data-val="${k}" aria-pressed="${S.can.kind === k}">${canopyThumb(k)}${n}</button>`).join('')}</div>
+      ${fld('can.h', 'Height h to highest point', { unit: 'm' })}
+      ${fld('can.b', 'Width b across wind', { unit: 'm' })}
+      ${fld('can.d', 'Depth d along wind', { unit: 'm' })}
+      ${fld('can.alpha', 'Roof pitch α', { unit: '°' })}
+      ${fld('can.phi', 'Degree of blockage φ')}
+      <p class="hint">φ = 0 is a clear space under the canopy, φ = 1 is fully blocked at the downwind eaves (cl 8.4.2). Values between the two are interpolated.</p>
+    </div>`;
+  }
+  if (S.tab === 'free') {
+    h += `<div class="group"><h3>Element</h3>
+      ${fld('fw.mode', 'Type', { wide: true, options: [['wall', 'Free-standing wall'], ['parapet', 'Parapet on a building'], ['sign', 'Signboard']] })}`;
+    if (S.fw.mode === 'sign') {
+      h += `${fld('fw.sh', 'Signboard height h', { unit: 'm' })}
+        ${fld('fw.sb', 'Signboard width b', { unit: 'm' })}
+        ${fld('fw.shg', 'Height of lower edge above ground', { unit: 'm' })}`;
+    } else {
+      h += `${fld('fw.h', S.fw.mode === 'parapet' ? 'Parapet height h<sub>p</sub>' : 'Wall height h', { unit: 'm' })}
+        ${S.fw.mode === 'parapet' ? fld('fw.hb', 'Building height to parapet base', { unit: 'm' }) : ''}
+        ${fld('fw.L', 'Length L', { unit: 'm' })}
+        ${fld('fw.Lc', 'Return corner length', { unit: 'm' })}
+        ${fld('fw.phi', 'Solidity ratio φ')}
+        <p class="hint">φ = 1 is a solid wall. At φ = 0.8 every zone takes c<sub>p,net</sub> = 1.2; between 0.8 and 1 the tool interpolates. Below φ = 0.8 treat the wall as a plane lattice (cl 8.5.1).</p>`;
+    }
+    h += `</div>`;
+  }
+  if (S.tab === 'friction') {
+    h += `<div class="group"><h3>Surface</h3>
+      ${fld('fric', 'Surface roughness', {
+      wide: true, options: [['smooth', 'Smooth — steel, smooth concrete (0.01)'],
+      ['rough', 'Rough — rough concrete, tar boards (0.02)'], ['veryRough', 'Very rough — ripples, ribs, folds (0.04)']]
+    })}</div>`;
+  }
+  return h;
+}
+
+/* ---------- results panes ---------- */
+
+function paneSite() {
+  const st = site(), t = TERRAIN[S.terrain], q = st.at(S.g.h);
+  const topo = S.useTopo === true || S.useTopo === 'true'
+    ? topographyFactor({ shape: S.topo.shape, H: +S.topo.H, Lu: +S.topo.Lu, Ld: +S.topo.Ld, x: +S.topo.x, z: +S.topo.z })
+    : null;
+  const parts = referenceHeights(S.g.h, S.g.b, S.g.hStrip);
+
+  // ---- q_p profile chart ----
+  const Hz = Math.max(S.g.h, 0.1);
+  const prof = [];
+  for (let i = 0; i <= 80; i++) { const z = Hz * i / 80; prof.push([st.at(z).qp, z]); }
+  const niceStep = v => {
+    const raw = Math.abs(v) / 5 || 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw / mag;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+  };
+  const qPeak = Math.max(...prof.map(p => p[0]));
+  const qStep = niceStep(qPeak);
+  const qMax = Math.max(Math.ceil(qPeak / qStep) * qStep, qStep);
+  const zStep = niceStep(Hz);
+  const CW = 500, CH = 260, mL = 54, mR = 20, mT = 18, mB = 44;
+  const X = q => mL + (q / qMax) * (CW - mL - mR);
+  const Y = z => CH - mB - (z / Hz) * (CH - mB - mT);
+  const qTicks = [], zTicks = [];
+  for (let q = 0; q <= qMax + 1e-9; q += qStep) qTicks.push(q);
+  for (let z = 0; z <= Hz + 1e-9; z += zStep) zTicks.push(z);
+  const dp = qStep < 0.1 ? 3 : 2;
+
+  const grid = qTicks.map(q => `<line x1="${X(q).toFixed(1)}" y1="${mT}" x2="${X(q).toFixed(1)}" y2="${CH - mB}" stroke="#e7edf2"/>`).join('')
+    + zTicks.map(z => `<line x1="${mL}" y1="${Y(z).toFixed(1)}" x2="${CW - mR}" y2="${Y(z).toFixed(1)}" stroke="#e7edf2"/>`).join('');
+  const curve = prof.map(([q, z], i) => `${i ? 'L' : 'M'}${X(q).toFixed(1)},${Y(z).toFixed(1)}`).join('');
+  const area = `M${X(0).toFixed(1)},${Y(0).toFixed(1)}` + prof.map(([q, z]) => `L${X(q).toFixed(1)},${Y(z).toFixed(1)}`).join('') + `L${X(0).toFixed(1)},${Y(Hz).toFixed(1)}Z`;
+  const marks = parts.length <= 6 ? parts : [parts[parts.length - 1]];
+  const refLines = marks.map(p => {
+    const q = st.at(p.ze).qp;
+    return `<line x1="${mL}" y1="${Y(p.ze).toFixed(1)}" x2="${X(q).toFixed(1)}" y2="${Y(p.ze).toFixed(1)}"
+      stroke="#e8871c" stroke-width="1" stroke-dasharray="3 3"/>
+      <circle cx="${X(q).toFixed(1)}" cy="${Y(p.ze).toFixed(1)}" r="2.6" fill="#e8871c"/>`;
+  }).join('');
+  const qTop = st.at(Hz).qp;
+  const chart = `<svg viewBox="0 0 ${CW} ${CH}" class="chart">
+    ${grid}
+    <path d="${area}" fill="#0e3763" opacity=".07"/>
+    <path d="${curve}" fill="none" stroke="#0e3763" stroke-width="2" stroke-linejoin="round"/>
+    ${refLines}
+    <line x1="${mL}" y1="${mT}" x2="${mL}" y2="${CH - mB}" stroke="#aab8c4"/>
+    <line x1="${mL}" y1="${CH - mB}" x2="${CW - mR}" y2="${CH - mB}" stroke="#aab8c4"/>
+    ${qTicks.map(q => `<text x="${X(q).toFixed(1)}" y="${CH - mB + 15}" text-anchor="middle" font-size="10.5" fill="#5d6f80">${fmt(q, dp)}</text>`).join('')}
+    ${zTicks.map(z => `<text x="${mL - 7}" y="${(Y(z) + 3.5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="#5d6f80">${fmt(z, zStep < 1 ? 1 : 0)}</text>`).join('')}
+    <text x="16" y="${((mT + CH - mB) / 2).toFixed(1)}" text-anchor="middle" font-size="11" fill="#5d6f80"
+      transform="rotate(-90 16 ${((mT + CH - mB) / 2).toFixed(1)})">height z, m</text>
+    <text x="${((mL + CW - mR) / 2).toFixed(1)}" y="${CH - 8}" text-anchor="middle" font-size="11" fill="#5d6f80">peak wind speed pressure, kPa</text>
+  </svg>`;
+
+  return `<h2>Peak wind speed pressure</h2>
+  <p class="lede">Everything downstream scales with q<sub>p</sub>. The chain below follows clauses 7.2 to 7.4 for the reference height z<sub>e</sub> = h.</p>
+  <div class="cards">
+    <div class="card"><b>${fmt(st.vb, 1)}</b><span>v<sub>b</sub> basic wind speed, m/s</span></div>
+    <div class="card"><b>${fmt(q.vp, 1)}</b><span>v<sub>p</sub>(z<sub>e</sub>) peak wind speed, m/s</span></div>
+    <div class="card"><b>${fmt(q.qp, 3)}</b><span>q<sub>p</sub>(z<sub>e</sub>) peak pressure, kPa</span></div>
+  </div>
+  <h3>Calculation trail</h3>
+  <div class="trail">
+    <div><span>Fundamental basic wind speed v<sub>b,0</sub><em>Figure 1, 3 s gust</em></span><b>${fmt(S.vb0, 1)} m/s</b></div>
+    <div><span>Probability factor c<sub>prob</sub> for a ${fmt(S.T, 0)} year return period<em>cl 7.2.3 eq 2, K = 0.2, n = 0.5</em></span><b>${fmt(st.cprob, 4)}</b></div>
+    <div class="key"><span>Basic wind speed v<sub>b</sub> = c<sub>prob</sub> · v<sub>b,0</sub><em>cl 7.2.2 eq 1</em></span><b>${fmt(st.vb, 2)} m/s</b></div>
+    <div><span>Terrain ${S.terrain}: z<sub>g</sub> = ${t.zg} m, z<sub>0</sub> = ${t.z0} m, z<sub>c</sub> = ${t.zc} m, α = ${t.a}<em>cl 7.3.2.1 Table 1</em></span><b></b></div>
+    <div><span>Roughness factor c<sub>r</sub>(z<sub>e</sub>) = 1.36 ((z − z<sub>0</sub>)/z<sub>g</sub>)<sup>α</sup><em>cl 7.3.2.1 eq 5</em></span><b>${fmt(q.cr, 4)}</b></div>
+    <div><span>Topography factor c<sub>0</sub>(z<sub>e</sub>)<em>cl 7.3.3, Annex B.3</em></span><b>${fmt(S.c0, 3)}</b></div>
+    <div class="key"><span>Peak wind speed v<sub>p</sub> = c<sub>r</sub> · c<sub>0</sub> · v<sub>b,peak</sub><em>cl 7.3.1.1 eq 3</em></span><b>${fmt(q.vp, 2)} m/s</b></div>
+    <div><span>Air density ρ at ${fmt(S.altitude, 0)} m above sea level<em>Table 4</em></span><b>${fmt(st.rho, 3)} kg/m³</b></div>
+    <div class="key"><span>Peak wind speed pressure q<sub>p</sub> = ½ ρ v<sub>p</sub>²<em>cl 7.4 eq 6</em></span><b>${fmt(q.qp, 4)} kPa</b></div>
+  </div>
+  ${topo ? `<h3>Topography, Annex B.3</h3>
+    <div class="trail">
+      <div><span>Upwind slope Φ = H / L<sub>u</sub></span><b>${fmt(topo.phi, 3)}</b></div>
+      <div><span>Effective length L<sub>e</sub></span><b>${fmt(topo.Le, 1)} m</b></div>
+      <div><span>Orography factor s<em>Figure B.2</em></span><b>${fmt(topo.s, 3)}</b></div>
+      <div class="key"><span>c<sub>0</sub> = 1 + 2 s Φ</span><b>${fmt(topo.c0, 3)}</b></div>
+    </div>
+    ${topo.note ? `<div class="note">${topo.note}</div>` : ''}
+    <div class="note">Calculated c₀ = <b>${fmt(topo.c0, 3)}</b>. It is not applied automatically — switch topography back to "entered directly" and type it in if you want to use it.</div>` : ''}
+  <h3>Pressure over the height of the structure</h3>
+  <div class="figs"><div class="fig" style="flex:1 1 470px">
+    <h4>q<sub>p</sub> against height</h4>
+    <div class="cap">Terrain ${S.terrain}, c₀ = ${fmt(S.c0, 2)} — constant below z<sub>c</sub> = ${TERRAIN[S.terrain].zc} m.
+      Marker shows q<sub>p</sub> = ${fmt(qTop, 4)} kPa at z<sub>e</sub> = ${fmt(Hz, 2)} m.</div>
+    ${chart}</div>
+    <div class="fig" style="flex:1 1 320px"><h4>Reference heights</h4>
+      <div class="cap">cl 8.3.2.1, Figure 7 — h = ${fmt(S.g.h, 2)} m, b = ${fmt(S.g.b, 2)} m</div>
+      <table><thead><tr><th>Part</th><th>from, m</th><th>to, m</th><th>z<sub>e</sub>, m</th><th>q<sub>p</sub>, kPa</th></tr></thead><tbody>
+      ${parts.map((p, i) => `<tr><td>${i + 1}</td><td>${fmt(p.zBot, 2)}</td><td>${fmt(p.zTop, 2)}</td>
+        <td>${fmt(p.ze, 2)}</td><td>${fmt(st.at(p.ze).qp, 4)}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="ref">${parts.length === 1 ? 'h ≤ b, so the structure is treated as one part.'
+      : parts.length === 2 ? 'b &lt; h ≤ 2b, so the structure is split into two parts.'
+        : 'h &gt; 2b, so the middle of the structure is divided into strips.'}</p>
+    </div>
+  </div>`;
+}
+
+function paneWalls() {
+  const q = qpRef(), g = S.g;
+  const a = wallP('0'), b90 = wallP('90');
+  const sc0 = buildingScene(g, '0', a.p, null);
+  const sc90 = buildingScene(g, '90', b90.p, null);
+  const tbl = (w, dir) => `<table>${COEFF_HEAD}<tbody>${coeffRows(w.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
+    <p class="ref">e = min(b, 2h) = ${fmt(w.e, 3)} m &nbsp;·&nbsp; h/d = ${fmt(w.hd, 3)}
+    &nbsp;·&nbsp; ${w.zones.map(z => `${z.id}: ${fmt(z.x1 - z.x0, 2)} m`).join(' · ')}</p>`;
+  const F = (dir, w) => {
+    const cd = w.cpe.D.cpe, ce = w.cpe.E.cpe;
+    const area = dir === '0' ? g.b * g.h : g.d * g.h;
+    return (cd - ce) * w.corr * q * area;
+  };
+  return `<h2>Vertical walls</h2>
+  <p class="lede">External pressure coefficients for the walls of a rectangular building, cl 8.3.2 and Table 6. Zones A to C run back from the windward corner along each side wall; D is windward and E leeward.</p>
+  ${figs([{ t: 'Wind at 0°', c: 'Zones A, B, C run back from the windward corner; D windward, E leeward', scene: sc0, w: '0' },
+           { t: 'Wind at 90°', c: 'b and d swap over, so e is measured on the new crosswind width', scene: sc90, w: '90' }])}
+  <h3>Wind at 0°</h3>${tbl(a.w, '0')}
+  <h3>Wind at 90°</h3>${tbl(b90.w, '90')}
+  <h3>Overall horizontal force on the walls</h3>
+  <table><thead><tr><th>Direction</th><th>C<sub>pe,D</sub></th><th>C<sub>pe,E</sub></th><th>Correlation factor</th><th>Reference area, m²</th><th>F<sub>w</sub>, kN</th></tr></thead><tbody>
+    <tr><td class="z">0°</td><td>${fmt(a.w.cpe.D.cpe)}</td><td>${fmt(a.w.cpe.E.cpe)}</td><td>${fmt(a.w.corr, 2)}</td><td>${fmt(S.g.b * S.g.h, 1)}</td><td>${fmt(F('0', a.w), 1)}</td></tr>
+    <tr><td class="z">90°</td><td>${fmt(b90.w.cpe.D.cpe)}</td><td>${fmt(b90.w.cpe.E.cpe)}</td><td>${fmt(b90.w.corr, 2)}</td><td>${fmt(S.g.d * S.g.h, 1)}</td><td>${fmt(F('90', b90.w), 1)}</td></tr>
+  </tbody></table>
+  <div class="note">The correlation factor of cl 8.3.2.4 accounts for windward and leeward peaks not happening at the same instant: 0.85 for h/d ≤ 1, rising linearly to 1.0 at h/d ≥ 5. It applies to the <b>overall force</b> only, not to the zone pressures in the tables above. The force here excludes the structural factor c<sub>s</sub>c<sub>d</sub> and any friction.</div>`;
+}
+
+function paneRoof() {
+  const q = qpRef(), g = S.g, c = roofCoeffs();
+  const wp0 = wallP('0').p, wp90 = wallP('90').p;
+  const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
+  let figList = [], tabs = '';
+  const T = (title, obj, cap) => `<h3>${title}</h3>${cap ? `<p class="ref">${cap}</p>` : ''}
+    <table>${COEFF_HEAD}<tbody>${coeffRows(obj, q)}</tbody></table>`;
+
+  if (g.type === 'flat') {
+    const z = flatRoofZones(g.h, g.b, g.d), z90 = flatRoofZones(g.h, g.d, g.b);
+    const p = V(c.flat);
+    figList = [{ t: 'Wind at 0°', c: 'Zones F, G, H, I measured back from the windward eaves', scene: buildingScene(g, '0', wp0, p), w: '0' },
+               { t: 'Wind at 90°', c: 'The same zoning rotated through 90°', scene: buildingScene(g, '90', wp90, p), w: '90' }];
+    tabs = T('Coefficients — both directions', c.flat, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.F.widthEach, 2)} m · F, G depth ${fmt(z.F.depth, 2)} m · H depth ${fmt(z.H.depth, 2)} m · I depth ${fmt(z.I.depth, 2)} m`)
+      + `<div class="note">Zone I carries <b>both</b> signs: ${fmt(c.flat.I.cpe, 2)} and +${fmt(c.flat.I.cpePos, 2)}. Both cases must be checked.</div>`;
+  } else if (g.type === 'mono') {
+    const z = monoZones(g.h, g.b, g.d);
+    figList = [{ t: 'Wind at 0° — onto the low eaves', c: 'Suction case, Table 8', scene: buildingScene(g, '0', wp0, V(c.deg0neg)), w: '0' },
+               { t: 'Wind at 180° — onto the high eaves', c: 'Table 8', scene: buildingScene(g, '180', null, V(c.deg180)), w: '180' },
+               { t: 'Wind at 90°', c: 'F splits into F<sub>up</sub> at the high eaves and F<sub>low</sub> at the low eaves', scene: buildingScene(g, '90', wp90, V(c.deg90)), w: '90' }];
+    tabs = T('Wind at 0° — suction case', c.deg0neg, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.d0.F.widthEach, 2)} m · F, G depth ${fmt(z.d0.F.depth, 2)} m · H depth ${fmt(z.d0.H.depth, 2)} m`)
+      + T('Wind at 0° — pressure case', c.deg0pos, 'Table 8 gives a second, positive set for pitches above 5°. Check both.')
+      + T('Wind at 180°', c.deg180)
+      + T('Wind at 90°', c.deg90);
+  } else if (g.type === 'duo') {
+    const z = duoZones(g.h, g.b, g.d);
+    figList = [{ t: 'Wind at 0° — suction case', c: 'Zone J is the strip just leeward of the ridge', scene: buildingScene(g, '0', wp0, V(c.deg0neg)), w: '0' },
+               { t: 'Wind at 90°', c: 'Wind along the ridge', scene: buildingScene(g, '90', wp90, V(c.deg90)), w: '90' }];
+    tabs = T('Wind at 0° — case 1', c.deg0neg, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.d0.F.widthEach, 2)} m · F, G depth ${fmt(z.d0.F.depth, 2)} m · H depth ${fmt(z.d0.H.depth, 2)} m · J depth ${fmt(z.d0.J.depth, 2)} m`)
+      + T('Wind at 0° — case 2', c.deg0pos, 'Table 10 lists two sets for pitches between −5° and +45°. Neither may be mixed with the other.')
+      + T('Wind at 90°', c.deg90, `F width ${fmt(z.d90.F.widthEach, 2)} m · G width ${fmt(z.d90.G.width, 2)} m · H depth ${fmt(z.d90.H.depth, 2)} m`);
+  } else {
+    figList = [{ t: 'Wind at 0°', c: 'Zone boundaries indicative — confirm against Figure 12', scene: buildingScene(g, '0', wp0, V(c.deg0)), w: '0' },
+               { t: 'Wind at 90°', c: 'Onto the hip end', scene: buildingScene(g, '90', wp90, V(c.deg90)), w: '90' }];
+    tabs = T('Wind at 0° — case 1', c.deg0)
+      + T('Wind at 0° — case 2', c.deg0pos, 'Positive set for the windward slope.')
+      + T('Wind at 90°', c.deg90)
+      + `<div class="note">Zone K is listed in the table but not drawn — it is a small region at the head of the windward hip. Read the zone boundaries off Figure 12 of the code.</div>`;
+  }
+  // resultant forces on the envelope
+  const rv0 = g.type === 'flat' ? V(c.flat) : g.type === 'mono' ? V(c.deg0neg)
+    : g.type === 'duo' ? V(c.deg0neg) : V(c.deg0);
+  const rv90 = g.type === 'flat' ? V(c.flat) : V(c.deg90);
+  const ef0 = envelopeForces(g, '0', wp0, rv0, q, S.cpiPos, S.cpiNeg);
+  const ef90 = envelopeForces(g, '90', wp90, rv90, q, S.cpiPos, S.cpiNeg);
+  const fRow = (n, e) => `<tr><td class="z">${n}</td>
+    <td>${fmt(e.cpi, 2)}</td><td>${fmt(e.areaRoof, 1)}</td>
+    <td class="${e.roofVert > 0 ? 'neg' : 'pos'}">${fmt(e.roofVert, 1)}</td>
+    <td>${fmt(e.roofAlong, 1)}</td><td>${fmt(e.wallAlong, 1)}</td>
+    <td><b>${fmt(e.totalAlong, 1)}</b></td></tr>`;
+  const forces = `<h3>Resultant forces on the envelope</h3>
+  <p class="ref">Each zone pressure is resolved on its own surface and summed, so pitched roofs keep the
+  correct vertical and horizontal split. Positive vertical is <b>uplift</b>. Internal pressure is included.</p>
+  <table><thead><tr><th>Wind / case</th><th>C<sub>pi</sub></th><th>Roof area, m²</th>
+    <th>Roof vertical, kN</th><th>Roof along wind, kN</th><th>Walls along wind, kN</th>
+    <th>Total along wind, kN</th></tr></thead><tbody>
+    ${fRow('0°, C<sub>pi</sub> positive', ef0.pos)}${fRow('0°, C<sub>pi</sub> negative', ef0.neg)}
+    ${fRow('90°, C<sub>pi</sub> positive', ef90.pos)}${fRow('90°, C<sub>pi</sub> negative', ef90.neg)}
+  </tbody></table>
+  <div class="note">Governing roof uplift is
+    <b>${fmt(Math.max(ef0.pos.roofVert, ef0.neg.roofVert, ef90.pos.roofVert, ef90.neg.roofVert), 1)} kN</b>
+    over ${fmt(ef0.pos.areaRoof, 1)} m² of roof. Use it against the permanent load for holding-down design.
+    Friction from the friction tab is additional to the along-wind totals, and the structural factor
+    c<sub>s</sub>c<sub>d</sub> is not included.</div>`;
+
+  const keyFig = `<h3>Zone key</h3>
+  <p class="ref">Plan on the roof, set out from the same clipped geometry as the 3D views.</p>
+  <div class="figs">
+    <div class="fig" style="flex:1 1 380px"><h4>Wind at 0°</h4>
+      <div class="cap">${{ flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type]} · zone layout</div>
+      ${renderZoneKey(g, '0', rv0, { width: 430, height: 300 })}</div>
+    <div class="fig" style="flex:1 1 380px"><h4>Wind at 90°</h4>
+      <div class="cap">${{ flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type]} · zone layout</div>
+      ${renderZoneKey(g, '90', rv90, { width: 430, height: 300 })}</div>
+  </div>`;
+
+  return `<h2>${ROOFS.find(r => r[0] === g.type)[1]} roof</h2>
+    <p class="lede">External pressure coefficients from ${{ flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[g.type]}, interpolated on ${g.type === 'flat' ? 'the eaves detail' : 'the roof pitch'} and on the loaded area A = ${fmt(g.A, 1)} m².</p>
+    ${figs(figList)}${tabs}
+    ${keyFig}${forces}
+    <div class="note">Vaulted and domed roofs (cl 8.3.8) are not covered by this tool.</div>`;
+}
+
+function paneInternal() {
+  const g = S.g, q = qpRef();
+  const hd = [g.h / g.d, g.h / g.b, g.h / g.d, g.h / g.b];
+  const w0 = wallZones(g.h, g.b, g.d, 10).cpe, w90 = wallZones(g.h, g.d, g.b, 10).cpe;
+  const avg = w => (w.A.cpe10 * 0.2 + w.B.cpe10 * 0.8);   // weighted side-wall value
+  const side0 = avg(w0), side90 = avg(w90);
+  const faceCpe = [
+    [w0.D.cpe10, side90, w0.E.cpe10, side90],
+    [side0, w90.D.cpe10, side0, w90.E.cpe10],
+    [w0.E.cpe10, side90, w0.D.cpe10, side90],
+    [side0, w90.E.cpe10, side0, w90.D.cpe10]
+  ];
+  const faces = [0, 1, 2, 3].map(i => ({
+    area: +S.op.area[i], openArea: +S.op.open[i], cpe: faceCpe[i]
+  }));
+  const res = internalPressure(faces, hd);
+  const rows = res.map((r, i) => `<tr><td class="z">${r.dir}°</td>
+    <td>${r.mode === 'dominant' ? `face ${r.face}, ratio ${fmt(r.ratio, 1)}` : r.mode === 'mu' ? `μ = ${fmt(r.mu, 3)}` : 'no openings'}</td>
+    <td>${r.mode === 'dominant' ? `${fmt(r.factor, 2)} · C<sub>pe</sub>` : r.mode === 'mu' ? `${fmt(r.upper, 3)} / ${fmt(r.lower, 3)}` : '–'}</td>
+    <td class="${sgn(r.cpi)}">${fmt(r.cpi, 3)}</td>
+    <td class="${sgn(r.cpi * q)}">${fmt(r.cpi === null ? null : r.cpi * q, 3)}</td></tr>`).join('');
+  const anyDominant = res.some(r => r.mode === 'dominant');
+  return `<h2>Internal pressure</h2>
+  <p class="lede">cl 8.3.9. A face counts as dominant when its openings are at least twice the openings in all the other faces put together; otherwise C<sub>pi</sub> comes from the opening ratio μ and h/d on Figure 16.</p>
+  <table><thead><tr><th>Wind</th><th>Governing condition</th><th>Figure 16, h/d ≤ 0.25 / ≥ 1</th><th>C<sub>pi</sub></th><th>w<sub>i</sub>, kPa</th></tr></thead><tbody>${rows}</tbody></table>
+  <h3>Openings entered</h3>
+  <table><thead><tr><th>Face</th><th>Area, m²</th><th>Openings, m²</th><th>Ratio</th><th>Check</th></tr></thead><tbody>
+    ${faces.map((f, i) => `<tr><td class="z">${i + 1}</td><td>${fmt(f.area, 1)}</td><td>${fmt(f.openArea, 1)}</td>
+      <td>${fmt(f.area > 0 ? f.openArea / f.area : 0, 3)}</td>
+      <td>${f.openArea > 0.3 * f.area ? '<span class="neg">openings exceed 30% of the face — treat as a canopy, cl 8.4</span>' : '<span class="ok">within cl 8.3</span>'}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="note">Where the openings cannot be estimated, cl 8.3.9.6 note 2 requires the more onerous of
+    <b>C<sub>pi</sub> = +0.2</b> (w<sub>i</sub> = ${fmt(0.2 * q, 3)} kPa) and <b>−0.3</b> (${fmt(-0.3 * q, 3)} kPa).
+    Open silos and chimneys take −0.6; vented tanks with small openings take −0.4 (cl 8.3.9.8).</div>
+  ${anyDominant ? '' : `<div class="note">The Figure 16 curves here are digitised to about ±0.01. For a design that turns on C<sub>pi</sub>, read the figure in the code.</div>`}
+  <div class="note">External coefficients at the openings are taken as area-weighted values over zones A and B of each face. Where the openings sit in one zone, substitute that zone's C<sub>pe</sub> by hand (cl 8.3.9.5).</div>`;
+}
+
+function paneCanopy() {
+  const c = S.can, q = qpAt(c.h);
+  const r = c.kind === 'mono' ? canopyMono(+c.alpha, +c.phi, 10) : canopyDuo(+c.alpha, +c.phi);
+  const zones = Object.keys(r.zones);
+  const maxV = {}, minV = {};
+  zones.forEach(k => { maxV[k] = r.zones[k].max * q; minV[k] = r.zones[k].min * q; });
+  const gg = { h: +c.h, b: +c.b, d: +c.d, alpha: +c.alpha };
+  const scMin = canopyScene(c.kind, gg, minV);
+  const scMax = canopyScene(c.kind, gg, maxV);
+  const area = c.b * c.d / Math.cos(c.alpha * Math.PI / 180);
+  return `<h2>${c.kind === 'mono' ? 'Mono' : 'Duo'}-pitch canopy roof</h2>
+  <p class="lede">cl 8.4 and ${c.kind === 'mono' ? 'Table 13' : 'Table 14'}. Canopy coefficients are <b>net</b> — they already combine the pressure on the top and the underside, so they are not combined with C<sub>pi</sub>.</p>
+  ${figs([{ t: 'Maximum uplift', c: 'Largest negative c<sub>p,net</sub>, φ = ' + fmt(c.phi, 2), scene: scMin, w: '0' },
+           { t: 'Maximum downward pressure', c: 'Largest positive c<sub>p,net</sub>', scene: scMax, w: '0' }])}
+  <h3>Net pressure coefficients</h3>
+  <table><thead><tr><th>Zone</th><th>c<sub>p,net</sub> max</th><th>c<sub>p,net</sub> min</th><th>w max, kPa</th><th>w min, kPa</th></tr></thead><tbody>
+  ${zones.map(k => `<tr><td class="z"><span class="sw" style="background:${pressureColour(minV[k], 1, 1)}"></span>${k}</td>
+    <td>${fmt(r.zones[k].max)}</td><td>${fmt(r.zones[k].min)}</td>
+    <td class="pos">${fmt(maxV[k], 3)}</td><td class="neg">${fmt(minV[k], 3)}</td></tr>`).join('')}
+  </tbody></table>
+  <h3>Overall force on the structure</h3>
+  <table><thead><tr><th>Case</th><th>c<sub>f</sub></th><th>q<sub>p</sub>, kPa</th><th>Reference area, m²</th><th>F<sub>w</sub>, kN</th></tr></thead><tbody>
+    <tr><td class="z">Downward</td><td>${fmt(r.cf.max)}</td><td>${fmt(q, 4)}</td><td>${fmt(area, 1)}</td><td class="pos">${fmt(r.cf.max * q * area, 1)}</td></tr>
+    <tr><td class="z">Uplift</td><td>${fmt(r.cf.min)}</td><td>${fmt(q, 4)}</td><td>${fmt(area, 1)}</td><td class="neg">${fmt(r.cf.min * q * area, 1)}</td></tr>
+  </tbody></table>
+  <div class="note">Use c<sub>f</sub> with the centre of pressure at <b>d/4 = ${fmt(c.d / 4, 2)} m</b> from the windward edge for the overall design of the structure; use the zone values for roofing elements and their fixings (cl 8.4.5). A duo-pitch canopy must also be checked with one slope loaded and the other unloaded. Zone boundaries in the views are indicative — set them out from Figure ${c.kind === 'mono' ? '19' : '20'}. Strip widths are b/10 = ${fmt(c.b / 10, 2)} m and d/10 = ${fmt(c.d / 10, 2)} m.</div>`;
+}
+
+function paneFree() {
+  const f = S.fw;
+  if (f.mode === 'sign') {
+    const sb = signboard(+f.sh, +f.sb, +f.shg);
+    const q = qpAt(sb.ze), F = sb.cf * q * sb.Aref;
+    const sc = plateScene([{ id: 'A', x0: 0, x1: +f.sb }], { A: sb.cf * q }, +f.sh, +f.sb, Math.min(f.sb, f.sh) * 0.06, +f.shg, true);
+    return `<h2>Signboard</h2>
+    <p class="lede">cl 8.5.3. A signboard separated from the ground by at least h/4 takes a force coefficient of 1.8, applied at mid-height with a horizontal eccentricity of ±b/4.</p>
+    ${figs([{ t: 'Net pressure on the board', c: `z<sub>e</sub> = ${fmt(sb.ze, 2)} m, c<sub>f</sub> = 1.8`, scene: sc, w: '0' }])}
+    ${sb.applies ? '' : '<div class="note warn">The lower edge is less than h/4 above the ground, so cl 8.5.3 does not apply — treat the board as a free-standing wall instead.</div>'}
+    <div class="trail">
+      <div><span>Reference height z<sub>e</sub> = h<sub>g</sub> + h/2</span><b>${fmt(sb.ze, 2)} m</b></div>
+      <div><span>q<sub>p</sub>(z<sub>e</sub>)</span><b>${fmt(q, 4)} kPa</b></div>
+      <div><span>Reference area A<sub>ref</sub> = b · h</span><b>${fmt(sb.Aref, 1)} m²</b></div>
+      <div><span>Force coefficient c<sub>f</sub></span><b>${fmt(sb.cf, 1)}</b></div>
+      <div class="key"><span>Resultant force F<sub>w</sub> = c<sub>f</sub> q<sub>p</sub> A<sub>ref</sub></span><b>${fmt(F, 1)} kN</b></div>
+      <div><span>Horizontal eccentricity e = ± b/4</span><b>± ${fmt(sb.ecc, 2)} m</b></div>
+      <div><span>Torsional moment F<sub>w</sub> · e</span><b>± ${fmt(F * sb.ecc, 1)} kNm</b></div>
+      <div class="key"><span>Moment at ground level F<sub>w</sub> · z<sub>e</sub></span><b>${fmt(F * sb.ze, 1)} kNm</b></div>
+    </div>
+    <div class="note">Divergence and flutter must be checked separately for slender boards (cl 8.5.3 note).</div>`;
+  }
+  const h = +f.h, zRef = f.mode === 'parapet' ? +f.hb + h : h;
+  const q = qpAt(zRef);
+  const r = freeWall(h, +f.L, +f.Lc, +f.phi);
+  const vals = {}; Object.keys(r.cpNet).forEach(k => vals[k] = r.cpNet[k] * q);
+  const sc = plateScene(r.zones, vals, h, +f.L, Math.min(h, f.L) * 0.08, f.mode === 'parapet' ? +f.hb : 0, false);
+  return `<h2>${f.mode === 'parapet' ? 'Parapet' : 'Free-standing wall'}</h2>
+  <p class="lede">cl 8.5.1 and Table 16. Zones are set out from the windward free end: A over 0.3h, B to 2h, C to 4h and D beyond. c<sub>p,net</sub> is a net coefficient across the wall.</p>
+  ${figs([{ t: 'Net pressure', c: `L/h = ${fmt(r.Lh, 2)}, reference height z<sub>e</sub> = ${fmt(zRef, 2)} m`, scene: sc, w: '0' }])}
+  <table><thead><tr><th>Zone</th><th>From, m</th><th>To, m</th><th>Solid, no corners</th><th>After corners</th><th>c<sub>p,net</sub></th><th>w, kPa</th></tr></thead><tbody>
+  ${r.zones.map((z, i) => `<tr><td class="z"><span class="sw" style="background:${pressureColour(vals[z.id], 1, 1)}"></span>${z.id}</td>
+    <td>${fmt(z.x0, 2)}</td><td>${fmt(z.x1, 2)}</td>
+    <td>${fmt(r.noCorner[i])}</td><td>${fmt(r.solid[i])}</td>
+    <td>${fmt(r.cpNet[z.id])}</td><td class="pos">${fmt(vals[z.id], 3)}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="note">Return corners at least h long reduce zone A markedly; the tool interpolates linearly for shorter returns. Total force on the wall, taking each zone at its own coefficient:
+    <b>${fmt(r.zones.reduce((s, z) => s + r.cpNet[z.id] * q * (z.x1 - z.x0) * h, 0), 1)} kN</b>.</div>`;
+}
+
+function paneFriction() {
+  const g = S.g, q = qpRef(), cfr = FRICTION[S.fric];
+  const f0 = frictionForce(g.h, g.b, g.d, cfr, q);
+  const f90 = frictionForce(g.h, g.d, g.b, cfr, q);
+  const row = (n, f, b, d) => `<tr><td class="z">${n}</td>
+    <td>${fmt(f.start, 2)}</td><td>${fmt(f.Aroof, 1)}</td><td>${fmt(f.Awalls, 1)}</td><td>${fmt(f.Afr, 1)}</td>
+    <td>${fmt(f.ratio, 2)}</td>
+    <td>${f.ignorable ? '<span class="ok">may be ignored</span>' : '<span class="neg">must be included</span>'}</td>
+    <td>${fmt(f.Ffr, 2)}</td></tr>`;
+  return `<h2>Friction forces</h2>
+  <p class="lede">cl 7.5.3.6 and 8.6. Friction acts on surfaces parallel to the wind, but only beyond min(2b, 4h) from the windward edge, and may be ignored altogether when the total area parallel to the wind is no more than four times the area normal to it.</p>
+  <div class="cards">
+    <div class="card"><b>${fmt(cfr, 2)}</b><span>c<sub>fr</sub>, Table 17</span></div>
+    <div class="card"><b>${fmt(cfr * q, 4)}</b><span>w<sub>fr</sub> = c<sub>fr</sub> q<sub>p</sub>, kPa</span></div>
+  </div>
+  <table><thead><tr><th>Wind</th><th>Starts at, m</th><th>Roof area, m²</th><th>Wall area, m²</th><th>A<sub>fr</sub>, m²</th>
+    <th>Parallel / normal</th><th>cl 7.5.3.6</th><th>F<sub>fr</sub>, kN</th></tr></thead><tbody>
+    ${row('0°', f0)}${row('90°', f90)}
+  </tbody></table>
+  <div class="note">The friction force acts along the wind, added to the pressure forces from the walls. Where A<sub>fr</sub> works out at zero the building is too short along the wind for friction to develop.</div>`;
+}
+
+function paneReport() {
+  const st = site(), q = qpRef(), g = S.g;
+  const a = wallP('0').w, b90 = wallP('90').w, c = roofCoeffs();
+  const roofTbl = () => {
+    const sets = g.type === 'flat' ? [['Both directions', c.flat]]
+      : g.type === 'mono' ? [['0° suction', c.deg0neg], ['0° pressure', c.deg0pos], ['180°', c.deg180], ['90°', c.deg90]]
+        : g.type === 'duo' ? [['0° case 1', c.deg0neg], ['0° case 2', c.deg0pos], ['90°', c.deg90]]
+          : [['0° case 1', c.deg0], ['0° case 2', c.deg0pos], ['90°', c.deg90]];
+    return sets.map(([n, o]) => `<h3>Roof — ${n}</h3><table>${COEFF_HEAD}<tbody>${coeffRows(o, q)}</tbody></table>`).join('');
+  };
+  return `<h2>Summary</h2>
+  <p class="lede">Everything the tool has worked out, on one page. The Word report is a formal
+  document — title block, numbered sections and tables, clause references, page numbering and a
+  statement of assumptions and limitations — ready to be edited and issued.</p>
+  <div class="docbar">
+    <button class="btn big" onclick="downloadDocx(this)">Download Word report (.docx)</button>
+    <button class="btn ghost" onclick="saveProject()">Save project</button>
+    <button class="btn ghost" onclick="document.getElementById('openFile').click()">Open project</button>
+    <button class="btn ghost" onclick="window.print()">Print this page</button>
+    <span>Fill in the title block on the left before downloading.</span>
+  </div>
+  <h3>Input</h3>
+  <table><tbody>
+    <tr><td>Site</td><td style="text-align:left">${esc(S.muni)}, ${esc(PROVINCES[S.province])}</td></tr>
+    <tr><td>v<sub>b,0</sub> / return period / altitude</td><td style="text-align:left">${fmt(S.vb0, 1)} m/s · ${fmt(S.T, 0)} years · ${fmt(S.altitude, 0)} m</td></tr>
+    <tr><td>Terrain category / c₀</td><td style="text-align:left">${S.terrain} · ${fmt(S.c0, 2)}</td></tr>
+    <tr><td>Building h × b × d</td><td style="text-align:left">${fmt(g.h, 2)} × ${fmt(g.b, 2)} × ${fmt(g.d, 2)} m</td></tr>
+    <tr><td>Roof</td><td style="text-align:left">${ROOFS.find(r => r[0] === g.type)[1]}${g.type !== 'flat' ? `, α = ${fmt(g.alpha, 1)}°` : ''}${g.type === 'hip' ? `, α₉₀ = ${fmt(g.alpha90, 1)}°` : ''}</td></tr>
+    <tr><td>Loaded area A</td><td style="text-align:left">${fmt(g.A, 1)} m²</td></tr>
+  </tbody></table>
+  <h3>Peak wind speed pressure</h3>
+  <table><tbody>
+    <tr><td>c<sub>prob</sub></td><td>${fmt(st.cprob, 4)}</td><td>v<sub>b</sub></td><td>${fmt(st.vb, 2)} m/s</td></tr>
+    <tr><td>c<sub>r</sub>(z<sub>e</sub>)</td><td>${fmt(st.at(g.h).cr, 4)}</td><td>v<sub>p</sub>(z<sub>e</sub>)</td><td>${fmt(st.at(g.h).vp, 2)} m/s</td></tr>
+    <tr><td>ρ</td><td>${fmt(st.rho, 3)} kg/m³</td><td><b>q<sub>p</sub>(z<sub>e</sub>)</b></td><td><b>${fmt(q, 4)} kPa</b></td></tr>
+  </tbody></table>
+  <h3>Walls — wind at 0°</h3><table>${COEFF_HEAD}<tbody>${coeffRows(a.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
+  <h3>Walls — wind at 90°</h3><table>${COEFF_HEAD}<tbody>${coeffRows(b90.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
+  ${roofTbl()}
+  <div class="note">Net pressures use C<sub>pi</sub> = +${fmt(S.cpiPos, 2)} and ${fmt(S.cpiNeg, 2)}.
+  Pressure coefficients and the peak pressure are as SANS 10160-3:2018. Partial factors and load combinations are Part 1 and are not applied here.</div>`;
+}
+
+const PANES = {
+  site: paneSite, walls: paneWalls, roof: paneRoof, internal: paneInternal,
+  canopy: paneCanopy, free: paneFree, friction: paneFriction, report: paneReport
+};
+
+/* ---------- wiring ---------- */
+
+function setPath(path, value) {
+  const keys = path.split('.');
+  let o = S;
+  for (let i = 0; i < keys.length - 1; i++) o = o[keys[i]];
+  o[keys[keys.length - 1]] = value;
+}
+
+function renderHeader() {
+  const st = site(), p = st.at(S.g.h);
+  document.getElementById('liveVp').textContent = fmt(p.vp, 1);
+  document.getElementById('liveQp').textContent = fmt(p.qp, 3);
+}
+
+function renderResults() {
+  try {
+    document.getElementById('out').innerHTML = PANES[S.tab]();
+  } catch (e) {
+    document.getElementById('out').innerHTML =
+      `<h2>Check the input</h2><div class="note warn">The geometry entered does not produce a valid figure: ${esc(e.message)}</div>`;
+  }
+  renderHeader();
+}
+
+function renderSidebar() {
+  document.getElementById('side').innerHTML = sidebar();
+}
+
+function renderAll() { renderSidebar(); renderResults(); }
+
+function init() {
+  document.getElementById('nav').innerHTML = TABS.map(([k, n]) =>
+    `<button data-tab="${k}" aria-selected="${S.tab === k}">${n}</button>`).join('');
+
+  document.getElementById('nav').addEventListener('click', e => {
+    const b = e.target.closest('button[data-tab]'); if (!b) return;
+    S.tab = b.dataset.tab;
+    [...document.querySelectorAll('#nav button')].forEach(x => x.setAttribute('aria-selected', x.dataset.tab === S.tab));
+    renderAll();
+  });
+
+  const side = document.getElementById('side');
+  side.addEventListener('input', e => {
+    const t = e.target; if (!t.dataset.path) return;
+    setPath(t.dataset.path, t.dataset.num ? (t.value === '' ? 0 : +t.value) : t.value);
+    if (t.dataset.path === 'province') {
+      const first = MUNICIPALITIES.find(m => m[1] === +S.province);
+      if (first) { S.muni = first[0]; S.vb0 = first[2]; }
+      renderAll(); return;
+    }
+    if (t.dataset.path === 'muni') {
+      const m = MUNICIPALITIES.find(x => x[0] === S.muni && x[1] === +S.province);
+      if (m) S.vb0 = m[2];
+      renderAll(); return;
+    }
+    if (t.dataset.path === 'preset') {
+      const p = PRESET_G[S.preset];
+      if (p) { Object.assign(S.g, p); S.edge.type = 'sharp'; }
+      renderAll(); return;
+    }
+    if (t.dataset.path === 'cpiMode') {
+      if (S.cpiMode === 'pair') { S.cpiPos = 0.2; S.cpiNeg = -0.3; }
+      else if (S.cpiMode === 'zero') { S.cpiPos = 0; S.cpiNeg = 0; }
+      renderAll(); return;
+    }
+    if (['terrain', 'useTopo', 'edge.type', 'fw.mode'].includes(t.dataset.path)) { renderAll(); return; }
+    renderResults();
+  });
+  side.addEventListener('click', e => {
+    const b = e.target.closest('button[data-set]'); if (!b) return;
+    setPath(b.dataset.set, b.dataset.val);
+    renderAll();
+  });
+
+  document.getElementById('openFile').addEventListener('change', e => {
+    openProject(e.target.files && e.target.files[0]);
+    e.target.value = '';
+  });
+
+  document.getElementById('out').addEventListener('click', e => {
+    const b = e.target.closest('button[data-view]'); if (!b) return;
+    S.view = b.dataset.view;
+    renderResults();
+  });
+
+  renderAll();
+}
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
