@@ -2959,9 +2959,9 @@ function paneCanopy() {
     <td class="pos">${fmt(maxV[k], 3)}</td><td class="neg">${fmt(minV[k], 3)}</td></tr>`).join('')}
   </tbody></table>
   <h3>Overall force on the structure</h3>
-  <table><thead><tr><th>Case</th><th>c<sub>f</sub></th><th>q<sub>p</sub>, kPa</th><th>Reference area, m²</th><th>F<sub>w</sub>, kN</th></tr></thead><tbody>
-    <tr><td class="z">Downward</td><td>${fmt(r.cf.max)}</td><td>${fmt(q, 4)}</td><td>${fmt(area, 1)}</td><td class="pos">${fmt(r.cf.max * q * area, 1)}</td></tr>
-    <tr><td class="z">Uplift</td><td>${fmt(r.cf.min)}</td><td>${fmt(q, 4)}</td><td>${fmt(area, 1)}</td><td class="neg">${fmt(r.cf.min * q * area, 1)}</td></tr>
+  <table><thead><tr><th>Case</th><th>c<sub>f</sub></th><th>q<sub>p</sub>, kPa</th><th>c<sub>f</sub> q<sub>p</sub>, kPa</th><th>Reference area, m²</th><th>F<sub>w</sub>, kN</th></tr></thead><tbody>
+    <tr><td class="z">Downward</td><td>${fmt(r.cf.max)}</td><td>${fmt(q, 4)}</td><td class="pos">${fmt(r.cf.max * q, 3)}</td><td>${fmt(area, 1)}</td><td class="pos">${fmt(r.cf.max * q * area, 1)}</td></tr>
+    <tr><td class="z">Uplift</td><td>${fmt(r.cf.min)}</td><td>${fmt(q, 4)}</td><td class="neg">${fmt(r.cf.min * q, 3)}</td><td>${fmt(area, 1)}</td><td class="neg">${fmt(r.cf.min * q * area, 1)}</td></tr>
   </tbody></table>
   <div class="note">Use c<sub>f</sub> with the centre of pressure at <b>d/4 = ${fmt(c.d / 4, 2)} m</b> from the windward edge for the overall design of the structure; use the zone values for roofing elements and their fixings (cl 8.4.5). A duo-pitch canopy must also be checked with one slope loaded and the other unloaded. Zone boundaries in the views are indicative — set them out from Figure ${c.kind === 'mono' ? '19' : '20'}. Strip widths are b/10 = ${fmt(c.b / 10, 2)} m and d/10 = ${fmt(c.d / 10, 2)} m.</div>`;
 }
