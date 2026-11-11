@@ -664,31 +664,34 @@ function internalPressure(faces, hdByDir) {
 
 /* ---------- 8.4  canopy roofs ---------- */
 
+/** Corner zone of a canopy: the governing value of zones B and C (Table 13 and 14, NOTE 2). */
+function canopyCorner(z) {
+  return { max: Math.max(z.B.max, z.C.max), min: Math.min(z.B.min, z.C.min) };
+}
+
 function canopyMono(alpha, phi, A) {
   const L = (c) => tableLookup(TBL.T13, alpha, c);
   const mn = (c0, c1) => lerp(L(c0), L(c1), clamp(phi, 0, 1));
-  return {
-    cf: { max: L(1), min: mn(5, 9) },
-    zones: {
-      A: { max: L(2), min: mn(6, 10) },
-      B: { max: L(3), min: mn(7, 11) },
-      C: { max: L(4), min: mn(8, 12) }
-    }
+  const zones = {
+    A: { max: L(2), min: mn(6, 10) },
+    B: { max: L(3), min: mn(7, 11) },
+    C: { max: L(4), min: mn(8, 12) }
   };
+  zones.D = canopyCorner(zones);            // corners
+  return { cf: { max: L(1), min: mn(5, 9) }, zones };
 }
 
 function canopyDuo(alpha, phi) {
   const L = (c) => tableLookup(TBL.T14, alpha, c);
   const mn = (c0, c1) => lerp(L(c0), L(c1), clamp(phi, 0, 1));
-  return {
-    cf: { max: L(1), min: mn(6, 11) },
-    zones: {
-      A: { max: L(2), min: mn(7, 12) },
-      B: { max: L(3), min: mn(8, 13) },
-      C: { max: L(4), min: mn(9, 14) },
-      D: { max: L(5), min: mn(10, 15) }
-    }
+  const zones = {
+    A: { max: L(2), min: mn(7, 12) },
+    B: { max: L(3), min: mn(8, 13) },
+    C: { max: L(4), min: mn(9, 14) },
+    D: { max: L(5), min: mn(10, 15) }       // strip either side of the ridge
   };
+  zones.E = canopyCorner(zones);            // corners
+  return { cf: { max: L(1), min: mn(6, 11) }, zones };
 }
 
 /* ---------- 8.5  free-standing walls, parapets, signboards ---------- */
@@ -1558,12 +1561,21 @@ function canopyScene(kind, g, Z) {
     // underside and edges, plain
     surfaces.push(surface(lift(plan, x => zTop(x) - t).reverse(), [-n[0], -n[1], -1], { body: '#9fb0bf' }));
     const R = (id, v, xl, xh, yl, yh) => zoneRect(s, plan, zTop, id, v, xl, xh, yl, yh);
-    R('C', Z.C, 0, d10, 0, b10); R('C', Z.C, 0, d10, b - b10, b);
-    R('C', Z.C, d - d10, d, 0, b10); R('C', Z.C, d - d10, d, b - b10, b);
-    R('B', Z.B, 0, d10, b10, b - b10); R('B', Z.B, d - d10, d, b10, b - b10);
+    // Key plans of Tables 13 and 14: C along the windward and leeward edges (d/10 wide),
+    // B along the two edges parallel to the wind (b/10 wide), and the corners (D on a
+    // mono-pitch, E on a duo-pitch) take the governing value of B and C. A duo-pitch
+    // also has D, a strip d/10 wide on each side of the ridge between the B strips.
+    const corner = mono ? 'D' : 'E';
+    R(corner, Z[corner], 0, d10, 0, b10); R(corner, Z[corner], 0, d10, b - b10, b);
+    R(corner, Z[corner], d - d10, d, 0, b10); R(corner, Z[corner], d - d10, d, b - b10, b);
+    R('C', Z.C, 0, d10, b10, b - b10); R('C', Z.C, d - d10, d, b10, b - b10);
     R('B', Z.B, d10, d - d10, 0, b10); R('B', Z.B, d10, d - d10, b - b10, b);
-    const mid = (!mono && Z.D !== undefined && plan[0][0] >= d / 2 - 1e-9) ? 'D' : 'A';
-    R(mid, Z[mid], d10, d - d10, b10, b - b10);
+    if (mono) {
+      R('A', Z.A, d10, d - d10, b10, b - b10);
+    } else {
+      R('A', Z.A, d10, d / 2 - d10, b10, b - b10); R('A', Z.A, d / 2 + d10, d - d10, b10, b - b10);
+      R('D', Z.D, d / 2 - d10, d / 2 + d10, b10, b - b10);
+    }
   });
   // Slab edges. The two that run along x must follow the roof profile — on a
   // duo-pitch that means through the ridge. Cutting them straight from eaves to
@@ -2241,8 +2253,9 @@ function reportSections(FG) {
     'Internal pressure coefficients derived from Figure 16 follow its two straight lines (Cpi = +0,35 at μ ≤ 0,33, '
     + 'falling to −0,30 at μ = 0,90 for h/d ≤ 0,25 and to −0,50 at μ = 0,95 for h/d ≥ 1,0), with linear '
     + 'interpolation on h/d between the two.',
-    'Zone boundaries for hipped roofs and for canopy roofs are indicative. Zone extents are to be set out from '
-    + 'Figures 12, 19 and 20 as applicable. Tabulated coefficients are unaffected.',
+    'Zone boundaries for hipped roofs are indicative and are to be set out from Figure 12. Canopy zones follow '
+    + 'the key plans of Tables 13 and 14, with the corner zone taking the governing value of zones B and C. '
+    + 'Tabulated coefficients are unaffected.',
     'Friction is taken on surfaces parallel to the wind beyond min(2b, 4h) from the windward edge in accordance '
     + 'with cl 7.5.3.6.',
     'This report is produced by a calculation aid. The input, the assumptions and the results are to be '
@@ -3046,7 +3059,7 @@ function paneCanopy() {
     <tr><td class="z">Downward</td><td>${fmt(r.cf.max)}</td><td>${fmt(q, 4)}</td><td class="pos">${fmt(r.cf.max * q, 3)}</td><td>${fmt(area, 1)}</td><td class="pos">${fmt(r.cf.max * q * area, 1)}</td></tr>
     <tr><td class="z">Uplift</td><td>${fmt(r.cf.min)}</td><td>${fmt(q, 4)}</td><td class="neg">${fmt(r.cf.min * q, 3)}</td><td>${fmt(area, 1)}</td><td class="neg">${fmt(r.cf.min * q * area, 1)}</td></tr>
   </tbody></table>
-  <div class="note">Use c<sub>f</sub> with the centre of pressure at <b>d/4 = ${fmt(c.d / 4, 2)} m</b> from the windward edge for the overall design of the structure; use the zone values for roofing elements and their fixings (cl 8.4.5). A duo-pitch canopy must also be checked with one slope loaded and the other unloaded. Zone boundaries in the views are indicative — set them out from Figure ${c.kind === 'mono' ? '19' : '20'}. Strip widths are b/10 = ${fmt(c.b / 10, 2)} m and d/10 = ${fmt(c.d / 10, 2)} m.</div>`;
+  <div class="note">Use c<sub>f</sub> with the centre of pressure at <b>d/4 = ${fmt(c.d / 4, 2)} m</b> from the windward edge for the overall design of the structure; use the zone values for roofing elements and their fixings (cl 8.4.5). A duo-pitch canopy must also be checked with one slope loaded and the other unloaded. Zones follow the key plan of ${c.kind === 'mono' ? 'Table 13' : 'Table 14'}: C along the windward and leeward edges, d/10 = ${fmt(c.d / 10, 2)} m wide; B along the two edges parallel to the wind, b/10 = ${fmt(c.b / 10, 2)} m wide; ${c.kind === 'mono' ? 'D in the corners' : 'D for d/10 on each side of the ridge and E in the corners'}; A over the rest. The corner zone takes the governing value of B and C (NOTE 2).</div>`;
 }
 
 function paneFree() {
