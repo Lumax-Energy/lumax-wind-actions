@@ -196,7 +196,7 @@ svg.key{width:100%; max-width:440px; height:auto; display:block}
   <span class="code">SANS 10160-3:2018 Ed 2.0 &nbsp;·&nbsp; Part 3</span>
   <div class="live">
     <span>v<sub>p</sub>(z<sub>e</sub>) <b id="liveVp">–</b> m/s</span>
-    <span>q<sub>p</sub>(z<sub>e</sub>) <b id="liveQp">–</b> kPa</span>
+    <span><span id="liveQpLbl">q<sub>p</sub>(z<sub>e</sub>)</span> <b id="liveQp">–</b> kPa</span>
     <button class="btn" onclick="saveProject()" title="Download this job as a project file">Save</button>
     <button class="btn" onclick="document.getElementById('openFile').click()" title="Reopen a saved project file">Open</button>
     <button class="btn" onclick="window.print()">Print</button>
@@ -348,11 +348,11 @@ const AIR_DENSITY = [[0, 1.20], [500, 1.12], [1000, 1.06], [1500, 1.00], [2000, 
 const FRICTION = { smooth: 0.01, rough: 0.02, veryRough: 0.04 };
 
 /* Figure 16 — internal pressure coefficient against opening ratio mu.
-   Digitised curves for h/d <= 0.25 and h/d >= 1.0 */
+   The figure is two straight lines from (0.33, +0.35): down to -0.30 at mu = 0.90
+   for h/d <= 0.25, and down to -0.50 at mu = 0.95 for h/d >= 1.0. Constant outside. */
 const FIG16 = {
-  mu: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-  upper: [0.75, 0.71, 0.65, 0.56, 0.44, 0.29, 0.10, -0.10, -0.22, -0.28, -0.30], // h/d <= 0.25
-  lower: [0.75, 0.70, 0.63, 0.53, 0.40, 0.23, 0.02, -0.18, -0.35, -0.45, -0.50]  // h/d >= 1.0
+  upper: { mu: [0.33, 0.90], cpi: [0.35, -0.30] }, // h/d <= 0.25
+  lower: { mu: [0.33, 0.95], cpi: [0.35, -0.50] }  // h/d >= 1.0
 };
 
 /* ---------- generic helpers ---------- */
@@ -422,19 +422,23 @@ function cRough(z, cat) {
 
 /**
  * Full site calculation.
- * @returns {{cprob, vb, vbPeak, rho, at:(z)=>({cr,vp,qp})}}
+ * @returns {{cprob, vb, vbPeak, rho, fos, at:(z)=>({cr,vp,qp0,qp})}}
  */
 function sitePressure(o) {
   const cprob = o.useCprob === false ? 1 : cProb(o.returnPeriod);
   const vb = o.vb0 * cprob;
   const vbPeak = vb; // 3 s gust map, cl 7.3.1.1 eq 4 ratio = 1.0
   const rho = airDensity(o.altitude);
+  // Factor of safety on the wind pressure: qp0 is the SANS 10160-3 value, qp = fos * qp0
+  // is what every pressure and force downstream is built from.
+  const fos = o.fos > 0 ? o.fos : 1;
   const at = z => {
     const cr = cRough(z, o.terrain);
     const vp = cr * o.c0 * vbPeak;
-    return { z, cr, vp, qp: 0.5 * rho * vp * vp / 1000 };
+    const qp0 = 0.5 * rho * vp * vp / 1000;
+    return { z, cr, vp, qp0, qp: fos * qp0 };
   };
-  return { cprob, vb, vbPeak, rho, at };
+  return { cprob, vb, vbPeak, rho, fos, at };
 }
 
 /**
@@ -622,8 +626,8 @@ function hipZones(h, b, d) {
 /* ---------- 8.3.9  internal pressure ---------- */
 
 function cpiFromMu(mu, hd) {
-  const up = interpArrays(FIG16.mu, FIG16.upper, clamp(mu, 0, 1));
-  const lo = interpArrays(FIG16.mu, FIG16.lower, clamp(mu, 0, 1));
+  const up = interpArrays(FIG16.upper.mu, FIG16.upper.cpi, clamp(mu, 0, 1));
+  const lo = interpArrays(FIG16.lower.mu, FIG16.lower.cpi, clamp(mu, 0, 1));
   if (hd <= 0.25) return { cpi: up, upper: up, lower: lo };
   if (hd >= 1) return { cpi: lo, upper: up, lower: lo };
   return { cpi: lerp(up, lo, (hd - 0.25) / 0.75), upper: up, lower: lo };
@@ -646,7 +650,8 @@ function internalPressure(faces, hdByDir) {
     });
     if (dominant >= 0) {
       const cpeD = faces[dominant].cpe[di];
-      const factor = ratio >= 3 ? 0.90 : 0.75;
+      // eq 14 at twice, eq 15 at three times or more, linear between (cl 8.3.9.5)
+      const factor = ratio >= 3 ? 0.90 : lerp(0.75, 0.90, ratio - 2);
       return { dir, mode: 'dominant', face: dominant + 1, ratio, factor, cpi: factor * cpeD };
     }
     if (totalOpen <= 0) return { dir, mode: 'none', cpi: null };
@@ -702,14 +707,11 @@ function freeWall(h, L, Lc, phi) {
   const solid = noCorner.map((v, i) => lerp(v, T16.withCorners[i], t));
   const ph = clamp(phi, 0.8, 1);
   const cp = solid.map((v, i) => lerp(T16.porous[i], v, (ph - 0.8) / 0.2));
+  // Figure 22: A to 0.3h, B to 2h, C to 4h, D beyond — each zone stops at the end of the wall
   const zones = [];
-  if (Lh <= 2) {
-    zones.push({ id: 'A', x0: 0, x1: 0.3 * h }, { id: 'B', x0: 0.3 * h, x1: 2 * h });
-    if (L > 2 * h) zones.push({ id: 'C', x0: 2 * h, x1: L });
-  } else {
-    zones.push({ id: 'A', x0: 0, x1: 0.3 * h }, { id: 'B', x0: 0.3 * h, x1: 2 * h }, { id: 'C', x0: 2 * h, x1: Math.min(4 * h, L) });
-    if (L > 4 * h) zones.push({ id: 'D', x0: 4 * h, x1: L });
-  }
+  [['A', 0, 0.3 * h], ['B', 0.3 * h, 2 * h], ['C', 2 * h, 4 * h], ['D', 4 * h, Infinity]].forEach(([id, x0, x1]) => {
+    if (L > x0 + 1e-9) zones.push({ id, x0, x1: Math.min(x1, L) });
+  });
   return { Lh, zones, cpNet: { A: cp[0], B: cp[1], C: cp[2], D: cp[3] }, noCorner, solid };
 }
 
@@ -773,12 +775,14 @@ function topographyFactor(o) {
   // downwind of a cliff or escarpment
   const xr = x / Le;
   if (xr > 3.5) return done(0, 'More than 3.5 Le downwind of the crest.');
-  const lx = Math.log10(clamp(xr, 0.1, 3.5));
   const lz = Math.log10(clamp(zLe, 0.1, 2));
   const A = -1.3420 * lz ** 3 - 0.8222 * lz ** 2 + 0.4609 * lz - 0.0791;
   const B = -1.0196 * lz ** 3 - 0.8910 * lz ** 2 + 0.5343 * lz - 0.1156;
   const C = 0.8030 * lz ** 3 + 0.4236 * lz ** 2 - 0.5738 * lz + 0.1606;
-  return done(clamp(A * lx * lx + B * lx + C, 0, 1.2));
+  const sAt = v => { const lx = Math.log10(v); return A * lx * lx + B * lx + C; };
+  // the curve fit starts at x/Le = 0.1; closer to the crest, interpolate from the crest value (A1)
+  const s = xr >= 0.1 ? sAt(xr) : lerp(A1, sAt(0.1), xr / 0.1);
+  return done(clamp(s, 0, 1.2));
 }
 
 /* ============================================================
@@ -1645,13 +1649,14 @@ function sceneResultants(scene, qp, cpi) {
 function envelopeForces(g, dir, wallV, roofV, qp, cpiPos, cpiNeg) {
   const sc = buildingScene(g, dir, wallV, roofV);
   const along = dir === '90' ? 1 : 0;
+  const sense = dir === '180' ? -1 : 1;     // at 180° the wind blows towards -x
   const pack = cpi => {
     const r = sceneResultants(sc, qp, cpi);
     return {
       cpi,
-      roofVert: r.roof[2], roofAlong: r.roof[along],
-      wallAlong: r.walls[along], areaRoof: r.areaRoof,
-      totalAlong: r.roof[along] + r.walls[along]
+      roofVert: r.roof[2], roofAlong: sense * r.roof[along],
+      wallAlong: sense * r.walls[along], areaRoof: r.areaRoof,
+      totalAlong: sense * (r.roof[along] + r.walls[along])
     };
   };
   return { pos: pack(cpiPos), neg: pack(cpiNeg) };
@@ -1844,7 +1849,7 @@ function svgToPng(svg, scale) {
 
 /** Which illustrations the report carries, in order. */
 function reportFigureSpecs() {
-  const g = S.g, q = qpRef(), c = roofCoeffs();
+  const g = S.g, q = qpRoof(), c = roofCoeffs();
   const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
   const roofAt = dir => g.type === 'flat' ? V(c.flat)
     : g.type === 'mono' ? V(dir === '90' ? c.deg90 : dir === '180' ? c.deg180 : c.deg0neg)
@@ -1857,7 +1862,7 @@ function reportFigureSpecs() {
       cap: 'External pressure zones — wind at 90°' }
   ];
   if (g.type === 'mono') specs.push({ key: 'w180', wind: '180',
-    scene: buildingScene(g, '180', null, roofAt('180')), cap: 'External pressure zones — wind at 180°' });
+    scene: buildingScene(g, '180', wallP('0').p, roofAt('180')), cap: 'External pressure zones — wind at 180°' });
   const figRef = { flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type];
   specs.push({ key: 'k0', svg: renderZoneKey(g, '0', roofAt('0'), { width: 440, height: 300 }),
     cap: `Roof zone key, wind at 0° — layout to ${figRef}` });
@@ -1933,7 +1938,10 @@ function reportSections(FG) {
   const c = roofCoeffs();
   const d = S.doc;
   const F = (v, dp) => fmt(v, dp);
-  const Vq = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
+  // q (z_e = h) serves walls and internal pressure; qr is the roof's own (h + h_p with parapets).
+  // Both already carry the factor of safety; QP names the pressure accordingly.
+  const qr = qpRoof(), fact = hasFos(), QP = fact ? 'FoS · qp' : 'qp';
+  const Vq = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * qr); return m; };
   let x = '';
 
   /* --- title page --- */
@@ -1949,8 +1957,12 @@ function reportSections(FG) {
   x += wSpace(400);
   x += wPara(wRun('This report sets out the derivation of wind actions on the structure described above. '
     + 'Peak wind speed pressure, external and internal pressure coefficients and the resulting surface '
-    + 'pressures are determined in accordance with SANS 10160-3. Partial factors and load combinations '
-    + 'are covered by SANS 10160-1 and are not applied in this report.', { sz: 18 }), { after: 200 });
+    + 'pressures are determined in accordance with SANS 10160-3. ' + (fact
+      ? `A factor of safety of ${F(st.fos, 2)} has been applied to the peak wind speed pressure, and every `
+      + 'pressure and force in this report includes it. Partial factors and load combinations of '
+      + 'SANS 10160-1 are not applied in addition.'
+      : 'Partial factors and load combinations are covered by SANS 10160-1 and are not applied in this report.'),
+    { sz: 18 }), { after: 200 });
   x += wBreak();
 
   /* --- 1 basis --- */
@@ -1969,7 +1981,7 @@ function reportSections(FG) {
     ['Site altitude', `${F(S.altitude, 0)} m above sea level`, 'Table 4'],
     ['Air density', `${F(st.rho, 3)} kg/m³`, 'Table 4'],
     ['Loaded area for Cpe', `${F(g.A, 1)} m²`, 'Figure 5']
-  ]);
+  ].concat(fact ? [['Factor of safety on wind pressure', F(st.fos, 2), 'Engineer’s input']] : []));
 
   /* --- 2 site --- */
   x += wHead(1, '2  Site and basic wind speed');
@@ -1987,20 +1999,24 @@ function reportSections(FG) {
     ['cprob', `Probability factor for a ${F(S.T, 0)} year return period`, { t: F(st.cprob, 4), align: 'right' }, '—', 'eq 2'],
     ['vb', 'Basic wind speed  vb = cprob · vb,0', { t: F(st.vb, 2), align: 'right' }, 'm/s', 'eq 1'],
     ['zg / α', `Terrain ${S.terrain} gradient height and exponent`, { t: `${t.zg} / ${t.a}`, align: 'right' }, 'm / —', 'Table 1'],
-    ['cr(ze)', 'Terrain roughness factor  1,36 ((z − z0)/zg)^α', { t: F(st.at(g.h).cr, 4), align: 'right' }, '—', 'eq 5'],
+    ['cr(ze)', 'Terrain roughness factor  1,36 ((z − z0)/(zg − z0))^α', { t: F(st.at(g.h).cr, 4), align: 'right' }, '—', 'eq 5'],
     ['c0(ze)', 'Topography factor', { t: F(S.c0, 3), align: 'right' }, '—', 'cl 7.3.3'],
     ['vp(ze)', 'Peak wind speed  vp = cr · c0 · vb,peak', { t: F(st.at(g.h).vp, 2), align: 'right' }, 'm/s', 'eq 3'],
     ['ρ', 'Air density at site altitude', { t: F(st.rho, 3), align: 'right' }, 'kg/m³', 'Table 4'],
     [{ t: 'qp(ze)', b: true }, { t: 'Peak wind speed pressure  qp = ½ ρ vp²', b: true },
-    { t: F(q, 4), align: 'right', b: true }, { t: 'kPa', b: true }, 'eq 6']
-  ]);
+    { t: F(st.at(g.h).qp0, 4), align: 'right', b: true }, { t: 'kPa', b: true }, 'eq 6']
+  ].concat(fact ? [
+    ['FoS', 'Factor of safety on wind pressure', { t: F(st.fos, 2), align: 'right' }, '—', 'Engineer’s input'],
+    [{ t: 'FoS · qp(ze)', b: true }, { t: 'Design wind pressure used in this report', b: true },
+    { t: F(q, 4), align: 'right', b: true }, { t: 'kPa', b: true }, '—']
+  ] : []));
 
   x += wHead(2, '2.2  Reference heights');
   x += wPara(wRun('The structure is divided over its height in accordance with cl 8.3.2.1 and Figure 7.', { sz: 18 }));
   x += wCaption('Reference heights and corresponding peak pressure');
   x += wTable([{ w: 1400, label: 'Part' }, { w: 2200, label: 'From, m', align: 'right' },
   { w: 2200, label: 'To, m', align: 'right' }, { w: 1500, label: 'ze, m', align: 'right' },
-  { w: 1500, label: 'qp, kPa', align: 'right' }],
+  { w: 1500, label: `${QP}, kPa`, align: 'right' }],
     parts.map((p, i) => [String(i + 1), F(p.zBot, 2), F(p.zTop, 2), F(p.ze, 2), F(st.at(p.ze).qp, 4)]));
 
   /* --- 3 geometry --- */
@@ -2022,8 +2038,8 @@ function reportSections(FG) {
   const coefCols = [{ w: 1100, label: 'Zone' }, { w: 1500, label: 'Cpe,10', align: 'right' },
   { w: 1500, label: 'Cpe,1', align: 'right' }, { w: 1600, label: 'Cpe (A)', align: 'right' },
   { w: 1600, label: 'we, kPa', align: 'right' }, { w: 1500, label: 'w net, kPa', align: 'right' }];
-  const coefRows = (obj, keys) => (keys || Object.keys(obj)).filter(k => obj[k]).map(k => {
-    const o = obj[k], we = o.cpe * q;
+  const coefRows = (obj, keys, qe = q) => (keys || Object.keys(obj)).filter(k => obj[k]).map(k => {
+    const o = obj[k], we = o.cpe * qe;
     const net = we - q * (we < 0 ? S.cpiPos : S.cpiNeg);
     return [{ t: k, b: true }, F(o.cpe10, 2), F(o.cpe1, 2), F(o.cpe, 3), F(we, 3), F(net, 3)];
   });
@@ -2056,7 +2072,12 @@ function reportSections(FG) {
   x += wFigure(FG.w180);
   x += wFigure(FG.k0);
   x += wFigure(FG.k90);
-  sets.forEach(([name, obj]) => { x += wCaption(`Roof — ${name}`); x += wTable(coefCols, coefRows(obj)); });
+  if (zeRoof() > g.h) {
+    x += wPara(wRun(`With parapets the roof takes its reference height at the top of the parapet (Figure 9): `
+      + `ze = h + hp = ${F(zeRoof(), 2)} m, ${QP} = ${F(qr, 4)} kPa. The walls and the internal pressure remain `
+      + `at ze = h.`, { sz: 18 }));
+  }
+  sets.forEach(([name, obj]) => { x += wCaption(`Roof — ${name}`); x += wTable(coefCols, coefRows(obj, null, qr)); });
   if (g.type === 'flat' && c.flat && c.flat.I) {
     x += wPara(wRun(`Zone I carries both signs: ${F(c.flat.I.cpe, 2)} and +${F(c.flat.I.cpePos, 2)}. `
       + 'Both cases are to be checked.', { sz: 17, i: true }));
@@ -2072,7 +2093,7 @@ function reportSections(FG) {
       : 'values entered directly by the engineer.'), { sz: 18 }));
   x += wCaption('Internal pressure adopted');
   x += wTable([{ w: 3600, label: 'Case' }, { w: 2600, label: 'Cpi', align: 'right' },
-  { w: 2600, label: 'wi = qp · Cpi, kPa', align: 'right' }], [
+  { w: 2600, label: `wi = ${QP} · Cpi, kPa`, align: 'right' }], [
     ['Positive internal pressure', F(S.cpiPos, 2), F(S.cpiPos * q, 3)],
     ['Negative internal pressure', F(S.cpiNeg, 2), F(S.cpiNeg * q, 3)]
   ]);
@@ -2094,13 +2115,16 @@ function reportSections(FG) {
   x += wHead(1, '8  Resultant forces on the envelope');
   x += wPara(wRun('Each zone pressure is resolved on the plane of its own surface and summed over the '
     + 'envelope, so a pitched roof keeps the correct split between vertical and horizontal components. '
-    + 'Positive vertical force is uplift. Internal pressure is included. Friction from clause 9 is '
+    + 'Positive vertical force is uplift. Internal pressure is included. Friction from section 9 is '
     + 'additional to the along-wind totals.', { sz: 18 }));
   const rv0 = g.type === 'flat' ? Vq(c.flat) : g.type === 'mono' ? Vq(c.deg0neg)
     : g.type === 'duo' ? Vq(c.deg0neg) : Vq(c.deg0);
   const rv90 = g.type === 'flat' ? Vq(c.flat) : Vq(c.deg90);
   const ef0 = envelopeForces(g, '0', wallP('0').p, rv0, q, S.cpiPos, S.cpiNeg);
   const ef90 = envelopeForces(g, '90', wallP('90').p, rv90, q, S.cpiPos, S.cpiNeg);
+  // a mono-pitch roof has its own coefficients with the wind onto the high eaves
+  const ef180 = g.type === 'mono' ? envelopeForces(g, '180', wallP('0').p, Vq(c.deg180), q, S.cpiPos, S.cpiNeg) : null;
+  const efAll = [ef0, ef90].concat(ef180 ? [ef180] : []);
   const fr = (n, ee) => [{ t: n, b: true }, F(ee.cpi, 2), F(ee.areaRoof, 1),
   { t: F(ee.roofVert, 1), b: true }, F(ee.roofAlong, 1), F(ee.wallAlong, 1), F(ee.totalAlong, 1)];
   x += wCaption('Resultant forces, kN (positive vertical is uplift)');
@@ -2110,8 +2134,8 @@ function reportSections(FG) {
   { w: 1400, label: 'Total along', align: 'right' }], [
     fr('0°, Cpi positive', ef0.pos), fr('0°, Cpi negative', ef0.neg),
     fr('90°, Cpi positive', ef90.pos), fr('90°, Cpi negative', ef90.neg)
-  ]);
-  const govUp = Math.max(ef0.pos.roofVert, ef0.neg.roofVert, ef90.pos.roofVert, ef90.neg.roofVert);
+  ].concat(ef180 ? [fr('180°, Cpi positive', ef180.pos), fr('180°, Cpi negative', ef180.neg)] : []));
+  const govUp = Math.max(...efAll.map(e => Math.max(e.pos.roofVert, e.neg.roofVert)));
   x += wPara(wRun(`Governing roof uplift: ${F(govUp, 1)} kN over ${F(ef0.pos.areaRoof, 1)} m² of roof `
     + 'surface. This is to be set against the permanent load in the design of holding-down details. '
     + 'The structural factor cs·cd is not included.', { sz: 17, i: true }));
@@ -2144,7 +2168,7 @@ function reportSections(FG) {
       + `${cn.kind === 'mono' ? 'Table 13' : 'Table 14'}. Net coefficients combine the pressure on the upper and `
       + 'lower surfaces and are therefore not combined with internal pressure. '
       + `Dimensions: h = ${F(cn.h, 2)} m, b = ${F(cn.b, 2)} m, d = ${F(cn.d, 2)} m, α = ${F(cn.alpha, 1)}°, `
-      + `degree of blockage φ = ${F(cn.phi, 2)}.  qp(h) = ${F(qc, 4)} kPa.`, { sz: 18 }));
+      + `degree of blockage φ = ${F(cn.phi, 2)}.  ${QP}(h) = ${F(qc, 4)} kPa.`, { sz: 18 }));
     x += wFigure(FG.can);
     x += wCaption('Canopy net pressure coefficients');
     x += wTable([{ w: 1400, label: 'Zone' }, { w: 1900, label: 'cp,net max', align: 'right' },
@@ -2179,7 +2203,7 @@ function reportSections(FG) {
         ['Board height h / width b', `${F(f.sh, 2)} / ${F(f.sb, 2)} m`],
         ['Height of lower edge above ground', `${F(f.shg, 2)} m`],
         ['Reference height ze = hg + h/2', `${F(sb.ze, 2)} m`],
-        ['qp(ze)', `${F(qs, 4)} kPa`],
+        [`${QP}(ze)`, `${F(qs, 4)} kPa`],
         ['Reference area Aref', `${F(sb.Aref, 1)} m²`],
         ['Force coefficient cf', F(sb.cf, 1)],
         [{ t: 'Resultant force Fw', b: true }, { t: `${F(Fs, 1)} kN`, b: true }],
@@ -2192,7 +2216,7 @@ function reportSections(FG) {
       const qw = qpAt(zRef), r = freeWall(h, +f.L, +f.Lc, +f.phi);
       x += wPara(wRun(`To cl 8.5.1 and Table 16. Height h = ${F(h, 2)} m, length L = ${F(f.L, 2)} m, `
         + `L/h = ${F(r.Lh, 2)}, return corner ${F(f.Lc, 2)} m, solidity ratio φ = ${F(f.phi, 2)}. `
-        + `Reference height ze = ${F(zRef, 2)} m, qp = ${F(qw, 4)} kPa. Zones are measured from the windward free end.`, { sz: 18 }));
+        + `Reference height ze = ${F(zRef, 2)} m, ${QP} = ${F(qw, 4)} kPa. Zones are measured from the windward free end.`, { sz: 18 }));
       x += wFigure(FG.free);
       x += wCaption('Free-standing wall net pressure coefficients');
       x += wTable([{ w: 1300, label: 'Zone' }, { w: 1800, label: 'From, m', align: 'right' },
@@ -2206,14 +2230,17 @@ function reportSections(FG) {
   x += wBreak();
   x += wHead(1, 'Assumptions and limitations');
   [
-    'Pressure coefficients are external pressure coefficients to SANS 10160-3. Partial factors, load '
-    + 'combinations and accompanying actions are covered by SANS 10160-1 and are not applied here.',
+    'Pressure coefficients are external pressure coefficients to SANS 10160-3. ' + (fact
+      ? `A factor of safety of ${F(st.fos, 2)} has been applied to the peak wind speed pressure at the engineer’s `
+      + 'instruction; it is not a requirement of SANS 10160-3. Partial factors, load combinations and accompanying '
+      + 'actions of SANS 10160-1 are not applied in addition.'
+      : 'Partial factors, load combinations and accompanying actions are covered by SANS 10160-1 and are not applied here.'),
     'The structural factor cs·cd has not been evaluated. Structures sensitive to dynamic response require '
     + 'separate consideration.',
     'Vaulted and domed roofs (cl 8.3.8) are not covered by this calculation.',
-    'Internal pressure coefficients derived from Figure 16 are read from a digitised form of that figure and '
-    + 'are accurate to approximately ±0,02. Where a design is governed by internal pressure, the figure in the '
-    + 'standard should be read directly.',
+    'Internal pressure coefficients derived from Figure 16 follow its two straight lines (Cpi = +0,35 at μ ≤ 0,33, '
+    + 'falling to −0,30 at μ = 0,90 for h/d ≤ 0,25 and to −0,50 at μ = 0,95 for h/d ≥ 1,0), with linear '
+    + 'interpolation on h/d between the two.',
     'Zone boundaries for hipped roofs and for canopy roofs are indicative. Zone extents are to be set out from '
     + 'Figures 12, 19 and 20 as applicable. Tabulated coefficients are unaffected.',
     'Friction is taken on surfaces parallel to the wind beyond min(2b, 4h) from the windward edge in accordance '
@@ -2380,6 +2407,8 @@ function openProject(file) {
         toast('That file is not a SANS Wind project file.', true);
         return;
       }
+      // files saved before the factor of safety existed carry none: open them unfactored
+      if (o.state && typeof o.state === 'object' && !('fos' in o.state)) S.fos = 1;
       mergeState(S, o.state);
       renderAll();
       toast('Opened ' + (S.doc.project || file.name));
@@ -2407,7 +2436,7 @@ function toast(msg, bad) {
 const S = {
   tab: 'site',
   province: 3, muni: 'City of Johannesburg', vb0: 36, T: 50,
-  terrain: 'B', altitude: 0, c0: 1, useTopo: false,
+  terrain: 'B', altitude: 0, c0: 1, useTopo: false, fos: 1,
   topo: { shape: 'cliff', H: 40, Lu: 200, Ld: 400, x: 0, z: 5 },
   g: { type: 'duo', h: 6.757, b: 50, d: 25, alpha: 8, alpha90: 10, A: 10, hStrip: 1 },
   edge: { type: 'sharp', hp: 0, r: 0, mansard: 30 },
@@ -2470,11 +2499,49 @@ const sgn = v => v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
 
 /* ---------- derived values ---------- */
 
-function site() {
-  return sitePressure({ vb0: S.vb0, returnPeriod: S.T, terrain: S.terrain, c0: S.c0, altitude: S.altitude });
+/** Factor of safety on the wind pressure; anything that is not a positive number counts as 1. */
+function fosOf() { return +S.fos > 0 ? +S.fos : 1; }
+function hasFos() { return Math.abs(fosOf() - 1) > 1e-9; }
+/** Name of the pressure the results are built from: q_p, or FoS · q_p once a factor is set. */
+function qSym(arg) {
+  return (hasFos() ? 'FoS · ' : '') + 'q<sub>p</sub>' + (arg ? `(${arg})` : '');
 }
+/** Signed coefficient for headings: +0.2, −0.3, 0. */
+function signed(v) {
+  const a = String(+Math.abs(+v || 0).toFixed(2));
+  return (v > 0 ? '+' : v < 0 ? '−' : '') + a;
+}
+
+function site() {
+  return sitePressure({ vb0: S.vb0, returnPeriod: S.T, terrain: S.terrain, c0: S.c0, altitude: S.altitude, fos: fosOf() });
+}
+/** All of these return the pressure with the factor of safety already applied. */
 function qpAt(z) { return site().at(z).qp; }
 function qpRef() { return qpAt(S.g.h); }
+/** Roof reference height: h, or h + h_p for a flat roof with parapets (Figure 9). */
+function zeRoof() {
+  const par = S.g.type === 'flat' && S.edge.type === 'parapet';
+  return S.g.h + (par ? Math.max(+S.edge.hp || 0, 0) : 0);
+}
+function qpRoof() { return qpAt(zeRoof()); }
+
+/** Banners shown above every results pane. */
+function banners() {
+  let h = '';
+  if (hasFos()) {
+    h += `<div class="note warn"><b>Factor of safety ${fmt(fosOf(), 2)} applied to the wind pressure.</b>
+      Every pressure and force shown is ${fmt(fosOf(), 2)} × the SANS 10160-3 value. Wind speeds are not factored.</div>`;
+  }
+  const g = S.g;
+  if (g.type !== 'flat' && ['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) {
+    const p = profileOf(g.type, g.h, g.d, g.alpha, g.alpha90);
+    if (p.he < 0) {
+      h += `<div class="note warn"><b>Check the building geometry.</b> The roof rises ${fmt(p.rise, 2)} m, more than
+        the height h = ${fmt(g.h, 2)} m to the highest point, which puts the eaves below ground. Reduce the pitch or the depth d, or increase h.</div>`;
+    }
+  }
+  return h;
+}
 
 /** roof coefficients for the active roof type, keyed by wind direction */
 function roofCoeffs() {
@@ -2535,18 +2602,23 @@ function canopyThumb(kind) {
   return renderScene(canopyScene(kind, { h: 4, b: 14, d: 9, alpha: 12 }, {}), { width: 118, height: 60, label: false }).svg;
 }
 
-function coeffRows(obj, q, keys) {
+/** q is the pressure for the external coefficient; qi (default q) is the one for internal pressure. */
+function coeffRows(obj, q, keys, qi) {
+  if (qi === undefined) qi = q;
   return (keys || Object.keys(obj)).filter(k => obj[k]).map(k => {
     const c = obj[k], we = c.cpe * q;
     return `<tr><td class="z"><span class="sw" style="background:${pressureColour(we, 1, 1)}"></span>${k}</td>
       <td>${fmt(c.cpe10)}</td><td>${fmt(c.cpe1)}</td><td>${fmt(c.cpe)}</td>
       <td class="${sgn(we)}">${fmt(we, 3)}</td>
-      <td class="${sgn(we - q * S.cpiPos)}">${fmt(we - q * S.cpiPos, 3)}</td>
-      <td class="${sgn(we - q * S.cpiNeg)}">${fmt(we - q * S.cpiNeg, 3)}</td></tr>`;
+      <td class="${sgn(we - qi * S.cpiPos)}">${fmt(we - qi * S.cpiPos, 3)}</td>
+      <td class="${sgn(we - qi * S.cpiNeg)}">${fmt(we - qi * S.cpiNeg, 3)}</td></tr>`;
   }).join('');
 }
-const COEFF_HEAD = `<thead><tr><th>Zone</th><th>C<sub>pe,10</sub></th><th>C<sub>pe,1</sub></th>
-  <th>C<sub>pe</sub>(A)</th><th>w<sub>e</sub> kPa</th><th>net, C<sub>pi</sub>=+0.2</th><th>net, C<sub>pi</sub>=−0.3</th></tr></thead>`;
+/** Table heading; the net columns name the internal pressure coefficients actually in use. */
+function coeffHead() {
+  return `<thead><tr><th>Zone</th><th>C<sub>pe,10</sub></th><th>C<sub>pe,1</sub></th>
+  <th>C<sub>pe</sub>(A)</th><th>w<sub>e</sub> kPa</th><th>net, C<sub>pi</sub>=${signed(S.cpiPos)}</th><th>net, C<sub>pi</sub>=${signed(S.cpiNeg)}</th></tr></thead>`;
+}
 
 /* ---------- sidebar ---------- */
 
@@ -2618,6 +2690,8 @@ function sidebar() {
       ${fld('topo.Ld', 'Downwind slope length L<sub>d</sub>', { unit: 'm' })}
       ${fld('topo.x', 'Distance from crest x', { unit: 'm' })}
       ${fld('topo.z', 'Height above local ground z', { unit: 'm' })}`}
+    ${fld('fos', 'Factor of safety on wind pressure', { step: 0.05 })}
+    <p class="hint">Multiplies q<sub>p</sub>, so every pressure and force scales with it. Leave at 1 for the unfactored SANS 10160-3 values.</p>
   </div>`;
 
   if (['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) h += buildingFields();
@@ -2689,7 +2763,7 @@ function sidebar() {
 /* ---------- results panes ---------- */
 
 function paneSite() {
-  const st = site(), t = TERRAIN[S.terrain], q = st.at(S.g.h);
+  const st = site(), t = TERRAIN[S.terrain], q = st.at(S.g.h), fact = hasFos();
   const topo = S.useTopo === true || S.useTopo === 'true'
     ? topographyFactor({ shape: S.topo.shape, H: +S.topo.H, Lu: +S.topo.Lu, Ld: +S.topo.Ld, x: +S.topo.x, z: +S.topo.z })
     : null;
@@ -2740,7 +2814,7 @@ function paneSite() {
     ${zTicks.map(z => `<text x="${mL - 7}" y="${(Y(z) + 3.5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="#5d6f80">${fmt(z, zStep < 1 ? 1 : 0)}</text>`).join('')}
     <text x="16" y="${((mT + CH - mB) / 2).toFixed(1)}" text-anchor="middle" font-size="11" fill="#5d6f80"
       transform="rotate(-90 16 ${((mT + CH - mB) / 2).toFixed(1)})">height z, m</text>
-    <text x="${((mL + CW - mR) / 2).toFixed(1)}" y="${CH - 8}" text-anchor="middle" font-size="11" fill="#5d6f80">peak wind speed pressure, kPa</text>
+    <text x="${((mL + CW - mR) / 2).toFixed(1)}" y="${CH - 8}" text-anchor="middle" font-size="11" fill="#5d6f80">${fact ? 'design wind pressure FoS · qp, kPa' : 'peak wind speed pressure, kPa'}</text>
   </svg>`;
 
   return `<h2>Peak wind speed pressure</h2>
@@ -2748,7 +2822,7 @@ function paneSite() {
   <div class="cards">
     <div class="card"><b>${fmt(st.vb, 1)}</b><span>v<sub>b</sub> basic wind speed, m/s</span></div>
     <div class="card"><b>${fmt(q.vp, 1)}</b><span>v<sub>p</sub>(z<sub>e</sub>) peak wind speed, m/s</span></div>
-    <div class="card"><b>${fmt(q.qp, 3)}</b><span>q<sub>p</sub>(z<sub>e</sub>) peak pressure, kPa</span></div>
+    <div class="card"><b>${fmt(q.qp, 3)}</b><span>${fact ? 'FoS · q<sub>p</sub>(z<sub>e</sub>) design pressure, kPa' : 'q<sub>p</sub>(z<sub>e</sub>) peak pressure, kPa'}</span></div>
   </div>
   <h3>Calculation trail</h3>
   <div class="trail">
@@ -2756,11 +2830,13 @@ function paneSite() {
     <div><span>Probability factor c<sub>prob</sub> for a ${fmt(S.T, 0)} year return period<em>cl 7.2.3 eq 2, K = 0.2, n = 0.5</em></span><b>${fmt(st.cprob, 4)}</b></div>
     <div class="key"><span>Basic wind speed v<sub>b</sub> = c<sub>prob</sub> · v<sub>b,0</sub><em>cl 7.2.2 eq 1</em></span><b>${fmt(st.vb, 2)} m/s</b></div>
     <div><span>Terrain ${S.terrain}: z<sub>g</sub> = ${t.zg} m, z<sub>0</sub> = ${t.z0} m, z<sub>c</sub> = ${t.zc} m, α = ${t.a}<em>cl 7.3.2.1 Table 1</em></span><b></b></div>
-    <div><span>Roughness factor c<sub>r</sub>(z<sub>e</sub>) = 1.36 ((z − z<sub>0</sub>)/z<sub>g</sub>)<sup>α</sup><em>cl 7.3.2.1 eq 5</em></span><b>${fmt(q.cr, 4)}</b></div>
+    <div><span>Roughness factor c<sub>r</sub>(z<sub>e</sub>) = 1.36 ((z − z<sub>0</sub>)/(z<sub>g</sub> − z<sub>0</sub>))<sup>α</sup><em>cl 7.3.2.1 eq 5</em></span><b>${fmt(q.cr, 4)}</b></div>
     <div><span>Topography factor c<sub>0</sub>(z<sub>e</sub>)<em>cl 7.3.3, Annex B.3</em></span><b>${fmt(S.c0, 3)}</b></div>
     <div class="key"><span>Peak wind speed v<sub>p</sub> = c<sub>r</sub> · c<sub>0</sub> · v<sub>b,peak</sub><em>cl 7.3.1.1 eq 3</em></span><b>${fmt(q.vp, 2)} m/s</b></div>
     <div><span>Air density ρ at ${fmt(S.altitude, 0)} m above sea level<em>Table 4</em></span><b>${fmt(st.rho, 3)} kg/m³</b></div>
-    <div class="key"><span>Peak wind speed pressure q<sub>p</sub> = ½ ρ v<sub>p</sub>²<em>cl 7.4 eq 6</em></span><b>${fmt(q.qp, 4)} kPa</b></div>
+    <div class="key"><span>Peak wind speed pressure q<sub>p</sub> = ½ ρ v<sub>p</sub>²<em>cl 7.4 eq 6</em></span><b>${fmt(q.qp0, 4)} kPa</b></div>
+    ${fact ? `<div><span>Factor of safety on wind pressure, FoS<em>entered by the engineer — not part of SANS 10160-3</em></span><b>${fmt(st.fos, 2)}</b></div>
+    <div class="key"><span>Design wind pressure = FoS · q<sub>p</sub><em>used for every pressure and force in this tool</em></span><b>${fmt(q.qp, 4)} kPa</b></div>` : ''}
   </div>
   ${topo ? `<h3>Topography, Annex B.3</h3>
     <div class="trail">
@@ -2773,13 +2849,13 @@ function paneSite() {
     <div class="note">Calculated c₀ = <b>${fmt(topo.c0, 3)}</b>. It is not applied automatically — switch topography back to "entered directly" and type it in if you want to use it.</div>` : ''}
   <h3>Pressure over the height of the structure</h3>
   <div class="figs"><div class="fig" style="flex:1 1 470px">
-    <h4>q<sub>p</sub> against height</h4>
-    <div class="cap">Terrain ${S.terrain}, c₀ = ${fmt(S.c0, 2)} — constant below z<sub>c</sub> = ${TERRAIN[S.terrain].zc} m.
-      Marker shows q<sub>p</sub> = ${fmt(qTop, 4)} kPa at z<sub>e</sub> = ${fmt(Hz, 2)} m.</div>
+    <h4>${qSym()} against height</h4>
+    <div class="cap">Terrain ${S.terrain}, c₀ = ${fmt(S.c0, 2)}${fact ? `, FoS = ${fmt(st.fos, 2)}` : ''} — constant below z<sub>c</sub> = ${TERRAIN[S.terrain].zc} m.
+      Marker shows ${qSym()} = ${fmt(qTop, 4)} kPa at z<sub>e</sub> = ${fmt(Hz, 2)} m.</div>
     ${chart}</div>
     <div class="fig" style="flex:1 1 320px"><h4>Reference heights</h4>
       <div class="cap">cl 8.3.2.1, Figure 7 — h = ${fmt(S.g.h, 2)} m, b = ${fmt(S.g.b, 2)} m</div>
-      <table><thead><tr><th>Part</th><th>from, m</th><th>to, m</th><th>z<sub>e</sub>, m</th><th>q<sub>p</sub>, kPa</th></tr></thead><tbody>
+      <table><thead><tr><th>Part</th><th>from, m</th><th>to, m</th><th>z<sub>e</sub>, m</th><th>${qSym()}, kPa</th></tr></thead><tbody>
       ${parts.map((p, i) => `<tr><td>${i + 1}</td><td>${fmt(p.zBot, 2)}</td><td>${fmt(p.zTop, 2)}</td>
         <td>${fmt(p.ze, 2)}</td><td>${fmt(st.at(p.ze).qp, 4)}</td></tr>`).join('')}
       </tbody></table>
@@ -2795,7 +2871,7 @@ function paneWalls() {
   const a = wallP('0'), b90 = wallP('90');
   const sc0 = buildingScene(g, '0', a.p, null);
   const sc90 = buildingScene(g, '90', b90.p, null);
-  const tbl = (w, dir) => `<table>${COEFF_HEAD}<tbody>${coeffRows(w.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
+  const tbl = (w, dir) => `<table>${coeffHead()}<tbody>${coeffRows(w.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
     <p class="ref">e = min(b, 2h) = ${fmt(w.e, 3)} m &nbsp;·&nbsp; h/d = ${fmt(w.hd, 3)}
     &nbsp;·&nbsp; ${w.zones.map(z => `${z.id}: ${fmt(z.x1 - z.x0, 2)} m`).join(' · ')}</p>`;
   const F = (dir, w) => {
@@ -2818,12 +2894,13 @@ function paneWalls() {
 }
 
 function paneRoof() {
-  const q = qpRef(), g = S.g, c = roofCoeffs();
+  // q at z_e = h serves the walls and internal pressure; qr is the roof's own (h + h_p with parapets)
+  const q = qpRef(), qr = qpRoof(), g = S.g, c = roofCoeffs();
   const wp0 = wallP('0').p, wp90 = wallP('90').p;
-  const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
+  const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * qr); return m; };
   let figList = [], tabs = '';
   const T = (title, obj, cap) => `<h3>${title}</h3>${cap ? `<p class="ref">${cap}</p>` : ''}
-    <table>${COEFF_HEAD}<tbody>${coeffRows(obj, q)}</tbody></table>`;
+    <table>${coeffHead()}<tbody>${coeffRows(obj, qr, null, q)}</tbody></table>`;
 
   if (g.type === 'flat') {
     const z = flatRoofZones(g.h, g.b, g.d), z90 = flatRoofZones(g.h, g.d, g.b);
@@ -2831,11 +2908,13 @@ function paneRoof() {
     figList = [{ t: 'Wind at 0°', c: 'Zones F, G, H, I measured back from the windward eaves', scene: buildingScene(g, '0', wp0, p), w: '0' },
                { t: 'Wind at 90°', c: 'The same zoning rotated through 90°', scene: buildingScene(g, '90', wp90, p), w: '90' }];
     tabs = T('Coefficients — both directions', c.flat, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.F.widthEach, 2)} m · F, G depth ${fmt(z.F.depth, 2)} m · H depth ${fmt(z.H.depth, 2)} m · I depth ${fmt(z.I.depth, 2)} m`)
-      + `<div class="note">Zone I carries <b>both</b> signs: ${fmt(c.flat.I.cpe, 2)} and +${fmt(c.flat.I.cpePos, 2)}. Both cases must be checked.</div>`;
+      + `<div class="note">Zone I carries <b>both</b> signs: ${fmt(c.flat.I.cpe, 2)} and +${fmt(c.flat.I.cpePos, 2)}. Both cases must be checked.</div>`
+      + (zeRoof() > g.h ? `<div class="note">With parapets the roof takes its reference height at the top of the parapet (Figure 9):
+          z<sub>e</sub> = h + h<sub>p</sub> = ${fmt(zeRoof(), 2)} m, ${qSym()} = ${fmt(qr, 4)} kPa. The walls and the internal pressure stay at z<sub>e</sub> = h (${fmt(q, 4)} kPa).</div>` : '');
   } else if (g.type === 'mono') {
     const z = monoZones(g.h, g.b, g.d);
     figList = [{ t: 'Wind at 0° — onto the low eaves', c: 'Suction case, Table 8', scene: buildingScene(g, '0', wp0, V(c.deg0neg)), w: '0' },
-               { t: 'Wind at 180° — onto the high eaves', c: 'Table 8', scene: buildingScene(g, '180', null, V(c.deg180)), w: '180' },
+               { t: 'Wind at 180° — onto the high eaves', c: 'Table 8', scene: buildingScene(g, '180', wp0, V(c.deg180)), w: '180' },
                { t: 'Wind at 90°', c: 'F splits into F<sub>up</sub> at the high eaves and F<sub>low</sub> at the low eaves', scene: buildingScene(g, '90', wp90, V(c.deg90)), w: '90' }];
     tabs = T('Wind at 0° — suction case', c.deg0neg, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.d0.F.widthEach, 2)} m · F, G depth ${fmt(z.d0.F.depth, 2)} m · H depth ${fmt(z.d0.H.depth, 2)} m`)
       + T('Wind at 0° — pressure case', c.deg0pos, 'Table 8 gives a second, positive set for pitches above 5°. Check both.')
@@ -2862,6 +2941,9 @@ function paneRoof() {
   const rv90 = g.type === 'flat' ? V(c.flat) : V(c.deg90);
   const ef0 = envelopeForces(g, '0', wp0, rv0, q, S.cpiPos, S.cpiNeg);
   const ef90 = envelopeForces(g, '90', wp90, rv90, q, S.cpiPos, S.cpiNeg);
+  // a mono-pitch roof has its own coefficients with the wind onto the high eaves
+  const ef180 = g.type === 'mono' ? envelopeForces(g, '180', wp0, V(c.deg180), q, S.cpiPos, S.cpiNeg) : null;
+  const efAll = [ef0, ef90].concat(ef180 ? [ef180] : []);
   const fRow = (n, e) => `<tr><td class="z">${n}</td>
     <td>${fmt(e.cpi, 2)}</td><td>${fmt(e.areaRoof, 1)}</td>
     <td class="${e.roofVert > 0 ? 'neg' : 'pos'}">${fmt(e.roofVert, 1)}</td>
@@ -2875,9 +2957,10 @@ function paneRoof() {
     <th>Total along wind, kN</th></tr></thead><tbody>
     ${fRow('0°, C<sub>pi</sub> positive', ef0.pos)}${fRow('0°, C<sub>pi</sub> negative', ef0.neg)}
     ${fRow('90°, C<sub>pi</sub> positive', ef90.pos)}${fRow('90°, C<sub>pi</sub> negative', ef90.neg)}
+    ${ef180 ? fRow('180°, C<sub>pi</sub> positive', ef180.pos) + fRow('180°, C<sub>pi</sub> negative', ef180.neg) : ''}
   </tbody></table>
   <div class="note">Governing roof uplift is
-    <b>${fmt(Math.max(ef0.pos.roofVert, ef0.neg.roofVert, ef90.pos.roofVert, ef90.neg.roofVert), 1)} kN</b>
+    <b>${fmt(Math.max(...efAll.map(e => Math.max(e.pos.roofVert, e.neg.roofVert))), 1)} kN</b>
     over ${fmt(ef0.pos.areaRoof, 1)} m² of roof. Use it against the permanent load for holding-down design.
     Friction from the friction tab is additional to the along-wind totals, and the structural factor
     c<sub>s</sub>c<sub>d</sub> is not included.</div>`;
@@ -2918,12 +3001,12 @@ function paneInternal() {
   const res = internalPressure(faces, hd);
   const rows = res.map((r, i) => `<tr><td class="z">${r.dir}°</td>
     <td>${r.mode === 'dominant' ? `face ${r.face}, ratio ${fmt(r.ratio, 1)}` : r.mode === 'mu' ? `μ = ${fmt(r.mu, 3)}` : 'no openings'}</td>
-    <td>${r.mode === 'dominant' ? `${fmt(r.factor, 2)} · C<sub>pe</sub>` : r.mode === 'mu' ? `${fmt(r.upper, 3)} / ${fmt(r.lower, 3)}` : '–'}</td>
+    <td>${r.mode === 'dominant' ? `${fmt(r.factor, r.ratio > 2 && r.ratio < 3 ? 3 : 2)} · C<sub>pe</sub>` : r.mode === 'mu' ? `${fmt(r.upper, 3)} / ${fmt(r.lower, 3)}` : '–'}</td>
     <td class="${sgn(r.cpi)}">${fmt(r.cpi, 3)}</td>
     <td class="${sgn(r.cpi * q)}">${fmt(r.cpi === null ? null : r.cpi * q, 3)}</td></tr>`).join('');
   const anyDominant = res.some(r => r.mode === 'dominant');
   return `<h2>Internal pressure</h2>
-  <p class="lede">cl 8.3.9. A face counts as dominant when its openings are at least twice the openings in all the other faces put together; otherwise C<sub>pi</sub> comes from the opening ratio μ and h/d on Figure 16.</p>
+  <p class="lede">cl 8.3.9. A face counts as dominant when its openings are at least twice the openings in all the other faces put together, and then takes C<sub>pi</sub> = 0.75 C<sub>pe</sub> at twice, 0.90 C<sub>pe</sub> at three times or more, interpolated between (cl 8.3.9.5); otherwise C<sub>pi</sub> comes from the opening ratio μ and h/d on Figure 16.</p>
   <table><thead><tr><th>Wind</th><th>Governing condition</th><th>Figure 16, h/d ≤ 0.25 / ≥ 1</th><th>C<sub>pi</sub></th><th>w<sub>i</sub>, kPa</th></tr></thead><tbody>${rows}</tbody></table>
   <h3>Openings entered</h3>
   <table><thead><tr><th>Face</th><th>Area, m²</th><th>Openings, m²</th><th>Ratio</th><th>Check</th></tr></thead><tbody>
@@ -2934,7 +3017,7 @@ function paneInternal() {
   <div class="note">Where the openings cannot be estimated, cl 8.3.9.6 note 2 requires the more onerous of
     <b>C<sub>pi</sub> = +0.2</b> (w<sub>i</sub> = ${fmt(0.2 * q, 3)} kPa) and <b>−0.3</b> (${fmt(-0.3 * q, 3)} kPa).
     Open silos and chimneys take −0.6; vented tanks with small openings take −0.4 (cl 8.3.9.8).</div>
-  ${anyDominant ? '' : `<div class="note">The Figure 16 curves here are digitised to about ±0.01. For a design that turns on C<sub>pi</sub>, read the figure in the code.</div>`}
+  ${anyDominant ? '' : `<div class="note">Figure 16 is two straight lines from C<sub>pi</sub> = +0.35 at μ ≤ 0.33: down to −0.30 at μ = 0.90 for h/d ≤ 0.25, and down to −0.50 at μ = 0.95 for h/d ≥ 1, constant beyond. Between the two h/d limits the tool interpolates linearly.</div>`}
   <div class="note">External coefficients at the openings are taken as area-weighted values over zones A and B of each face. Where the openings sit in one zone, substitute that zone's C<sub>pe</sub> by hand (cl 8.3.9.5).</div>`;
 }
 
@@ -2959,7 +3042,7 @@ function paneCanopy() {
     <td class="pos">${fmt(maxV[k], 3)}</td><td class="neg">${fmt(minV[k], 3)}</td></tr>`).join('')}
   </tbody></table>
   <h3>Overall force on the structure</h3>
-  <table><thead><tr><th>Case</th><th>c<sub>f</sub></th><th>q<sub>p</sub>, kPa</th><th>c<sub>f</sub> q<sub>p</sub>, kPa</th><th>Reference area, m²</th><th>F<sub>w</sub>, kN</th></tr></thead><tbody>
+  <table><thead><tr><th>Case</th><th>c<sub>f</sub></th><th>${qSym()}, kPa</th><th>c<sub>f</sub> · ${qSym()}, kPa</th><th>Reference area, m²</th><th>F<sub>w</sub>, kN</th></tr></thead><tbody>
     <tr><td class="z">Downward</td><td>${fmt(r.cf.max)}</td><td>${fmt(q, 4)}</td><td class="pos">${fmt(r.cf.max * q, 3)}</td><td>${fmt(area, 1)}</td><td class="pos">${fmt(r.cf.max * q * area, 1)}</td></tr>
     <tr><td class="z">Uplift</td><td>${fmt(r.cf.min)}</td><td>${fmt(q, 4)}</td><td class="neg">${fmt(r.cf.min * q, 3)}</td><td>${fmt(area, 1)}</td><td class="neg">${fmt(r.cf.min * q * area, 1)}</td></tr>
   </tbody></table>
@@ -2978,10 +3061,10 @@ function paneFree() {
     ${sb.applies ? '' : '<div class="note warn">The lower edge is less than h/4 above the ground, so cl 8.5.3 does not apply — treat the board as a free-standing wall instead.</div>'}
     <div class="trail">
       <div><span>Reference height z<sub>e</sub> = h<sub>g</sub> + h/2</span><b>${fmt(sb.ze, 2)} m</b></div>
-      <div><span>q<sub>p</sub>(z<sub>e</sub>)</span><b>${fmt(q, 4)} kPa</b></div>
+      <div><span>${qSym('z<sub>e</sub>')}</span><b>${fmt(q, 4)} kPa</b></div>
       <div><span>Reference area A<sub>ref</sub> = b · h</span><b>${fmt(sb.Aref, 1)} m²</b></div>
       <div><span>Force coefficient c<sub>f</sub></span><b>${fmt(sb.cf, 1)}</b></div>
-      <div class="key"><span>Resultant force F<sub>w</sub> = c<sub>f</sub> q<sub>p</sub> A<sub>ref</sub></span><b>${fmt(F, 1)} kN</b></div>
+      <div class="key"><span>Resultant force F<sub>w</sub> = c<sub>f</sub> · ${qSym()} · A<sub>ref</sub></span><b>${fmt(F, 1)} kN</b></div>
       <div><span>Horizontal eccentricity e = ± b/4</span><b>± ${fmt(sb.ecc, 2)} m</b></div>
       <div><span>Torsional moment F<sub>w</sub> · e</span><b>± ${fmt(F * sb.ecc, 1)} kNm</b></div>
       <div class="key"><span>Moment at ground level F<sub>w</sub> · z<sub>e</sub></span><b>${fmt(F * sb.ze, 1)} kNm</b></div>
@@ -3019,7 +3102,7 @@ function paneFriction() {
   <p class="lede">cl 7.5.3.6 and 8.6. Friction acts on surfaces parallel to the wind, but only beyond min(2b, 4h) from the windward edge, and may be ignored altogether when the total area parallel to the wind is no more than four times the area normal to it.</p>
   <div class="cards">
     <div class="card"><b>${fmt(cfr, 2)}</b><span>c<sub>fr</sub>, Table 17</span></div>
-    <div class="card"><b>${fmt(cfr * q, 4)}</b><span>w<sub>fr</sub> = c<sub>fr</sub> q<sub>p</sub>, kPa</span></div>
+    <div class="card"><b>${fmt(cfr * q, 4)}</b><span>w<sub>fr</sub> = c<sub>fr</sub> · ${qSym()}, kPa</span></div>
   </div>
   <table><thead><tr><th>Wind</th><th>Starts at, m</th><th>Roof area, m²</th><th>Wall area, m²</th><th>A<sub>fr</sub>, m²</th>
     <th>Parallel / normal</th><th>cl 7.5.3.6</th><th>F<sub>fr</sub>, kN</th></tr></thead><tbody>
@@ -3029,14 +3112,14 @@ function paneFriction() {
 }
 
 function paneReport() {
-  const st = site(), q = qpRef(), g = S.g;
+  const st = site(), q = qpRef(), qr = qpRoof(), g = S.g, fact = hasFos();
   const a = wallP('0').w, b90 = wallP('90').w, c = roofCoeffs();
   const roofTbl = () => {
     const sets = g.type === 'flat' ? [['Both directions', c.flat]]
       : g.type === 'mono' ? [['0° suction', c.deg0neg], ['0° pressure', c.deg0pos], ['180°', c.deg180], ['90°', c.deg90]]
         : g.type === 'duo' ? [['0° case 1', c.deg0neg], ['0° case 2', c.deg0pos], ['90°', c.deg90]]
           : [['0° case 1', c.deg0], ['0° case 2', c.deg0pos], ['90°', c.deg90]];
-    return sets.map(([n, o]) => `<h3>Roof — ${n}</h3><table>${COEFF_HEAD}<tbody>${coeffRows(o, q)}</tbody></table>`).join('');
+    return sets.map(([n, o]) => `<h3>Roof — ${n}</h3><table>${coeffHead()}<tbody>${coeffRows(o, qr, null, q)}</tbody></table>`).join('');
   };
   return `<h2>Summary</h2>
   <p class="lede">Everything the tool has worked out, on one page. The Word report is a formal
@@ -3054,6 +3137,7 @@ function paneReport() {
     <tr><td>Site</td><td style="text-align:left">${esc(S.muni)}, ${esc(PROVINCES[S.province])}</td></tr>
     <tr><td>v<sub>b,0</sub> / return period / altitude</td><td style="text-align:left">${fmt(S.vb0, 1)} m/s · ${fmt(S.T, 0)} years · ${fmt(S.altitude, 0)} m</td></tr>
     <tr><td>Terrain category / c₀</td><td style="text-align:left">${S.terrain} · ${fmt(S.c0, 2)}</td></tr>
+    ${fact ? `<tr><td>Factor of safety on wind pressure</td><td style="text-align:left">${fmt(st.fos, 2)}</td></tr>` : ''}
     <tr><td>Building h × b × d</td><td style="text-align:left">${fmt(g.h, 2)} × ${fmt(g.b, 2)} × ${fmt(g.d, 2)} m</td></tr>
     <tr><td>Roof</td><td style="text-align:left">${ROOFS.find(r => r[0] === g.type)[1]}${g.type !== 'flat' ? `, α = ${fmt(g.alpha, 1)}°` : ''}${g.type === 'hip' ? `, α₉₀ = ${fmt(g.alpha90, 1)}°` : ''}</td></tr>
     <tr><td>Loaded area A</td><td style="text-align:left">${fmt(g.A, 1)} m²</td></tr>
@@ -3062,13 +3146,17 @@ function paneReport() {
   <table><tbody>
     <tr><td>c<sub>prob</sub></td><td>${fmt(st.cprob, 4)}</td><td>v<sub>b</sub></td><td>${fmt(st.vb, 2)} m/s</td></tr>
     <tr><td>c<sub>r</sub>(z<sub>e</sub>)</td><td>${fmt(st.at(g.h).cr, 4)}</td><td>v<sub>p</sub>(z<sub>e</sub>)</td><td>${fmt(st.at(g.h).vp, 2)} m/s</td></tr>
-    <tr><td>ρ</td><td>${fmt(st.rho, 3)} kg/m³</td><td><b>q<sub>p</sub>(z<sub>e</sub>)</b></td><td><b>${fmt(q, 4)} kPa</b></td></tr>
+    <tr><td>ρ</td><td>${fmt(st.rho, 3)} kg/m³</td><td><b>q<sub>p</sub>(z<sub>e</sub>)</b></td><td><b>${fmt(st.at(g.h).qp0, 4)} kPa</b></td></tr>
+    ${fact ? `<tr><td>Factor of safety FoS</td><td>${fmt(st.fos, 2)}</td><td><b>FoS · q<sub>p</sub>(z<sub>e</sub>)</b></td><td><b>${fmt(q, 4)} kPa</b></td></tr>` : ''}
+    ${zeRoof() > g.h ? `<tr><td>Roof z<sub>e</sub> = h + h<sub>p</sub></td><td>${fmt(zeRoof(), 2)} m</td><td>${qSym()} for the roof</td><td>${fmt(qr, 4)} kPa</td></tr>` : ''}
   </tbody></table>
-  <h3>Walls — wind at 0°</h3><table>${COEFF_HEAD}<tbody>${coeffRows(a.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
-  <h3>Walls — wind at 90°</h3><table>${COEFF_HEAD}<tbody>${coeffRows(b90.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
+  <h3>Walls — wind at 0°</h3><table>${coeffHead()}<tbody>${coeffRows(a.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
+  <h3>Walls — wind at 90°</h3><table>${coeffHead()}<tbody>${coeffRows(b90.cpe, q, ['A', 'B', 'C', 'D', 'E'])}</tbody></table>
   ${roofTbl()}
-  <div class="note">Net pressures use C<sub>pi</sub> = +${fmt(S.cpiPos, 2)} and ${fmt(S.cpiNeg, 2)}.
-  Pressure coefficients and the peak pressure are as SANS 10160-3:2018. Partial factors and load combinations are Part 1 and are not applied here.</div>`;
+  <div class="note">Net pressures use C<sub>pi</sub> = ${signed(S.cpiPos)} and ${signed(S.cpiNeg)}.
+  Pressure coefficients and the peak pressure are as SANS 10160-3:2018. ${fact
+      ? `A factor of safety of ${fmt(st.fos, 2)} has been applied to the peak wind speed pressure, so every pressure above includes it. Partial factors and load combinations of Part 1 are not applied in addition.`
+      : 'Partial factors and load combinations are Part 1 and are not applied here.'}</div>`;
 }
 
 const PANES = {
@@ -3089,11 +3177,12 @@ function renderHeader() {
   const st = site(), p = st.at(S.g.h);
   document.getElementById('liveVp').textContent = fmt(p.vp, 1);
   document.getElementById('liveQp').textContent = fmt(p.qp, 3);
+  document.getElementById('liveQpLbl').innerHTML = qSym('z<sub>e</sub>');
 }
 
 function renderResults() {
   try {
-    document.getElementById('out').innerHTML = PANES[S.tab]();
+    document.getElementById('out').innerHTML = banners() + PANES[S.tab]();
   } catch (e) {
     document.getElementById('out').innerHTML =
       `<h2>Check the input</h2><div class="note warn">The geometry entered does not produce a valid figure: ${esc(e.message)}</div>`;
