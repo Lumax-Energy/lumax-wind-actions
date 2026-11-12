@@ -178,6 +178,99 @@ td.neg{color:var(--maroon)} td.pos{color:var(--navy)}
 @media print{ .docbar{display:none} }
 svg.key{width:100%; max-width:440px; height:auto; display:block}
 
+/* ---------- site position and the Figure 1 map ---------- */
+.sitepos{font-size:13px; color:var(--muted); line-height:1.35; margin:0 0 8px}
+.sitepos b{color:var(--ink); font-weight:500; white-space:nowrap}
+.btn.wide{width:100%; margin-bottom:10px}
+.flag{font:400 12.5px var(--sans); white-space:nowrap}
+.flag.bad{color:var(--maroon)}
+.flag.ok{color:#1f6b3a}
+.trail .flag{font-size:12.5px}
+.results h2.next{margin-top:30px}
+.sitebox{display:flex; flex-wrap:wrap; gap:18px 22px; align-items:flex-start; margin:10px 0 6px}
+.mapfig{
+  flex:1 1 380px; max-width:520px; min-width:260px; position:relative; display:block; line-height:0;
+  padding:6px; border:1px solid var(--rule-2); border-radius:4px; background:#fff; cursor:pointer;
+}
+.mapfig:hover{border-color:var(--navy)}
+.mapfig:focus-visible{outline:2px solid var(--amber); outline-offset:1px}
+.mapfig img{display:block; width:100%; height:auto}
+.mapfig svg{position:absolute; left:6px; top:6px; width:calc(100% - 12px); height:calc(100% - 12px)}
+.sitefacts{flex:1 1 320px; min-width:260px}
+.sitefacts .trail{margin-top:0}
+.sitefacts .trail b{text-align:right}
+
+dialog#wmDlg{
+  border:0; padding:0; width:min(1240px, calc(100vw - 24px)); max-width:none; max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px);
+  background:var(--paper); color:var(--ink); border-radius:4px; box-shadow:0 12px 48px rgba(20,33,45,.4);
+  overflow:hidden;
+}
+dialog#wmDlg:not([open]){display:none}
+dialog#wmDlg::backdrop{background:rgba(22,33,43,.55)}
+.wm{display:flex; flex-direction:column; max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px)}
+.wmhead{
+  background:var(--ink); color:#e9eef3; padding:10px 18px; border-bottom:3px solid var(--navy);
+  display:flex; align-items:baseline; gap:8px 18px; flex-wrap:wrap; flex:none;
+}
+.wmhead h2{font-size:21px; color:#fff; line-height:1.1}
+.wmhead .code{font-size:14px; color:#9db1c4; font-family:var(--cond); letter-spacing:.02em}
+.wmhead .btn{margin-left:auto}
+.wmbody{overflow-y:auto; padding:16px 18px; flex:1 1 auto; min-height:0}
+.wmmain{display:grid; grid-template-columns:minmax(0,1fr) 350px; gap:16px; align-items:start}
+.wmmap{min-width:0}
+.wmtools{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; justify-content:space-between; margin-bottom:8px}
+.wmtools b{font:600 16px var(--cond); letter-spacing:.02em; color:var(--navy)}
+.wmtools span{display:flex; gap:14px; flex-wrap:wrap; font-size:13.5px; color:var(--muted)}
+.wmtools label{display:inline-flex; gap:6px; align-items:center; cursor:pointer}
+.wmplate{background:#fff; border:1px solid var(--rule); border-radius:4px; padding:8px; margin-bottom:8px}
+.wmstage{position:relative; width:100%; line-height:0}
+.wmstage img{display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none}
+.wmstage svg{position:absolute; inset:0; width:100%; height:100%; cursor:crosshair; touch-action:manipulation}
+.wmstage svg:focus-visible{outline:3px solid var(--amber); outline-offset:2px}
+.wmtip{
+  position:absolute; pointer-events:none; background:var(--ink); color:#fff; font:500 12.5px/1.4 var(--sans);
+  padding:5px 8px; border-radius:3px; white-space:nowrap; transform:translate(12px,12px); z-index:2;
+}
+.wmpanel{display:grid; gap:12px; min-width:0}
+.wmcard{
+  background:var(--card); border:1px solid var(--rule-2); border-top:3px solid var(--navy);
+  border-radius:3px; padding:10px 12px 12px; min-width:0;
+}
+.wmcard h3{font-size:16px; color:var(--navy); border-bottom:1px solid var(--rule); padding-bottom:4px; margin-bottom:10px}
+.wmcard .note{margin:10px 0 0}
+.wmvb{display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap}
+.wmvb b{font:600 46px/1 var(--cond); color:var(--navy)}
+.wmvb small{font:600 16px var(--cond); color:var(--muted); align-self:flex-end; padding-bottom:5px}
+.wmsym{font:600 16px var(--cond)}
+.wmsrc{font-size:13px; color:var(--muted); line-height:1.3}
+.wmdms{display:grid; grid-template-columns:52px repeat(3,minmax(0,1fr)); gap:6px; align-items:center; margin-bottom:8px}
+.wmdms .hd{font-size:12px; color:var(--faint); text-align:center}
+.wmdms .lab{font:600 15px var(--cond); color:var(--muted)}
+.wmdec{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.wmdec label{display:grid; gap:3px; font-size:13px; color:var(--muted)}
+.wmdms input,.wmdec input{
+  font:500 14px var(--sans); font-variant-numeric:tabular-nums; width:100%; min-width:0;
+  padding:5px 7px; border:1px solid var(--rule); border-radius:2px; background:#fff; color:var(--ink);
+}
+.wmdms input:focus,.wmdec input:focus{outline:2px solid var(--amber); outline-offset:-1px; border-color:var(--amber)}
+dl.wmkv{margin:0 0 10px; display:grid; grid-template-columns:max-content minmax(0,1fr); gap:5px 12px; font-size:13.5px}
+dl.wmkv dt{color:var(--muted)}
+dl.wmkv dd{margin:0; overflow-wrap:anywhere}
+.wmrow{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.wmhow{margin-top:14px; font-size:13.5px; color:var(--muted)}
+.wmhow summary{cursor:pointer; font:600 15px var(--cond); letter-spacing:.02em; color:var(--navy)}
+.wmhow div{max-width:80ch}
+.wmhow pre{font:12.5px/1.5 ui-monospace,Consolas,monospace; background:#fff; border:1px solid var(--rule); border-radius:3px; padding:8px 10px; margin:0; overflow-x:auto}
+.wmfoot{
+  background:#f4f7f9; border-top:1px solid var(--rule); padding:10px 18px; flex:none;
+  display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;
+}
+.wmfoot span{font-size:13.5px; color:var(--muted); margin-right:auto}
+.wmfoot span b{color:var(--ink)}
+.btn:disabled{opacity:.5; cursor:default}
+@media (max-width:900px){ .wmmain{grid-template-columns:minmax(0,1fr)} }
+@media print{ dialog#wmDlg{display:none} .mapfig{border:0; padding:0} .mapfig svg{left:0; top:0; width:100%; height:100%} }
+
 /* ---------- toast ---------- */
 .toast{
   position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
@@ -208,6 +301,110 @@ svg.key{width:100%; max-width:440px; height:auto; display:block}
   <aside id="side"></aside>
   <section class="results" id="out"></section>
 </main>
+<dialog id="wmDlg" aria-labelledby="wmTitle">
+  <div class="wm">
+    <div class="wmhead">
+      <h2 id="wmTitle">Site and fundamental basic wind speed</h2>
+      <span class="code">SANS 10160-3 Figure 1 &nbsp;·&nbsp; 3 s gust</span>
+      <button type="button" class="btn" id="wmClose" title="Close without changing the site">Close</button>
+    </div>
+    <div class="wmbody">
+      <div class="wmmain">
+        <div class="wmmap">
+          <div class="wmtools">
+            <b>Figure 1 · 3 s gust (normative)</b>
+            <span>
+              <label><input type="checkbox" id="wmGrid" checked> 2° grid</label>
+              <label><input type="checkbox" id="wmDots"> Municipality points</label>
+            </span>
+          </div>
+          <div class="wmplate">
+            <div class="wmstage" id="wmStage">
+              <img id="wmImg" alt="SANS 10160-3 Figure 1, 3 s gust wind speed map of South Africa" width="958" height="768">
+              <svg id="wmOv" tabindex="0" role="application" preserveAspectRatio="none"
+                aria-label="Map. Click to place the site. Arrow keys move it by 1 minute, Shift+arrow by 10 minutes."></svg>
+              <div class="wmtip" id="wmTip" hidden></div>
+            </div>
+          </div>
+          <div class="note warn" id="wmNoImg" hidden><b>The Figure 1 map could not be loaded.</b> Choose a municipality to use
+            its table value. A site set by coordinates cannot be read from the map until the page is reloaded with a connection.</div>
+          <p class="hint">Click the map to place the site. With the map focused, arrow keys move it by 1′ (Shift: 10′).</p>
+        </div>
+
+        <div class="wmpanel">
+          <div class="wmcard">
+            <h3>Fundamental basic wind speed</h3>
+            <div class="wmvb"><b id="wmVb">36</b><small>m/s</small>
+              <div><div class="wmsym">v<sub>b,0</sub></div><div class="wmsrc" id="wmSrc">—</div></div>
+            </div>
+            <div class="note warn" id="wmNote" hidden></div>
+          </div>
+
+          <div class="wmcard">
+            <h3>Municipality</h3>
+            <div class="f wide"><label for="wmProv">Province</label><select id="wmProv"></select></div>
+            <div class="f wide"><label for="wmMun">Municipality</label><select id="wmMun"></select></div>
+            <div class="f wide"><label for="wmFind">Find by name</label>
+              <input type="text" id="wmFind" list="wmMunList" placeholder="Type a municipality or city" autocomplete="off"></div>
+            <datalist id="wmMunList"></datalist>
+          </div>
+
+          <div class="wmcard">
+            <h3>Site location (GPS)</h3>
+            <div class="wmdms">
+              <span></span><span class="hd">° deg</span><span class="hd">′ min</span><span class="hd">″ sec</span>
+              <span class="lab">South</span>
+              <input type="number" id="wmSD" min="0" max="90" step="1" aria-label="South degrees">
+              <input type="number" id="wmSM" min="0" max="59" step="1" aria-label="South minutes">
+              <input type="number" id="wmSS" min="0" max="59.9" step="0.1" aria-label="South seconds">
+              <span class="lab">East</span>
+              <input type="number" id="wmED" min="0" max="180" step="1" aria-label="East degrees">
+              <input type="number" id="wmEM" min="0" max="59" step="1" aria-label="East minutes">
+              <input type="number" id="wmES" min="0" max="59.9" step="0.1" aria-label="East seconds">
+            </div>
+            <div class="wmdec">
+              <label for="wmSDec">South (decimal °)<input type="number" id="wmSDec" step="0.000001"></label>
+              <label for="wmEDec">East (decimal °)<input type="number" id="wmEDec" step="0.000001"></label>
+            </div>
+            <div class="note warn" id="wmErr" role="alert" hidden></div>
+          </div>
+
+          <div class="wmcard">
+            <h3>Cross-check</h3>
+            <dl class="wmkv">
+              <dt>Map zone here</dt><dd id="wmZone">—</dd>
+              <dt>Nearest centroid</dt><dd id="wmNear">—</dd>
+              <dt>Table value</dt><dd id="wmNearV">—</dd>
+              <dt>Image pixel</dt><dd id="wmPx">—</dd>
+            </dl>
+            <div class="wmrow">
+              <button type="button" class="btn ghost" id="wmCopy">Copy summary</button>
+              <span class="wmsrc" id="wmCopyMsg" aria-live="polite"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <details class="wmhow">
+        <summary>How the coordinates work</summary>
+        <div>
+          <p>South is entered as a positive number of degrees. The map is treated as linear in degrees between its grid lines, so a site's position on the image is:</p>
+          <pre>x = 114.5 + (E − 18) · 687.5 / 14     (pixels, image 958 wide)
+y =  58.0 + (S − 22) · 588.5 / 12     (pixels, image 768 high)
+
+Accepted range: E 16.4 – 33.0, S 22.0 – 34.9</pre>
+          <p>When a municipality is selected, v<sub>b,0</sub> is its value from the municipality table and the site is put at the municipality's centroid. Otherwise the zone colour under the site is read. Where two zones meet, the higher value is used and a warning is shown. If there is no zone under the site, it falls back to 36 m/s.</p>
+          <p>Municipality points are centroids. Large or irregular municipalities can have a centroid that falls in a neighbouring zone, so the table value and the colour under the point can differ. For 9 of the 235 municipalities they do.</p>
+        </div>
+      </details>
+    </div>
+    <div class="wmfoot">
+      <span id="wmUseMsg"></span>
+      <button type="button" class="btn ghost" id="wmCancel">Cancel</button>
+      <button type="button" class="btn big" id="wmUse">Use this site</button>
+    </div>
+  </div>
+</dialog>
 <script>
 // Code tables digitised from SANS 10160-3:2018 Ed 2.0 (Part 3: Wind actions)
 const TBL = {};
@@ -328,7 +525,185 @@ TBL.T14 = [
   [30,0.9,1.3,1.9,1.6,0.7,-1,-1.4,-1.9,-1.4,-2,-1.3,-1.4,-1.8,-1.4,-2]
 ];
 const PROVINCES = {"1": "Eastern Cape", "2": "Free State", "3": "Gauteng", "4": "Kwazulu-Natal", "5": "Limpopo", "6": "Mpumalanga", "7": "Northern Cape", "8": "North-West", "9": "Western Cape"};
-const MUNICIPALITIES = [["Aganang", 5, 36], ["Ba-Phalaborwa", 5, 32], ["Bela-Bela", 5, 36], ["Blouberg", 5, 32], ["Fetakgomo", 5, 36], ["Greater Giyani", 5, 32], ["Greater Letaba", 5, 32], ["Greater Tzaneen", 5, 36], ["Lepele-Nkumpi", 5, 36], ["Lephalale", 5, 32], ["Makhado", 5, 32], ["Makhuduthamaga", 5, 36], ["Maruleng", 5, 36], ["Modimolle", 5, 36], ["Mogalakwena", 5, 36], ["Molemole", 5, 36], ["Mookgopong", 5, 36], ["Musina", 5, 32], ["Mutale", 5, 32], ["Polokwane", 5, 36], ["Thabazimbi", 5, 36], ["Thulamela", 5, 32], ["City of Johannesburg", 3, 36], ["City of Tshwane", 3, 36], ["Ekurhuleni", 3, 36], ["Emfuleni", 3, 36], ["Lesedi", 3, 36], ["Merafong City", 3, 36], ["Midvaal", 3, 36], ["Mogale City", 3, 36], ["Nokeng tsa Taemane", 3, 36], ["Randfontein", 3, 36], ["West Rand", 3, 36], ["Westonaria", 3, 36], ["Albert Luthuli", 6, 36], ["Delmas", 6, 36], ["Dipaleseng", 6, 36], ["Dr JS Moroka", 6, 36], ["Emalahleni", 6, 36], ["Govan Mbeki", 6, 36], ["Highlands", 6, 36], ["Lekwa", 6, 36], ["Mbombela", 6, 32], ["Middelburg", 6, 36], ["Mkhondo", 6, 36], ["Msukaligwa", 6, 36], ["Nkomazi", 6, 32], ["Seme", 6, 36], ["Steve Tshwete", 6, 36], ["Thaba Chweu", 6, 36], ["Thembisile", 6, 36], ["Umjindi", 6, 36], ["City of Matlosana", 8, 36], ["Ditsobotla", 8, 36], ["Greater Taung", 8, 40], ["Kagisano", 8, 36], ["Kgetlengrivier", 8, 36], ["Klerksdorp", 8, 36], ["Lekwa-Teemane", 8, 40], ["Madibeng", 8, 36], ["Mafikeng", 8, 36], ["Maquassi Hills", 8, 40], ["Molopo", 8, 36], ["Moretele", 8, 36], ["Moses Kotane", 8, 36], ["Moshaweng", 8, 36], ["Naledi", 8, 40], ["Rustenburg", 8, 36], ["Schweizer-Reneke", 8, 40], ["Setla-Kgobi", 8, 36], ["Tlokwe City Council", 8, 36], ["Tswaing", 8, 36], ["Ventersdorp", 8, 36], ["Zeerust", 8, 36], ["Dihlabeng", 2, 40], ["Kopanong", 2, 40], ["Letsemeng", 2, 40], ["Mafube", 2, 40], ["Maluti a Phofung", 2, 40], ["Mangaung", 2, 40], ["Mantsopa", 2, 40], ["Masilonyana", 2, 40], ["Matjhabeng", 2, 40], ["Metsimaholo", 2, 40], ["Mohokare", 2, 40], ["Moqhaka", 2, 40], ["Nala", 2, 40], ["Naledi", 2, 40], ["Ngwathe", 2, 40], ["Nketoana", 2, 40], ["Phumelela", 2, 40], ["Setsoto", 2, 40], ["Tokologo", 2, 40], ["Tswelopele", 2, 40], ["Abaqulusi", 4, 36], ["Dannhauser", 4, 40], ["eDumbe", 4, 36], ["Emadlangeni", 4, 40], ["Emnambithi", 4, 40], ["eNdondakusuka", 4, 40], ["Endumeni", 4, 40], ["Ethekwini", 4, 36], ["Ezingoleni", 4, 36], ["Greater Kokstad", 4, 40], ["Hibiscus Coast", 4, 36], ["Hlabisa", 4, 36], ["Imbabazane", 4, 40], ["Impendle", 4, 40], ["Indaka", 4, 40], ["Ingwe", 4, 40], ["Jozini", 4, 32], ["Kwa Sani", 4, 40], ["KwaDukuza", 4, 36], ["Maphumulo", 4, 40], ["Matatiele", 4, 40], ["Mkhambathini", 4, 40], ["Mpofana", 4, 40], ["Msinga", 4, 40], ["Msunduzi", 4, 40], ["Mthonjaneni", 4, 36], ["Mtubatuba", 4, 32], ["Ndwedwe", 4, 36], ["Newcastle", 4, 40], ["Nkandla", 4, 40], ["Nongoma", 4, 36], ["Nqutu", 4, 40], ["Ntambanana", 4, 36], ["Okhahlamba", 4, 40], ["Richmond", 4, 40], ["The Big 5 False Bay", 4, 32], ["Ubuhlebezwe", 4, 40], ["Ulundi", 4, 36], ["Umdoni", 4, 36], ["Umhlabuyalingana", 4, 32], ["uMhlathuze", 4, 36], ["uMlalazi", 4, 36], ["uMngeni", 4, 40], ["uMshwathi", 4, 40], ["Umtshezi", 4, 40], ["UMuziwabantu", 4, 40], ["Umvoti", 4, 40], ["Umzumbe", 4, 36], ["UPhongolo", 4, 32], ["Vulamehlo", 4, 36], ["Kheis", 7, 40], ["Khara Hais", 7, 40], ["Dikgatlong", 7, 40], ["Emthanjeni", 7, 40], ["Gamagara", 7, 36], ["Ga-Segonyana", 7, 36], ["Hantam", 7, 36], ["Kai Garib", 7, 40], ["Kamiesberg", 7, 32], ["Kareeberg", 7, 40], ["Karoo Hoogland", 7, 40], ["Kgatelopele", 7, 36], ["Khâi-Ma", 7, 36], ["Magareng", 7, 40], ["Mier", 7, 36], ["Nama Khoi", 7, 32], ["Phokwane", 7, 40], ["Renosterberg", 7, 40], ["Richtersveld", 7, 32], ["Siyancuma", 7, 40], ["Siyathemba", 7, 40], ["Sol Plaatje", 7, 40], ["Thembelihle", 7, 40], ["Tsantsabane", 7, 36], ["Ubuntu", 7, 40], ["Umsobomvu", 7, 40], ["Beaufort West", 9, 40], ["Bergrivier", 9, 40], ["Bitou Municipality", 9, 36], ["Breede River/Winelands", 9, 40], ["Breede Valley", 9, 44], ["Cape Agulhas", 9, 44], ["Cederberg", 9, 36], ["City of Cape Town", 9, 40], ["Drakenstein", 9, 40], ["George", 9, 36], ["Kannaland", 9, 36], ["Knysna", 9, 36], ["Laingsburg", 9, 40], ["Langeberg", 9, 40], ["Matzikama", 9, 32], ["Mossel Bay", 9, 36], ["Oudtshoorn", 9, 36], ["Overstrand", 9, 44], ["Prince Albert", 9, 40], ["Saldanha Bay", 9, 40], ["Stellenbosch", 9, 40], ["Swartland", 9, 40], ["Swellendam", 9, 40], ["Theewaterskloof", 9, 40], ["Witzenberg", 9, 40], ["Amahlathi", 1, 40], ["Baviaans", 1, 36], ["Blue Crane Route", 1, 36], ["Buffalo City", 1, 40], ["Camdeboo", 1, 36], ["Elundini", 1, 44], ["Emalahleni", 1, 44], ["Engcobo", 1, 44], ["Gariep", 1, 40], ["Great Kei", 1, 40], ["Ikwezi", 1, 36], ["Ingquza Hill", 1, 40], ["Inkwanca", 1, 40], ["Intsika Yethu", 1, 44], ["Inxuba Yethemba", 1, 40], ["King Sabata Dalindye", 1, 44], ["Kouga", 1, 40], ["Kou-Kamma", 1, 36], ["Lukanji", 1, 44], ["Makana", 1, 40], ["Maletswai", 1, 40], ["Mbhashe", 1, 40], ["Mbizana", 1, 40], ["Mhlontlo", 1, 44], ["Mnquma", 1, 40], ["Ndlambe", 1, 40], ["Nelson Mandela", 1, 40], ["Ngqushwa", 1, 40], ["Nkonkobe", 1, 40], ["Ntabankulu", 1, 40], ["Nxuba", 1, 40], ["Nyandeni", 1, 44], ["Port St Johns", 1, 40], ["Qaukeni", 1, 40], ["Sakhisizwe", 1, 44], ["Senqu", 1, 40], ["Sunday's River Valley", 1, 40], ["Tsolwana", 1, 40], ["Umzimkhulu", 1, 40], ["Umzimvubu", 1, 40]];
+const MUNICIPALITIES = [["Aganang", 5, 36, 23.6629041, 28.8232471], ["Ba-Phalaborwa", 5, 32, 23.9507011, 31.1341696], ["Bela-Bela", 5, 36, 24.8847369, 28.2889638], ["Blouberg", 5, 32, 23.2904879, 29.1437982], ["Fetakgomo", 5, 36, 24.4146578, 29.746439], ["Greater Giyani", 5, 32, 23.385605, 30.4391317], ["Greater Letaba", 5, 32, 23.5337294, 30.0382018], ["Greater Tzaneen", 5, 36, 23.8575684, 29.9907269], ["Lepele-Nkumpi", 5, 36, 24.291322, 29.4189321], ["Lephalale", 5, 32, 23.6863019, 27.6945248], ["Makhado", 5, 32, 23.1173619, 29.6676998], ["Makhuduthamaga", 5, 36, 24.7365708, 29.4966774], ["Maruleng", 5, 36, 24.3030871, 30.4843022], ["Modimolle", 5, 36, 24.4338818, 27.5393843], ["Mogalakwena", 5, 36, 23.8705743, 28.1133783], ["Molemole", 5, 36, 23.5220445, 29.2566268], ["Mookgopong", 5, 36, 24.5009854, 28.3217144], ["Musina", 5, 32, 22.4406735, 29.4985516], ["Mutale", 5, 32, 22.6041478, 30.3612114], ["Polokwane", 5, 36, 23.9116036, 29.381066], ["Thabazimbi", 5, 36, 24.5859334, 27.3864723], ["Thulamela", 5, 32, 22.9037917, 30.3089266], ["City of Johannesburg", 3, 36, 26.2091674, 28.0500423], ["City of Tshwane", 3, 36, 25.745285, 28.189303], ["Ekurhuleni", 3, 36, 26.1895285, 28.2604827], ["Emfuleni", 3, 36, 26.6087593, 27.6569193], ["Lesedi", 3, 36, 26.4232369, 28.2401881], ["Merafong City", 3, 36, 26.368427, 27.1129331], ["Midvaal", 3, 36, 26.6286064, 27.8577732], ["Mogale City", 3, 36, 26.0041887, 27.5429491], ["Nokeng tsa Taemane", 3, 36, 25.4531889, 28.2478826], ["Randfontein", 3, 36, 26.176709, 27.4695992], ["West Rand", 3, 36, 26.2203709, 26.9881278], ["Westonaria", 3, 36, 26.3634667, 27.5347543], ["Albert Luthuli", 6, 36, 26.1070426, 30.1833829], ["Delmas", 6, 36, 26.1068374, 28.4784129], ["Dipaleseng", 6, 36, 26.7830363, 28.3355182], ["Dr JS Moroka", 6, 36, 25.1140498, 28.4736525], ["Emalahleni", 6, 36, 25.8718962, 29.1299695], ["Govan Mbeki", 6, 36, 26.522778, 29.180278], ["Highlands", 6, 36, 25.8996455, 29.2328928], ["Lekwa", 6, 36, 26.8947259, 29.0688583], ["Mbombela", 6, 32, 25.3608691, 30.6273626], ["Middelburg", 6, 36, 25.8293131, 29.2423378], ["Mkhondo", 6, 36, 26.9248233, 30.1987792], ["Msukaligwa", 6, 36, 26.5143617, 29.8382631], ["Nkomazi", 6, 32, 25.650494, 31.3514377], ["Seme", 6, 36, 27.1010457, 29.7126934], ["Steve Tshwete", 6, 36, 25.8293131, 29.2423378], ["Thaba Chweu", 6, 36, 24.9740554, 29.9448003], ["Thembisile", 6, 36, 25.4893088, 28.7087377], ["Umjindi", 6, 36, 25.7425686, 30.8878492], ["City of Matlosana", 8, 36, 26.8532366, 26.5731017], ["Ditsobotla", 8, 36, 26.113658, 25.6995375], ["Greater Taung", 8, 40, 27.5496628, 23.9316905], ["Kagisano", 8, 36, 26.4905411, 23.4375683], ["Kgetlengrivier", 8, 36, 25.7496582, 26.5550779], ["Klerksdorp", 8, 36, 26.8532366, 26.5731017], ["Lekwa-Teemane", 8, 40, 27.6353714, 24.7718657], ["Madibeng", 8, 36, 25.4282613, 27.1778511], ["Mafikeng", 8, 36, 25.9446662, 25.1494172], ["Maquassi Hills", 8, 40, 27.2831772, 25.50174], ["Molopo", 8, 36, 25.8611532, 23.162587], ["Moretele", 8, 36, 25.1789096, 27.7714026], ["Moses Kotane", 8, 36, 25.1206198, 26.6672375], ["Moshaweng", 8, 36, 26.7655711, 22.8077539], ["Naledi", 8, 40, 26.9590125, 24.7293925], ["Rustenburg", 8, 36, 25.648779, 27.1834966], ["Schweizer-Reneke", 8, 40, 27.1715429, 25.2280376], ["Setla-Kgobi", 8, 36, 26.1353635, 24.7074279], ["Tlokwe City Council", 8, 36, 26.7162945, 27.0961189], ["Tswaing", 8, 36, 26.5831615, 25.4046182], ["Ventersdorp", 8, 36, 26.3211671, 26.629888], ["Zeerust", 8, 36, 25.5387318, 26.0766878], ["Dihlabeng", 2, 40, 28.3707342, 28.016519], ["Kopanong", 2, 40, 29.944999, 25.0913107], ["Letsemeng", 2, 40, 29.5481288, 24.4986599], ["Mafube", 2, 40, 27.2798954, 28.3410595], ["Maluti a Phofung", 2, 40, 28.3733991, 28.750899], ["Mangaung", 2, 40, 29.1460937, 26.1267295], ["Mantsopa", 2, 40, 29.1479391, 26.6737289], ["Masilonyana", 2, 40, 28.6248213, 25.9882777], ["Matjhabeng", 2, 40, 27.9592563, 26.3734113], ["Metsimaholo", 2, 40, 26.9265909, 27.7745683], ["Mohokare", 2, 40, 30.1290368, 26.2153261], ["Moqhaka", 2, 40, 27.5661025, 26.6366455], ["Nala", 2, 40, 27.599057, 25.8957156], ["Naledi", 2, 40, 28.5865442, 28.8056025], ["Ngwathe", 2, 40, 27.2792123, 27.1490449], ["Nketoana", 2, 40, 27.8639897, 27.9713587], ["Phumelela", 2, 40, 27.6322915, 28.6900957], ["Setsoto", 2, 40, 28.5672572, 27.0089726], ["Tokologo", 2, 40, 28.3769199, 24.8700872], ["Tswelopele", 2, 40, 28.0752145, 25.3354017], ["Abaqulusi", 4, 36, 27.8307097, 30.7946487], ["Dannhauser", 4, 40, 27.9887057, 29.8264044], ["eDumbe", 4, 36, 27.4831702, 30.5466035], ["Emadlangeni", 4, 40, 27.6372999, 30.0187236], ["Emnambithi", 4, 40, 28.4216541, 29.446884], ["eNdondakusuka", 4, 40, 29.1194521, 31.355867], ["Endumeni", 4, 40, 28.1842244, 29.9980989], ["Ethekwini", 4, 36, 29.8839586, 30.5926558], ["Ezingoleni", 4, 36, 30.7582496, 30.0384848], ["Greater Kokstad", 4, 40, 30.2873736, 29.047095], ["Hibiscus Coast", 4, 36, 30.8104892, 30.0721602], ["Hlabisa", 4, 36, 28.1459502, 31.8569007], ["Imbabazane", 4, 40, 29.0052408, 29.8561715], ["Impendle", 4, 40, 29.5787029, 29.6546596], ["Indaka", 4, 40, 28.5609423, 30.1166828], ["Ingwe", 4, 40, 29.8708736, 29.5190947], ["Jozini", 4, 32, 27.3648059, 31.6225702], ["Kwa Sani", 4, 40, 29.7689385, 29.1667853], ["KwaDukuza", 4, 36, 29.3529306, 30.9812985], ["Maphumulo", 4, 40, 29.1034287, 30.7945144], ["Matatiele", 4, 40, 30.3476185, 28.475745], ["Mkhambathini", 4, 40, 29.8447635, 30.2685197], ["Mpofana", 4, 40, 29.1527037, 29.7357694], ["Msinga", 4, 40, 28.603654, 30.2127392], ["Msunduzi", 4, 40, 29.6343378, 30.1704296], ["Mthonjaneni", 4, 36, 28.5759014, 31.2360244], ["Mtubatuba", 4, 32, 28.3048743, 32.006979], ["Ndwedwe", 4, 36, 29.4012586, 30.7030645], ["Newcastle", 4, 40, 27.695615, 29.6532336], ["Nkandla", 4, 40, 28.646254, 30.7044291], ["Nongoma", 4, 36, 27.9054697, 31.4638287], ["Nqutu", 4, 40, 28.2974292, 30.4913339], ["Ntambanana", 4, 36, 28.5950935, 31.7201129], ["Okhahlamba", 4, 40, 28.7303889, 29.0617291], ["Richmond", 4, 40, 29.9170583, 30.1406696], ["The Big 5 False Bay", 4, 32, 27.9019596, 31.9950137], ["Ubuhlebezwe", 4, 40, 30.1878835, 29.8687449], ["Ulundi", 4, 36, 28.307934, 31.3865399], ["Umdoni", 4, 36, 30.3505694, 30.5233751], ["Umhlabuyalingana", 4, 32, 27.2204855, 32.2546184], ["uMhlathuze", 4, 36, 28.7882818, 31.7899546], ["uMlalazi", 4, 36, 28.9350138, 31.1520092], ["uMngeni", 4, 40, 28.9270721, 30.310946], ["uMshwathi", 4, 40, 29.3937035, 30.3177045], ["Umtshezi", 4, 40, 28.9295638, 29.7181243], ["UMuziwabantu", 4, 40, 30.6473394, 29.7317897], ["Umvoti", 4, 40, 29.0050838, 30.3943393], ["Umzumbe", 4, 36, 30.4856191, 30.1927152], ["UPhongolo", 4, 32, 27.5398101, 31.2610887], ["Vulamehlo", 4, 36, 30.2126887, 30.4363397], ["Kheis", 7, 40, 28.8815777, 21.1113933], ["Khara Hais", 7, 40, 28.3786542, 20.970704], ["Dikgatlong", 7, 40, 28.4026741, 24.082949], ["Emthanjeni", 7, 40, 30.8151491, 23.3427726], ["Gamagara", 7, 36, 27.669, 22.7273786], ["Ga-Segonyana", 7, 36, 27.5484351, 23.3218587], ["Hantam", 7, 36, 31.0805951, 18.6406809], ["Kai Garib", 7, 40, 28.9020274, 20.0806734], ["Kamiesberg", 7, 32, 30.5160822, 17.4153925], ["Kareeberg", 7, 40, 30.5989364, 21.5972622], ["Karoo Hoogland", 7, 40, 31.6914819, 20.0217375], ["Kgatelopele", 7, 36, 28.2327093, 23.346644], ["Khâi-Ma", 7, 36, 29.1627533, 18.5853339], ["Magareng", 7, 40, 28.1739594, 24.501169], ["Mier", 7, 36, 26.2949637, 20.0361475], ["Nama Khoi", 7, 32, 29.3879259, 17.3101874], ["Phokwane", 7, 40, 27.7993555, 24.6916294], ["Renosterberg", 7, 40, 30.2834899, 23.8356564], ["Richtersveld", 7, 32, 29.0024939, 17.097283], ["Siyancuma", 7, 40, 29.0928148, 23.2226388], ["Siyathemba", 7, 40, 29.45718, 22.0046496], ["Sol Plaatje", 7, 40, 28.735779, 24.3268792], ["Thembelihle", 7, 40, 29.6390277, 23.294275], ["Tsantsabane", 7, 36, 28.310011, 22.6263621], ["Ubuntu", 7, 40, 31.39573, 21.9667093], ["Umsobomvu", 7, 40, 30.819354, 24.4750777], ["Beaufort West", 9, 40, 32.3082007, 21.7321911], ["Bergrivier", 9, 40, 32.8102057, 18.3634012], ["Bitou Municipality", 9, 36, 33.9463388, 23.2931851], ["Breede River/Winelands", 9, 40, 33.8165475, 19.7082118], ["Breede Valley", 9, 44, 33.6426622, 19.3313916], ["Cape Agulhas", 9, 44, 34.5174371, 19.7072222], ["Cederberg", 9, 36, 32.3590702, 18.3428332], ["City of Cape Town", 9, 40, 34.0228115, 18.4659687], ["Drakenstein", 9, 40, 33.5024819, 18.7192217], ["George", 9, 36, 33.9361167, 22.3569352], ["Kannaland", 9, 36, 33.6140722, 20.6789842], ["Knysna", 9, 36, 33.9437112, 22.8363401], ["Laingsburg", 9, 40, 33.0130107, 20.3891928], ["Langeberg", 9, 40, 33.8410859, 19.9426274], ["Matzikama", 9, 32, 31.6484131, 18.5139486], ["Mossel Bay", 9, 36, 34.0941982, 21.717047], ["Oudtshoorn", 9, 36, 34.0859431, 20.8760375], ["Overstrand", 9, 44, 34.4394619, 19.4563579], ["Prince Albert", 9, 40, 32.9849308, 21.6164377], ["Saldanha Bay", 9, 40, 32.9633965, 17.9108944], ["Stellenbosch", 9, 40, 33.9280107, 18.8359801], ["Swartland", 9, 40, 33.2927064, 18.2545916], ["Swellendam", 9, 40, 34.1084632, 20.095988], ["Theewaterskloof", 9, 40, 34.1536933, 19.188107], ["Witzenberg", 9, 40, 33.0955651, 18.728823], ["Amahlathi", 1, 40, 32.4672903, 27.0709062], ["Baviaans", 1, 36, 33.4175658, 23.4587487], ["Blue Crane Route", 1, 36, 32.792007, 24.9276023], ["Buffalo City", 1, 40, 32.978646, 27.3390424], ["Camdeboo", 1, 36, 32.1445219, 23.8093908], ["Elundini", 1, 44, 30.924213, 27.7542328], ["Emalahleni", 1, 44, 31.6252497, 27.0987847], ["Engcobo", 1, 44, 31.6674217, 27.9555463], ["Gariep", 1, 40, 30.9819575, 25.515938], ["Great Kei", 1, 40, 32.6809056, 27.7468363], ["Ikwezi", 1, 36, 32.992486, 24.2960514], ["Ingquza Hill", 1, 40, 31.217572, 29.3411664], ["Inkwanca", 1, 40, 31.5157793, 26.1822606], ["Intsika Yethu", 1, 44, 31.9445346, 27.3751108], ["Inxuba Yethemba", 1, 40, 31.8617692, 24.7949451], ["King Sabata Dalindye", 1, 44, 31.7476233, 28.4642913], ["Kouga", 1, 40, 33.9113718, 24.5741604], ["Kou-Kamma", 1, 36, 33.8560301, 23.7482618], ["Lukanji", 1, 44, 32.0589897, 26.7259959], ["Makana", 1, 40, 33.2515165, 26.1983965], ["Maletswai", 1, 40, 31.0225219, 26.2989881], ["Mbhashe", 1, 40, 32.1154788, 28.3592259], ["Mbizana", 1, 40, 30.8598213, 29.8059213], ["Mhlontlo", 1, 44, 31.1678339, 28.5147155], ["Mnquma", 1, 40, 32.351993, 27.9116875], ["Ndlambe", 1, 40, 33.509527, 26.4535522], ["Nelson Mandela", 1, 40, 33.8006771, 25.2499968], ["Ngqushwa", 1, 40, 33.1915739, 26.8819465], ["Nkonkobe", 1, 40, 32.7252506, 26.5374112], ["Ntabankulu", 1, 40, 30.9736701, 29.2842409], ["Nxuba", 1, 40, 30.9952088, 29.0218553], ["Nyandeni", 1, 44, 31.6091477, 28.7614771], ["Port St Johns", 1, 40, 31.6225402, 29.5435171], ["Qaukeni", 1, 40, 31.217572, 29.3411664], ["Sakhisizwe", 1, 44, 31.4666941, 27.5581405], ["Senqu", 1, 40, 30.8653837, 27.0197278], ["Sunday's River Valley", 1, 40, 33.510189, 25.5506433], ["Tsolwana", 1, 40, 31.8489643, 25.4699451], ["Umzimkhulu", 1, 40, 30.2738035, 29.474165], ["Umzimvubu", 1, 40, 30.8240738, 28.7631253]];
+
+/* ============================================================
+   Figure 1 wind map — site position, zone reading and the municipality cross-check
+   South is a positive number of degrees. MUNICIPALITIES rows are
+   [name, province id, vb0 (3 s gust, m/s), centroid south, centroid east].
+   The map image (3 s gust, 958 x 768 px) arrives from fig1-map.js as a data URI. Without it the
+   municipality table still works, but the zone colours cannot be read.
+   ============================================================ */
+
+const WM = {
+  w: 958, h: 768,
+  // fitted to the grid lines on the image: 18°E at x = 114.5, 32°E at x = 802; 22°S at y = 58, 34°S at y = 646.5
+  x0: 114.5, e0: 18, kx: 687.5 / 14,
+  y0: 58, s0: 22, ky: 588.5 / 12,
+  gridE: [18, 20, 22, 24, 26, 28, 30, 32], gridS: [22, 24, 26, 28, 30, 32, 34],
+  legendBox: [690, 520, 892, 652],
+  zones: [[44, [205, 137, 102]], [40, [245, 202, 123]], [36, [255, 255, 190]], [32, [200, 215, 158]]],
+  hex: { 44: '#cd8966', 40: '#f5ca7b', 36: '#ffffbe', 32: '#c8d79e' },
+  def: 36,
+  bounds: { sMin: 22, sMax: 34.9, eMin: 16.4, eMax: 33 },
+  src: null,          // the map as a data URI, once fig1-map.js has loaded
+  url: null,          // object URL of the same image for <img>, so renders do not copy the data URI
+  image: null,        // decoded Image, for the report figure
+  pixels: undefined,  // undefined = still loading, null = could not be read, otherwise ImageData
+  failed: false,      // fig1-map.js did not load
+  pendingNone: false  // "None" was chosen before the colours could be read: set v_b,0 when they can
+};
+// settles once the map colours are readable or known to be unreadable; the report waits on it
+WM.ready = new Promise(res => { WM.settle = res; });
+
+const wmToPx = (s, e) => [WM.x0 + (e - WM.e0) * WM.kx, WM.y0 + (s - WM.s0) * WM.ky];
+const wmToDeg = (x, y) => [WM.s0 + (y - WM.y0) / WM.ky, WM.e0 + (x - WM.x0) / WM.kx];
+const wmInBounds = (s, e) => s >= WM.bounds.sMin && s <= WM.bounds.sMax && e >= WM.bounds.eMin && e <= WM.bounds.eMax;
+
+function wmToDMS(deg) {
+  const tenths = Math.round(Math.abs(deg) * 36000);   // seconds to 0.1″
+  const d = Math.floor(tenths / 36000);
+  const m = Math.floor((tenths - d * 36000) / 600);
+  const s = (tenths - d * 36000 - m * 600) / 10;
+  return [d, m, s];
+}
+const wmFromDMS = (d, m, s) => d + (m + s / 60) / 60;
+const wmFmtDMS = (deg, hemi) => {
+  const [d, m, s] = wmToDMS(deg);
+  return `${d}°${String(m).padStart(2, '0')}′${s.toFixed(1).padStart(4, '0')}″${hemi}`;
+};
+
+function wmDistKm(s1, e1, s2, e2) {
+  const r = Math.PI / 180;
+  const a = Math.sin((s2 - s1) * r / 2) ** 2 + Math.cos(s1 * r) * Math.cos(s2 * r) * Math.sin((e2 - e1) * r / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
+/** Municipality whose centroid is closest to the point, and the distance in km. */
+function wmNearest(s, e) {
+  let best = null, bd = Infinity;
+  for (const m of MUNICIPALITIES) { const d = wmDistKm(s, e, m[3], m[4]); if (d < bd) { bd = d; best = m; } }
+  return [best, bd];
+}
+
+// Only pixels that closely match a legend colour vote, so anti-aliased boundary lines (which blend
+// into the colour of a different zone) are ignored. Where two zones are present the higher one wins,
+// matching how a designer reads a site on a zone boundary.
+function wmZoneVotes(pd, x, y, R) {
+  const votes = {}; let n = 0;
+  for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+    const px = Math.round(x + dx), py = Math.round(y + dy);
+    if (px < 0 || py < 0 || px >= pd.width || py >= pd.height) continue;
+    const i = (py * pd.width + px) * 4, r = pd.data[i], g = pd.data[i + 1], b = pd.data[i + 2];
+    let bz = null, bd = Infinity;
+    for (const [z, [zr, zg, zb]] of WM.zones) {
+      const d = (r - zr) ** 2 + (g - zg) ** 2 + (b - zb) ** 2;
+      if (d < bd) { bd = d; bz = z; }
+    }
+    if (bd < 24 * 24) { votes[bz] = (votes[bz] || 0) + 1; n++; }
+  }
+  if (n < 6) return null;
+  const present = Object.keys(votes).map(Number).filter(z => votes[z] >= Math.max(3, 0.12 * n));
+  if (!present.length) return null;
+  return { kind: 'zone', z: Math.max(...present), boundary: present.length > 1, present: present.sort((a, b) => b - a) };
+}
+/** Wind zone under a point: {kind:'zone', z, present, boundary, edge} or kind 'none', 'legend', 'na', 'loading'. */
+function wmZoneAt(s, e) {
+  const pd = WM.pixels;
+  if (pd === undefined) return { kind: WM.failed ? 'na' : 'loading' };
+  if (!pd) return { kind: 'na' };
+  const [x, y] = wmToPx(s, e);
+  const lb = WM.legendBox;
+  if (x >= lb[0] && x <= lb[2] && y >= lb[1] && y <= lb[3]) return { kind: 'legend' };
+  const near = wmZoneVotes(pd, x, y, 4);
+  if (near) return near;
+  // on a coastline or thick border: look a little wider before giving up
+  const wide = wmZoneVotes(pd, x, y, 9);
+  return wide ? { ...wide, boundary: true, edge: true } : { kind: 'none' };
+}
+
+/**
+ * v_b,0 for a site. The municipality table comes first; with no municipality the zone colour under the
+ * site is read, and on a zone boundary the higher value is used. `row` is a MUNICIPALITIES row or null;
+ * pass NaN for the position when there is none.
+ * Returns { vb, kind: 'muni' | 'map' | 'loading' | 'default', src, note, zone, near, nd }.
+ */
+function wmResolve(row, s, e) {
+  const has = Number.isFinite(s) && Number.isFinite(e);
+  const zone = has ? wmZoneAt(s, e) : { kind: 'nosite' };
+  const [near, nd] = has ? wmNearest(s, e) : [null, NaN];
+  let vb, kind, src, note = '';
+  if (row) { vb = row[2]; kind = 'muni'; src = `Municipality table: ${row[0]}`; }
+  else if (zone.kind === 'zone') {
+    vb = zone.z; kind = 'map';
+    src = zone.boundary ? 'Read from the map: higher of the zones at the site' : 'Read from the map colour at the site';
+  }
+  else if (zone.kind === 'loading') { vb = WM.def; kind = 'loading'; src = 'Reading the map…'; }
+  else {
+    vb = WM.def; kind = 'default';
+    src = zone.kind === 'na' ? 'Default (the map colours could not be read)'
+      : zone.kind === 'nosite' ? 'Default (no site position)' : 'Default (no zone under the site)';
+    note = zone.kind === 'legend' ? 'The site is on the legend box, not on the map.'
+      : zone.kind === 'na' ? 'This browser could not read the map colours. Read the zone from the map yourself.'
+        : zone.kind === 'nosite' ? 'No municipality is selected and no site position is set.'
+          : 'No wind zone colour under the site. It may be outside South Africa (sea, Lesotho or a neighbouring country).';
+  }
+  if (row && zone.kind === 'zone' && !zone.present.includes(row[2])) {
+    note = `The map colour at this point is ${zone.present.join(' / ')} m/s, but the table gives ${row[2]} m/s for ${row[0]}. `
+      + 'The point is the municipality’s centroid, so check the site’s actual position on the map.';
+  } else if (!row && zone.kind === 'zone' && zone.boundary) {
+    note = `The site is on or near a zone boundary (${zone.present.join(' / ')} m/s). The higher value is used. Check the exact position.`;
+  }
+  return { vb, kind, src, note, zone, near, nd };
+}
+
+/** Take the map image (a data URI) once fig1-map.js has delivered it, then redraw. */
+function wmLoadImage(src) {
+  if (!src || WM.src) return;
+  WM.src = src;
+  try {
+    const bin = atob(src.slice(src.indexOf(',') + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    WM.url = URL.createObjectURL(new Blob([bytes], { type: 'image/jpeg' }));
+  } catch (_) { WM.url = src; }
+  const im = new Image();
+  im.onload = () => {
+    try {
+      const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+      const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+      WM.pixels = g.getImageData(0, 0, c.width, c.height);
+      WM.image = im;
+    } catch (_) { WM.pixels = null; }
+    WM.settle(); wmChanged();
+  };
+  im.onerror = () => { WM.pixels = null; WM.settle(); wmChanged(); };
+  im.src = src;
+  wmChanged();
+}
+/** fig1-map.js could not be fetched. */
+function wmLoadFailed() {
+  if (WM.src) return;
+  WM.failed = true; WM.pixels = null;
+  WM.settle(); wmChanged();
+}
+/** The map state changed (image arrived, colours readable, or failed): redraw whatever shows it. */
+function wmChanged() {
+  const side = document.getElementById('side');
+  if (!side || !side.innerHTML) return;   // before the first render
+  let full = true;
+  if (WM.pendingNone && WM.pixels !== undefined) {
+    // "None" was chosen while the map was loading: now take the zone value (or the default) for the site
+    WM.pendingNone = false;
+    if (!S.muni) S.vb0 = wmResolve(null, hasSite() ? +S.siteS : NaN, hasSite() ? +S.siteE : NaN).vb;
+  } else {
+    // a field being typed in keeps its focus: only the results and the two site lines redraw then
+    const a = document.activeElement;
+    if (a && a.closest && a.closest('#side')) full = false;
+  }
+  if (full) renderAll(); else { renderResults(); updateSiteHints(); }
+  pkRefresh();
+}
+window.wmImageReady = () => wmLoadImage(window.WM_IMG);
 
 /* ============================================================
    SANS 10160-3:2018 — calculation engine
@@ -1955,8 +2330,32 @@ function reportFigureSpecs() {
   return specs;
 }
 
+/** Figure 1 with the site marked, as a JPEG for the report. Null without the map or a site position. */
+function mapFigureJpeg() {
+  if (!WM.image || !hasSite()) return null;
+  const c = document.createElement('canvas');
+  c.width = WM.w; c.height = WM.h;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(WM.image, 0, 0, c.width, c.height);
+  const [x, y] = wmToPx(+S.siteS, +S.siteE);
+  g.strokeStyle = '#0e3763'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(0, y); g.lineTo(c.width, y); g.moveTo(x, 0); g.lineTo(x, c.height); g.stroke();
+  g.beginPath(); g.arc(x, y, 9, 0, 2 * Math.PI);
+  g.strokeStyle = '#ffffff'; g.lineWidth = 5; g.stroke();
+  g.strokeStyle = '#0e3763'; g.lineWidth = 2.5; g.stroke();
+  const bin = atob(c.toDataURL('image/jpeg', 0.9).split(',')[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return { bytes, w: c.width, h: c.height, ext: 'jpg' };
+}
+
 async function collectFigures() {
   const out = [];
+  try {
+    const m = mapFigureJpeg();
+    if (m) out.push({ key: 'map', cap: 'SANS 10160-3 Figure 1, fundamental basic wind speed (3 s gust), with the site marked', ...m });
+  } catch (e) { /* the report goes out without the map */ }
   for (const sp of reportFigureSpecs()) {
     const r = sp.svg ? { svg: sp.svg } : renderScene(sp.scene, { wind: sp.wind, width: 460, height: 300, mode: S.view });
     const png = await svgToPng(r.svg, 2.5);
@@ -1986,7 +2385,7 @@ function wFigure(fig) {
   if (!fig) return '';
   FIG_N++;
   const wCm = 12.6, hCm = wCm * fig.h / fig.w;
-  return wImage(fig.rel, fig.key + '.png', wCm, hCm)
+  return wImage(fig.rel, fig.file || fig.key + '.png', wCm, hCm)
     + wPara(wRun(`Figure ${FIG_N} — ${fig.cap}`, { sz: 17, i: true, color: '44586B' }),
       { align: 'center', after: 160 });
 }
@@ -2048,11 +2447,24 @@ function reportSections(FG) {
   /* --- 2 site --- */
   x += wHead(1, '2  Site and basic wind speed');
   x += wCaption('Site location and fundamental basic wind speed');
-  x += wTable([{ w: 3400, label: 'Item' }, { w: 5400, label: 'Value' }], [
-    ['Province', PROVINCES[S.province] || '—'],
-    ['Municipality', S.muni || '—'],
-    ['Fundamental basic wind speed vb,0', `${F(S.vb0, 1)} m/s  (3 s gust, Figure 1)`]
-  ]);
+  const si = siteInfo(), siteRows = [];
+  if (si.row) siteRows.push(['Province', PROVINCES[S.province] || '—'], ['Municipality', S.muni]);
+  if (si.has) {
+    siteRows.push([si.centroid ? 'Municipality centroid' : 'Site position', sitePosText()]);
+  }
+  if (!si.row && si.zone.kind === 'zone') {
+    siteRows.push(['Wind zone on Figure 1 at that position', `${si.zone.present.join(' / ')} m/s`
+      + (si.zone.boundary ? (si.zone.edge ? ' — near the coast or a border' : ' — on a zone boundary') : '')]);
+  }
+  if (!si.row && si.near) {
+    siteRows.push(['Nearest municipality centroid',
+      `${si.near[0]} (${PROVINCES[si.near[1]]}), ${F(si.nd, 1)} km — table value ${si.near[2]} m/s`]);
+  }
+  siteRows.push(['Fundamental basic wind speed vb,0', `${F(S.vb0, 1)} m/s  (3 s gust, Figure 1)`],
+    ['Source of vb,0', si.kind === 'loading' ? 'Not determined — Figure 1 had not loaded when the report was made' : vbSourceText(si)]);
+  x += wTable([{ w: 3400, label: 'Item' }, { w: 5400, label: 'Value' }], siteRows);
+  if (si.note) x += wPara(wRun(si.note, { sz: 18 }));
+  x += wFigure(FG.map);
   x += wHead(2, '2.1  Peak wind speed pressure');
   x += wCaption('Derivation of qp at the reference height ze = h');
   x += wTable([{ w: 1500, label: 'Symbol' }, { w: 3700, label: 'Description' },
@@ -2337,13 +2749,15 @@ function reportSections(FG) {
 
 async function buildDocx() {
   TABLE_N = 0; FIG_N = 0; DRAW_ID = 0;
+  // the site table and the map figure need the map colours: give a map that is still loading a moment
+  if (WM.pixels === undefined) await Promise.race([WM.ready, new Promise(r => setTimeout(r, 8000))]);
 
   // Figures are optional: if the browser will not rasterise them the report is
   // still produced, just without the illustrations.
   let media = [];
   try { media = await collectFigures(); } catch (e) { media = []; }
   const F = {};
-  media.forEach((m, i) => { F[m.key] = { ...m, rel: `rId${3 + i}`, file: `image${i + 1}.png` }; });
+  media.forEach((m, i) => { m.file = `image${i + 1}.${m.ext || 'png'}`; F[m.key] = { ...m, rel: `rId${3 + i}` }; });
 
   const body = reportSections(F);
   const sect = '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/>'
@@ -2375,7 +2789,7 @@ async function buildDocx() {
     + '</w:docDefaults></w:styles>';
 
   const imgRels = media.map((m, i) =>
-    `<Relationship Id="rId${3 + i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image${i + 1}.png"/>`).join('');
+    `<Relationship Id="rId${3 + i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.file}"/>`).join('');
 
   const files = [
     {
@@ -2383,6 +2797,7 @@ async function buildDocx() {
         + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
         + '<Default Extension="xml" ContentType="application/xml"/>'
         + '<Default Extension="png" ContentType="image/png"/>'
+        + '<Default Extension="jpg" ContentType="image/jpeg"/>'
         + '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
         + '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
         + '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'
@@ -2403,7 +2818,7 @@ async function buildDocx() {
     { name: 'word/footer1.xml', text: footer },
     { name: 'word/document.xml', text: `${head}<w:document ${NS}><w:body>${body}${sect}</w:body></w:document>` }
   ];
-  media.forEach((m, i) => files.push({ name: `word/media/image${i + 1}.png`, bytes: m.bytes }));
+  media.forEach(m => files.push({ name: `word/media/${m.file}`, bytes: m.bytes }));
   return zipStore(files);
 }
 
@@ -2487,6 +2902,14 @@ function openProject(file) {
       // files saved before the factor of safety existed carry none: open them unfactored
       if (o.state && typeof o.state === 'object' && !('fos' in o.state)) S.fos = 1;
       mergeState(S, o.state);
+      // Site position: files saved before the map existed carry none, and one that is missing or off the
+      // map cannot be used. Fall back to the centroid of the file's municipality, or to no position.
+      const fs = o.state || {};
+      WM.pendingNone = false;
+      if (!(typeof fs.siteS === 'number' && typeof fs.siteE === 'number' && wmInBounds(fs.siteS, fs.siteE))) {
+        const row = muniRow();
+        S.siteS = row ? row[3] : null; S.siteE = row ? row[4] : null;
+      }
       renderAll();
       toast('Opened ' + (S.doc.project || file.name));
     } catch (e) {
@@ -2513,6 +2936,9 @@ function toast(msg, bad) {
 const S = {
   tab: 'site',
   province: 3, muni: 'City of Johannesburg', vb0: 36, T: 50,
+  // site position in degrees, south positive: the municipality's centroid, or a point set on the Figure 1 map
+  // (muni is then ''). null = no position.
+  siteS: 26.2091674, siteE: 28.0500423,
   terrain: 'B', altitude: 0, c0: 1, useTopo: false, fos: 1,
   topo: { shape: 'cliff', H: 40, Lu: 200, Ld: 400, x: 0, z: 5 },
   g: { type: 'duo', h: 6.757, b: 50, d: 25, alpha: 8, alpha90: 10, A: 10, hStrip: 1 },
@@ -2780,10 +3206,14 @@ function cpiFields() {
 function sidebar() {
   const munis = MUNICIPALITIES.filter(m => m[1] === +S.province)
     .map(m => [m[0], CITY[m[0]] ? `${m[0]} (${CITY[m[0]]})` : m[0]]);
+  const info = siteInfo();
   let h = `<div class="group"><h3>Site</h3>
     ${fld('province', 'Province', { wide: true, options: Object.entries(PROVINCES).filter(p => +p[0] > 0) })}
-    ${fld('muni', 'Municipality', { wide: true, options: munis })}
+    ${fld('muni', 'Municipality', { wide: true, options: [['', '— None: read the wind speed from the map —']].concat(munis) })}
+    <p class="sitepos" id="sitePos">${sitePosHtml(info)}</p>
+    <button type="button" class="btn ghost wide" data-act="map">Set the site on the map…</button>
     ${fld('vb0', 'v<sub>b,0</sub> fundamental basic wind speed', { unit: 'm/s' })}
+    <p class="hint" id="vbHint">${esc(vbSourceText(info))}</p>
     ${fld('T', 'Mean return period', { unit: 'years' })}
     ${fld('altitude', 'Site altitude above sea level', { unit: 'm' })}
     ${fld('terrain', 'Terrain category', {
@@ -2870,6 +3300,391 @@ function sidebar() {
 
 /* ---------- results panes ---------- */
 
+/* ---------- site position and the source of v_b,0 ---------- */
+
+/** Table row of the selected municipality, or null when the site was set on the map instead. */
+function muniRow() {
+  return S.muni ? (MUNICIPALITIES.find(x => x[0] === S.muni && x[1] === +S.province) || null) : null;
+}
+function hasSite() {
+  return S.siteS !== null && S.siteE !== null && S.siteS !== '' && S.siteE !== ''
+    && Number.isFinite(+S.siteS) && Number.isFinite(+S.siteE) && wmInBounds(+S.siteS, +S.siteE);
+}
+/** Select a municipality: its table value, and its centroid as the site position. */
+function setMuni(row) {
+  S.muni = row[0]; S.province = row[1]; S.vb0 = row[2]; S.siteS = row[3]; S.siteE = row[4];
+  WM.pendingNone = false;
+}
+/**
+ * What the map and the municipality table say about the site as it stands (see wmResolve), plus
+ * `manual`: v_b,0 in use is not that value, so it was typed in by hand.
+ */
+function siteInfo() {
+  const row = muniRow(), has = hasSite();
+  const r = wmResolve(row, has ? +S.siteS : NaN, has ? +S.siteE : NaN);
+  r.row = row; r.has = has;
+  r.centroid = !!(row && has && wmDistKm(+S.siteS, +S.siteE, row[3], row[4]) < 0.05);
+  const diff = Math.abs(+S.vb0 - r.vb) > 1e-9;
+  // no municipality and an unreadable map: there is nothing to compare v_b,0 with, which is not "typed by hand"
+  const unread = !row && r.zone.kind === 'na';
+  r.manual = r.kind !== 'loading' && !unread && diff;
+  r.unverified = unread && diff;
+  // the value in use is not the higher zone, so the standard boundary note would be untrue
+  if (r.manual && r.kind === 'map' && r.zone.boundary) {
+    r.note = `The site is on or near a zone boundary (${r.zone.present.join(' / ')} m/s). Check the exact position.`;
+  }
+  return r;
+}
+const lowerFirst = t => t.charAt(0).toLowerCase() + t.slice(1);
+/** Where v_b,0 in use comes from, as plain text (sidebar hint, site pane, report). */
+function vbSourceText(r) {
+  if (r.unverified) return 'Not checked — the map colours could not be read';
+  if (!r.manual) return r.src;
+  return 'Entered by hand' + (r.kind === 'muni' ? ` — the municipality table gives ${r.vb} m/s for ${r.row[0]}`
+    : r.kind === 'map' ? ` — the map zone at the site gives ${r.vb} m/s` : '');
+}
+function sitePosText() {
+  return hasSite() ? `${wmFmtDMS(+S.siteS, ' S')}, ${wmFmtDMS(+S.siteE, ' E')}` : 'not set';
+}
+/** Site in one line: municipality and province, or the coordinates of a site set on the map. */
+function siteLineText(r) {
+  r = r || siteInfo();
+  if (r.row) return `${S.muni}, ${PROVINCES[S.province]}`;
+  return r.has ? `${sitePosText()} (no municipality selected)` : 'No municipality or site position';
+}
+const wmChip = z => `<span class="sw" style="background:${WM.hex[z]}"></span>${z} m/s`;
+function zoneHtml(zone) {
+  return zone.kind === 'zone'
+    ? zone.present.map(wmChip).join(' &nbsp;') + (zone.boundary ? ` <span class="flag bad">${zone.edge ? 'near the coast or a border' : 'zone boundary'}</span>` : '')
+    : zone.kind === 'na' ? 'Unavailable' : zone.kind === 'loading' ? 'Reading…'
+      : zone.kind === 'legend' ? 'On the legend' : zone.kind === 'nosite' ? '—' : 'None (outside the zones)';
+}
+function sitePosHtml(r) {
+  return r.has
+    ? `Site position <b>${sitePosText()}</b>${r.centroid ? ' — municipality centroid' : ''}`
+    : 'Site position <b>not set</b>';
+}
+/** Refresh the two site lines in the sidebar without redrawing it (keeps the focus in a field). */
+function updateSiteHints() {
+  const r = siteInfo(), p = document.getElementById('sitePos'), h = document.getElementById('vbHint');
+  if (p) p.innerHTML = sitePosHtml(r);
+  if (h) h.textContent = vbSourceText(r);
+}
+
+/** Figure 1 with the site marked. Clicking it opens the map picker. */
+function mapFigure() {
+  if (!WM.url) {
+    return `<div class="note${WM.failed ? ' warn' : ''}" style="flex:1 1 300px">${WM.failed
+      ? '<b>The Figure 1 map could not be loaded.</b> The municipality table still works; the wind zone at the site cannot be read.'
+      : 'Loading the Figure 1 map…'}</div>`;
+  }
+  let mark = '';
+  if (hasSite()) {
+    const [x, y] = wmToPx(+S.siteS, +S.siteE), X = x.toFixed(1), Y = y.toFixed(1);
+    mark = `<line x1="0" x2="${WM.w}" y1="${Y}" y2="${Y}"/><line y1="0" y2="${WM.h}" x1="${X}" x2="${X}"/>`
+      + `<circle cx="${X}" cy="${Y}" r="9" fill="none" stroke="#fff" stroke-width="5"/>`
+      + `<circle cx="${X}" cy="${Y}" r="9" fill="none" stroke-width="2.5"/>`;
+  }
+  return `<button type="button" class="mapfig" data-act="map" title="Set the site on the map">
+    <img src="${WM.url}" width="${WM.w}" height="${WM.h}" alt="SANS 10160-3 Figure 1, 3 s gust wind speed map of South Africa, with the site marked">
+    <svg viewBox="0 0 ${WM.w} ${WM.h}" preserveAspectRatio="none" aria-hidden="true" stroke="#0e3763" stroke-width="2">${mark}</svg>
+  </button>`;
+}
+
+/** Top of the site pane: where the site is, what the map and the table give there, and v_b,0 in use. */
+function siteBlock() {
+  const r = siteInfo();
+  const near = r.near, nearMatch = near && r.zone.kind === 'zone'
+    ? (r.zone.present.includes(near[2]) ? ' <span class="flag ok">matches the map</span>' : ' <span class="flag bad">differs from the map</span>') : '';
+  const notes = [];
+  if (r.note) notes.push(`<div class="note warn">${esc(r.note)}</div>`);
+  if (r.manual) {
+    notes.push(`<div class="note warn"><b>v<sub>b,0</sub> = ${fmt(S.vb0, 1)} m/s was entered by hand.</b> ${r.kind === 'muni'
+      ? `The municipality table gives ${r.vb} m/s for ${esc(r.row[0])}.`
+      : r.kind === 'map' ? `The map zone at the site gives ${r.vb} m/s.` : 'There is no table or map value for this site to compare it with.'}</div>`);
+  }
+  return `<div class="sitebox">
+    ${mapFigure()}
+    <div class="sitefacts">
+      <div class="trail">
+        <div><span>Site position<em>${r.centroid ? 'municipality centroid' : ''}</em></span><b>${r.has
+      ? `${wmFmtDMS(+S.siteS, ' S')}<br>${wmFmtDMS(+S.siteE, ' E')}` : 'not set'}</b></div>
+        <div><span>Municipality</span><b>${r.row ? `${esc(S.muni)}<br>${esc(PROVINCES[S.province])}` : 'not selected'}</b></div>
+        <div><span>Wind zone on the map here<em>Figure 1</em></span><b>${zoneHtml(r.zone)}</b></div>
+        ${!r.row && near ? `<div><span>Nearest municipality centroid<em>${esc(near[0])}, ${esc(PROVINCES[near[1]])}, ${r.nd.toFixed(1)} km</em></span><b>${wmChip(near[2])}${nearMatch}</b></div>` : ''}
+        <div class="key"><span>v<sub>b,0</sub> in use<em>${esc(vbSourceText(r))}</em></span><b>${fmt(S.vb0, 1)} m/s</b></div>
+      </div>
+      <button type="button" class="btn big" data-act="map">Set the site on the map</button>
+    </div>
+  </div>${notes.join('')}`;
+}
+
+/* ---------- map picker (dialog) ----------
+   Works on its own copy of the site (PK) so that Cancel leaves the job untouched; "Use this site"
+   writes the position, the municipality and v_b,0 back to S. */
+
+const PK = { s: 26.2091674, e: 28.0500423, mun: -1, prov: 0, built: false, rejected: false };
+const pk$ = id => document.getElementById(id);
+const pkRow = () => PK.mun >= 0 ? MUNICIPALITIES[PK.mun] : null;
+const pkLabel = (m, withProv) => m[0] + (CITY[m[0]] ? ` (${CITY[m[0]]})` : '') + (withProv ? ` — ${PROVINCES[m[1]]}` : '');
+const SVGNS = 'http://www.w3.org/2000/svg';
+function pkEl(tag, attrs, parent) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+function pkFillMun() {
+  const list = MUNICIPALITIES.map((m, i) => [m, i]).filter(([m]) => PK.prov === 0 || m[1] === PK.prov)
+    .sort((a, b) => a[0][0].localeCompare(b[0][0]));
+  pk$('wmMun').replaceChildren(new Option('— None: read the wind speed from the map —', -1),
+    ...list.map(([m, i]) => new Option(pkLabel(m, !PK.prov), i)));
+  pk$('wmMun').value = list.some(([, i]) => i === PK.mun) ? PK.mun : -1;
+}
+function pkSync(except) {
+  const [sd, sm, ss] = wmToDMS(PK.s), [ed, em, es] = wmToDMS(PK.e);
+  const set = (id, v) => { if (id !== except) pk$(id).value = v; };
+  set('wmSD', sd); set('wmSM', sm); set('wmSS', ss.toFixed(1));
+  set('wmED', ed); set('wmEM', em); set('wmES', es.toFixed(1));
+  if (except !== 'dec') { pk$('wmSDec').value = PK.s.toFixed(6); pk$('wmEDec').value = PK.e.toFixed(6); }
+}
+function pkDrawPos() {
+  const [x, y] = wmToPx(PK.s, PK.e), ov = pk$('wmOv');
+  const h = ov.querySelector('#wmPosH'), v = ov.querySelector('#wmPosV');
+  h.setAttribute('y1', y); h.setAttribute('y2', y);
+  v.setAttribute('x1', x); v.setAttribute('x2', x);
+  ov.querySelectorAll('circle.pos').forEach(c => { c.setAttribute('cx', x); c.setAttribute('cy', y); });
+}
+function pkUpdate(opts = {}) {
+  PK.rejected = false;
+  pkDrawPos();
+  if (!opts.keepInputs) pkSync(opts.except);
+  pk$('wmErr').hidden = true;
+  const row = pkRow(), r = wmResolve(row, PK.s, PK.e), zone = r.zone, near = r.near;
+  pk$('wmVb').textContent = r.vb;
+  pk$('wmSrc').textContent = r.src;
+  pk$('wmNote').hidden = !r.note; pk$('wmNote').textContent = r.note;
+  pk$('wmZone').innerHTML = zoneHtml(zone);
+  pk$('wmNear').textContent = near ? `${near[0]} (${PROVINCES[near[1]]}), ${r.nd.toFixed(1)} km` : '—';
+  pk$('wmNearV').innerHTML = near ? wmChip(near[2]) + (zone.kind === 'zone'
+    ? (zone.present.includes(near[2]) ? ' <span class="flag ok">matches the map</span>' : ' <span class="flag bad">differs from the map</span>') : '') : '—';
+  const [px, py] = wmToPx(PK.s, PK.e);
+  pk$('wmPx').textContent = `x ${px.toFixed(1)}, y ${py.toFixed(1)} of ${WM.w}×${WM.h}`;
+  pk$('wmUse').disabled = r.kind === 'loading';
+  pk$('wmUseMsg').innerHTML = r.kind === 'loading' ? 'Reading the map…'
+    : `Sets the site and v<sub>b,0</sub> = <b>${r.vb} m/s</b>${Math.abs(+S.vb0 - r.vb) > 1e-9 ? ` (now ${fmt(+S.vb0, 1)} m/s)` : ''}`;
+}
+/** Rejected input: show why, and put the fields back to the site that is still in use. */
+function pkReject(msg) {
+  pkSync();
+  pk$('wmErr').textContent = msg;
+  pk$('wmErr').hidden = false;
+  PK.rejected = true;
+}
+function pkSet(s, e, opts = {}) {
+  if (!isFinite(s) || !isFinite(e)) return pkReject('Enter a number for both South and East. The site has not moved.');
+  if (!wmInBounds(s, e)) {
+    const b = WM.bounds;
+    return pkReject(`${s.toFixed(4)}° S, ${e.toFixed(4)}° E is outside the map. Enter South between ${b.sMin}° and ${b.sMax}° and East between ${b.eMin}° and ${b.eMax}°. The site has not moved.`);
+  }
+  PK.s = s; PK.e = e;
+  if (!opts.keepMun) { PK.mun = -1; pk$('wmMun').value = -1; }
+  pkUpdate(opts);
+}
+// Exact "Name — Province" first (also typed with a hyphen, or as "Name (Province)"), then the exact
+// municipality name, then the exact familiar city name, then names starting with the text, then any
+// word starting with it, then anywhere in the name. Two or more hits are never resolved silently:
+// several municipalities share a name (Emalahleni is 36 m/s in Mpumalanga and 44 m/s in the Eastern Cape).
+function pkFind(text) {
+  const v = text.trim().toLowerCase();
+  const norm = t => t.trim().toLowerCase().replace(/\s*[—–-]\s*/g, ' - ');
+  const vn = norm(text);
+  const names = m => [m[0].toLowerCase()].concat(CITY[m[0]] ? [CITY[m[0]].toLowerCase()] : []);
+  const tests = [
+    m => [pkLabel(m, true), `${m[0]} — ${PROVINCES[m[1]]}`, `${m[0]} (${PROVINCES[m[1]]})`].some(l => norm(l) === vn),
+    m => m[0].toLowerCase() === v,
+    m => !!CITY[m[0]] && CITY[m[0]].toLowerCase() === v,
+    m => names(m).some(n => n.startsWith(v)),
+    m => names(m).some(n => n.split(/[\s\/-]+/).some(w => w.startsWith(v))),
+    m => names(m).some(n => n.includes(v))
+  ];
+  for (const t of tests) {
+    let hits = MUNICIPALITIES.filter(t);
+    if (hits.length > 1 && PK.prov) { const inProv = hits.filter(m => m[1] === PK.prov); if (inProv.length) hits = inProv; }
+    if (hits.length) return hits;
+  }
+  return [];
+}
+function pkEvtToDeg(ev) {
+  const r = pk$('wmOv').getBoundingClientRect();
+  const x = (ev.clientX - r.left) * WM.w / r.width, y = (ev.clientY - r.top) * WM.h / r.height;
+  return [...wmToDeg(x, y), ev.clientX - r.left, ev.clientY - r.top];
+}
+const pkRound = v => Math.round(v * 1e6) / 1e6;
+
+/** One-off: fill the lists, draw the overlay and wire the dialog. */
+function pkBuild() {
+  PK.built = true;
+  pk$('wmProv').replaceChildren(new Option('All provinces', 0),
+    ...Object.entries(PROVINCES).map(([id, n]) => new Option(n, id)));
+  pk$('wmMunList').replaceChildren(...MUNICIPALITIES.map(m => {
+    const o = document.createElement('option'); o.value = pkLabel(m, true); return o;
+  }));
+
+  const ov = pk$('wmOv');
+  ov.setAttribute('viewBox', `0 0 ${WM.w} ${WM.h}`);
+  const gGrid = pkEl('g', { id: 'wmGridG', stroke: '#cc5a17', 'stroke-width': 1, opacity: .75 }, ov);
+  for (const e of WM.gridE) { const [x] = wmToPx(0, e); pkEl('line', { x1: x, y1: 0, x2: x, y2: WM.h, 'vector-effect': 'non-scaling-stroke' }, gGrid); }
+  for (const s of WM.gridS) { const [, y] = wmToPx(s, 0); pkEl('line', { x1: 0, y1: y, x2: WM.w, y2: y, 'vector-effect': 'non-scaling-stroke' }, gGrid); }
+  const gDots = pkEl('g', { id: 'wmDotsG' }, ov);
+  for (const m of MUNICIPALITIES) {
+    const [x, y] = wmToPx(m[3], m[4]);
+    const c = pkEl('circle', { cx: x, cy: y, r: 3.2, fill: WM.hex[m[2]], stroke: '#222', 'stroke-width': .8 }, gDots);
+    pkEl('title', {}, c).textContent = `${m[0]} · ${m[2]} m/s`;
+  }
+  gGrid.style.display = pk$('wmGrid').checked ? '' : 'none';
+  gDots.style.display = pk$('wmDots').checked ? '' : 'none';
+  const gPos = pkEl('g', { fill: 'none', stroke: '#0e3763', 'stroke-width': 2 }, ov);
+  pkEl('line', { id: 'wmPosH', x1: 0, x2: WM.w, 'vector-effect': 'non-scaling-stroke' }, gPos);
+  pkEl('line', { id: 'wmPosV', y1: 0, y2: WM.h, 'vector-effect': 'non-scaling-stroke' }, gPos);
+  pkEl('circle', { class: 'pos', r: 8, stroke: '#fff', 'stroke-width': 5, 'vector-effect': 'non-scaling-stroke' }, gPos);
+  pkEl('circle', { class: 'pos', r: 8, 'stroke-width': 2.5, 'vector-effect': 'non-scaling-stroke' }, gPos);
+
+  pk$('wmGrid').addEventListener('change', e => { gGrid.style.display = e.target.checked ? '' : 'none'; });
+  pk$('wmDots').addEventListener('change', e => { gDots.style.display = e.target.checked ? '' : 'none'; });
+
+  pk$('wmProv').addEventListener('change', e => {
+    PK.prov = +e.target.value;
+    const cur = pkRow();
+    if (PK.prov && cur && cur[1] !== PK.prov) PK.mun = -1;
+    pkFillMun(); pkUpdate();
+  });
+  pk$('wmMun').addEventListener('change', e => {
+    PK.mun = +e.target.value;
+    const m = pkRow();
+    if (m) pkSet(m[3], m[4], { keepMun: true }); else pkUpdate();
+  });
+  pk$('wmFind').addEventListener('change', e => {
+    if (!e.target.value.trim()) return;
+    const hits = pkFind(e.target.value), g = pk$('wmErr');
+    if (!hits.length) { g.textContent = `No municipality matches “${e.target.value}”.`; g.hidden = false; PK.rejected = true; return; }
+    if (hits.length > 1) {
+      const names = hits.slice(0, 8).map(m => pkLabel(m, true)).join('; ');
+      g.textContent = `${hits.length} municipalities match “${e.target.value}”: ${names}${hits.length > 8 ? '; …' : ''}. Pick one from the list or choose the province first.`;
+      g.hidden = false; PK.rejected = true; return;
+    }
+    const m = hits[0];
+    PK.prov = m[1]; pk$('wmProv').value = m[1]; PK.mun = MUNICIPALITIES.indexOf(m); pkFillMun();
+    pkSet(m[3], m[4], { keepMun: true });
+    e.target.value = '';
+  });
+  const DMS = ['wmSD', 'wmSM', 'wmSS', 'wmED', 'wmEM', 'wmES'];
+  for (const id of DMS) {
+    pk$(id).addEventListener('change', () => {
+      const p = DMS.map(k => { const t = pk$(k).value.trim(); return t === '' ? 0 : parseFloat(t); });
+      if (p.some(v => !isFinite(v))) return pkReject('Enter numbers in every degree, minute and second box. The site has not moved.');
+      if (p.some(v => v < 0) || p[1] >= 60 || p[2] >= 60 || p[4] >= 60 || p[5] >= 60)
+        return pkReject('Degrees, minutes and seconds must be positive, and minutes and seconds below 60. The site has not moved.');
+      pkSet(pkRound(wmFromDMS(p[0], p[1], p[2])), pkRound(wmFromDMS(p[3], p[4], p[5])));
+    });
+  }
+  for (const id of ['wmSDec', 'wmEDec']) {
+    pk$(id).addEventListener('change', () => pkSet(parseFloat(pk$('wmSDec').value), parseFloat(pk$('wmEDec').value), { except: 'dec' }));
+  }
+
+  ov.addEventListener('click', ev => { const [s, e] = pkEvtToDeg(ev); pkSet(pkRound(s), pkRound(e)); });
+  ov.addEventListener('pointermove', ev => {
+    if (ev.pointerType === 'touch') return;
+    const [s, e, lx, ly] = pkEvtToDeg(ev), tip = pk$('wmTip');
+    if (!wmInBounds(s, e)) { tip.hidden = true; return; }
+    const z = wmZoneAt(s, e);
+    tip.innerHTML = `${wmFmtDMS(s, ' S')}<br>${wmFmtDMS(e, ' E')}${z.kind === 'zone' ? '<br>' + wmChip(z.z) : ''}`;
+    const st = pk$('wmStage').getBoundingClientRect();
+    tip.style.left = Math.min(lx, st.width - 170) + 'px'; tip.style.top = Math.min(ly, st.height - 60) + 'px';
+    tip.hidden = false;
+  });
+  ov.addEventListener('pointerleave', () => { pk$('wmTip').hidden = true; });
+  ov.addEventListener('keydown', ev => {
+    const step = (ev.shiftKey ? 10 : 1) / 60, b = WM.bounds;
+    const d = { ArrowUp: [-step, 0], ArrowDown: [step, 0], ArrowLeft: [0, -step], ArrowRight: [0, step] }[ev.key];
+    if (!d) return;
+    ev.preventDefault();
+    pkSet(Math.min(b.sMax, Math.max(b.sMin, PK.s + d[0])), Math.min(b.eMax, Math.max(b.eMin, PK.e + d[1])));
+  });
+
+  pk$('wmCopy').addEventListener('click', () => {
+    const row = pkRow(), r = wmResolve(row, PK.s, PK.e);
+    const text = [
+      'SANS 10160-3 Fig 1 (3 s gust)',
+      `Site: ${wmFmtDMS(PK.s, ' S')}, ${wmFmtDMS(PK.e, ' E')} (${PK.s.toFixed(6)} S, ${PK.e.toFixed(6)} E)`,
+      row ? `Municipality: ${row[0]} (${PROVINCES[row[1]]})` : null,
+      `vb,0 = ${r.vb} m/s (${r.src})`
+    ].filter(Boolean).join('\n');
+    const done = msg => { pk$('wmCopyMsg').textContent = msg; setTimeout(() => { pk$('wmCopyMsg').textContent = ''; }, 2500); };
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      pk$('wmDlg').appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+      ta.remove(); done(ok ? 'Copied' : 'Copy blocked. Select the coordinates manually.');
+    };
+    try { navigator.clipboard.writeText(text).then(() => done('Copied'), fallback); } catch (_) { fallback(); }
+  });
+
+  pk$('wmUse').addEventListener('click', pkApply);
+  // An entry refused as the focus left its field (that is, by the press on this button) must stay on
+  // screen instead of being applied over. A new press starts clean, so the next click does apply.
+  for (const ev of ['pointerdown', 'keydown']) pk$('wmUse').addEventListener(ev, () => { PK.rejected = false; });
+  for (const id of ['wmCancel', 'wmClose']) pk$(id).addEventListener('click', () => pk$('wmDlg').close());
+}
+
+/** Map image arrived or failed while the dialog exists: show it, and re-read the zone. */
+function pkRefresh() {
+  if (!PK.built) return;
+  if (WM.url && pk$('wmImg').getAttribute('src') !== WM.url) pk$('wmImg').src = WM.url;
+  pk$('wmNoImg').hidden = !WM.failed;
+  if (pk$('wmDlg').open) pkUpdate({ keepInputs: true });
+}
+
+function pkOpen() {
+  const dlg = pk$('wmDlg');
+  if (!dlg.showModal) {
+    toast('This browser cannot show the map picker. Choose the municipality in the Site panel, or update the browser.', true);
+    return;
+  }
+  if (!PK.built) pkBuild();
+  const row = muniRow();
+  PK.mun = row ? MUNICIPALITIES.indexOf(row) : -1;
+  PK.prov = row ? row[1] : 0;
+  if (hasSite()) { PK.s = +S.siteS; PK.e = +S.siteE; }
+  else if (row) { PK.s = row[3]; PK.e = row[4]; }
+  pk$('wmProv').value = PK.prov;
+  pkFillMun();
+  pk$('wmFind').value = '';
+  pkRefresh();
+  pkUpdate();
+  if (!dlg.open) dlg.showModal();
+}
+
+/** "Use this site": write the picker's site, municipality and v_b,0 into the job. */
+function pkApply() {
+  const row = pkRow(), r = wmResolve(row, PK.s, PK.e);
+  if (r.kind === 'loading') return;
+  if (PK.rejected) { PK.rejected = false; return; }   // the refusal message stays up; the next click applies
+  S.siteS = PK.s; S.siteE = PK.e;
+  if (row) { S.muni = row[0]; S.province = row[1]; }
+  else {
+    // no municipality: the province only filters the sidebar list, so set it to the nearest centroid's
+    S.muni = '';
+    S.province = r.near ? r.near[1] : (PK.prov || S.province);
+  }
+  S.vb0 = r.vb;
+  WM.pendingNone = false;
+  pk$('wmDlg').close();
+  renderAll();
+  toast(`Site set — fundamental basic wind speed ${r.vb} m/s`);
+}
+
 function paneSite() {
   const st = site(), t = TERRAIN[S.terrain], q = st.at(S.g.h), fact = hasFos();
   const topo = S.useTopo === true || S.useTopo === 'true'
@@ -2925,7 +3740,11 @@ function paneSite() {
     <text x="${((mL + CW - mR) / 2).toFixed(1)}" y="${CH - 8}" text-anchor="middle" font-size="11" fill="#5d6f80">${fact ? 'design wind pressure FoS · qp, kPa' : 'peak wind speed pressure, kPa'}</text>
   </svg>`;
 
-  return `<h2>Peak wind speed pressure</h2>
+  return `<h2>Site and fundamental basic wind speed</h2>
+  <p class="lede">v<sub>b,0</sub> comes from the municipality table when a municipality is selected. Otherwise it is read from
+  the wind zone under the site on SANS 10160-3 Figure 1 (3 s gust); on a zone boundary the higher value is used.</p>
+  ${siteBlock()}
+  <h2 class="next">Peak wind speed pressure</h2>
   <p class="lede">Everything downstream scales with q<sub>p</sub>. The chain below follows clauses 7.2 to 7.4 for the reference height z<sub>e</sub> = h.</p>
   <div class="cards">
     <div class="card"><b>${fmt(st.vb, 1)}</b><span>v<sub>b</sub> basic wind speed, m/s</span></div>
@@ -2934,7 +3753,7 @@ function paneSite() {
   </div>
   <h3>Calculation trail</h3>
   <div class="trail">
-    <div><span>Fundamental basic wind speed v<sub>b,0</sub><em>Figure 1, 3 s gust</em></span><b>${fmt(S.vb0, 1)} m/s</b></div>
+    <div><span>Fundamental basic wind speed v<sub>b,0</sub><em>Figure 1, 3 s gust — ${esc(lowerFirst(vbSourceText(siteInfo())))}</em></span><b>${fmt(S.vb0, 1)} m/s</b></div>
     <div><span>Probability factor c<sub>prob</sub> for a ${fmt(S.T, 0)} year return period<em>cl 7.2.3 eq 2, K = 0.2, n = 0.5</em></span><b>${fmt(st.cprob, 4)}</b></div>
     <div class="key"><span>Basic wind speed v<sub>b</sub> = c<sub>prob</sub> · v<sub>b,0</sub><em>cl 7.2.2 eq 1</em></span><b>${fmt(st.vb, 2)} m/s</b></div>
     <div><span>Terrain ${S.terrain}: z<sub>g</sub> = ${t.zg} m, z<sub>0</sub> = ${t.z0} m, z<sub>c</sub> = ${t.zc} m, α = ${t.a}<em>cl 7.3.2.1 Table 1</em></span><b></b></div>
@@ -3240,6 +4059,7 @@ function paneReport() {
     return sets.filter(([, o]) => o)
       .map(([n, o]) => `<h3>Roof — ${n}</h3><table>${coeffHead()}<tbody>${coeffRows(o, qr, null, q)}</tbody></table>`).join('');
   };
+  const si = siteInfo();
   return `<h2>Summary</h2>
   <p class="lede">Everything the tool has worked out, on one page. The Word report is a formal
   document — title block, numbered sections and tables, clause references, page numbering and a
@@ -3253,8 +4073,9 @@ function paneReport() {
   </div>
   <h3>Input</h3>
   <table><tbody>
-    <tr><td>Site</td><td style="text-align:left">${esc(S.muni)}, ${esc(PROVINCES[S.province])}</td></tr>
+    <tr><td>Site</td><td style="text-align:left">${esc(siteLineText(si))}${si.row && si.has ? ` · ${sitePosText()}` : ''}</td></tr>
     <tr><td>v<sub>b,0</sub> / return period / altitude</td><td style="text-align:left">${fmt(S.vb0, 1)} m/s · ${fmt(S.T, 0)} years · ${fmt(S.altitude, 0)} m</td></tr>
+    <tr><td>Source of v<sub>b,0</sub></td><td style="text-align:left">${esc(vbSourceText(si))}${si.zone.kind === 'zone' ? ` · map zone at the site ${si.zone.present.join(' / ')} m/s` : ''}</td></tr>
     <tr><td>Terrain category / c₀</td><td style="text-align:left">${S.terrain} · ${fmt(S.c0, 2)}</td></tr>
     ${fact ? `<tr><td>Factor of safety on wind pressure</td><td style="text-align:left">${fmt(st.fos, 2)}</td></tr>` : ''}
     <tr><td>Building h × b × d</td><td style="text-align:left">${fmt(g.h, 2)} × ${fmt(g.b, 2)} × ${fmt(g.d, 2)} m</td></tr>
@@ -3331,13 +4152,23 @@ function init() {
     const t = e.target; if (!t.dataset.path) return;
     setPath(t.dataset.path, t.dataset.num ? (t.value === '' ? 0 : +t.value) : t.value);
     if (t.dataset.path === 'province') {
-      const first = MUNICIPALITIES.find(m => m[1] === +S.province);
-      if (first) { S.muni = first[0]; S.vb0 = first[2]; }
+      // with a municipality selected, move to the first one of the new province; a site set on the map
+      // (no municipality) stays where it is and the province only refilters the list
+      if (S.muni) {
+        const first = MUNICIPALITIES.find(m => m[1] === +S.province);
+        if (first) setMuni(first);
+      }
       renderAll(); return;
     }
     if (t.dataset.path === 'muni') {
-      const m = MUNICIPALITIES.find(x => x[0] === S.muni && x[1] === +S.province);
-      if (m) S.vb0 = m[2];
+      const m = muniRow();
+      if (m) setMuni(m);
+      else {
+        // "None": the site stays where it is and v_b,0 is read from the map there
+        const r = wmResolve(null, hasSite() ? +S.siteS : NaN, hasSite() ? +S.siteE : NaN);
+        if (r.kind === 'loading') WM.pendingNone = true;   // read when the map arrives, see wmChanged
+        else S.vb0 = r.vb;                                  // the zone value, or the 36 m/s default with its warning
+      }
       renderAll(); return;
     }
     if (t.dataset.path === 'preset') {
@@ -3352,9 +4183,11 @@ function init() {
     }
     if (['terrain', 'useTopo', 'edge.type', 'fw.mode'].includes(t.dataset.path)) { renderAll(); return; }
     if (t.dataset.path === 'g.alpha') showFlatEdge();
+    if (t.dataset.path === 'vb0') { WM.pendingNone = false; updateSiteHints(); }
     renderResults();
   });
   side.addEventListener('click', e => {
+    if (e.target.closest('[data-act="map"]')) { pkOpen(); return; }
     const b = e.target.closest('button[data-set]'); if (!b) return;
     setPath(b.dataset.set, b.dataset.val);
     renderAll();
@@ -3366,15 +4199,18 @@ function init() {
   });
 
   document.getElementById('out').addEventListener('click', e => {
+    if (e.target.closest('[data-act="map"]')) { pkOpen(); return; }
     const b = e.target.closest('button[data-view]'); if (!b) return;
     S.view = b.dataset.view;
     renderResults();
   });
 
   renderAll();
+  if (window.WM_IMG) wmLoadImage(window.WM_IMG);   // fig1-map.js got here first
 }
 document.addEventListener('DOMContentLoaded', init);
 
 </script>
+<script src="fig1-map.js" async onerror="wmLoadFailed()"></script>
 </body>
 </html>
