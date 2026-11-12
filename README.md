@@ -12,5 +12,9 @@ Single-page app — open `index.html` or use GitHub Pages above.
 |---|---|
 | `index.html` | The app: markup, styles and script |
 | `fig1-map.js` | SANS 10160-3 Figure 1 (3 s gust map, 958 × 768 px) as a data URI. Loaded by `index.html` to show the site on the map and read the wind zone under it. Without it the municipality table still works |
+| `report-template.js` | Letterhead, styles, theme and fonts of the Lumax report template. Loaded when a Word report is downloaded |
+| `tools/make_report_template.py` | Rebuilds `report-template.js` from a Word report in the Lumax house style |
 
 The site and v<sub>b,0</sub> are set with **Set the site on the map**: choose a municipality (table value, site at its centroid), enter GPS coordinates, or click the map (zone colour under the site; the higher value on a zone boundary). This is the former [sans10160-wind-map](https://github.com/Lumax-Energy/sans10160-wind-map) tool built in.
+
+The **Report** tab makes a short Word report on one roof in the Lumax report format: choose the roof (flat, mono-pitch, duo-pitch or hipped roof, or a mono- or duo-pitch canopy), fill in the title block and download. The longer record of the whole building is still available as **Full calculation record**.

@@ -271,6 +271,17 @@ dl.wmkv dd{margin:0; overflow-wrap:anywhere}
 @media (max-width:900px){ .wmmain{grid-template-columns:minmax(0,1fr)} }
 @media print{ dialog#wmDlg{display:none} .mapfig{border:0; padding:0} .mapfig svg{left:0; top:0; width:100%; height:100%} }
 
+/* ---------- report tab: which roof the report is about ---------- */
+.focusbar{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:6px 0 4px; padding:10px 12px;
+  background:#f4f7f9; border:1px solid var(--rule-2); border-left:3px solid var(--navy); border-radius:3px; max-width:80ch;
+}
+.focusbar label{font:600 16px var(--cond); letter-spacing:.01em; color:var(--navy)}
+.focusbar select{font:500 14px var(--sans); padding:5px 7px; border:1px solid var(--rule); border-radius:2px; background:#fff; color:var(--ink)}
+.focusbar select:focus{outline:2px solid var(--amber); outline-offset:-1px; border-color:var(--amber)}
+.focusbar span{font-size:12.5px; color:var(--faint); flex:1 1 220px}
+@media print{ .focusbar{display:none} }
+
 /* ---------- toast ---------- */
 .toast{
   position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
@@ -898,7 +909,8 @@ function flatRoofCpe(edge, A) {
   out.I = {
     cpe10: ineg.cpe10, cpe1: ineg.cpe1,
     cpe: cpeForArea(ineg.cpe10, ineg.cpe1, A),
-    cpePos: cpeForArea(ipos.cpe10, ipos.cpe1, A)
+    cpePos: cpeForArea(ipos.cpe10, ipos.cpe1, A),
+    cpe10Pos: ipos.cpe10, cpe1Pos: ipos.cpe1
   };
   return out;
 }
@@ -2670,8 +2682,11 @@ function reportSections(FG) {
       ['Downward', F(r.cf.max, 2), F(area, 1), F(r.cf.max * qc * area, 1)],
       ['Uplift', F(r.cf.min, 2), F(area, 1), F(r.cf.min * qc * area, 1)]
     ]);
-    x += wPara(wRun(`The centre of pressure is taken at d/4 = ${F(cn.d / 4, 2)} m from the windward edge for the `
-      + 'overall design of the structure (cl 8.4.5). Zone coefficients apply to roofing elements and their fixings.', { sz: 17, i: true }));
+    x += wPara(wRun((cn.kind === 'mono'
+      ? `The centre of pressure is taken at d/4 = ${F(cn.d / 4, 2)} m from the windward edge for the overall design of the structure (cl 8.4.6). `
+      : 'For the overall design of the structure the centre of pressure is taken at the centre of each slope, and one slope is also to be '
+      + 'checked loaded with the other unloaded (cl 8.4.6). ')
+      + 'Zone coefficients apply to roofing elements and their fixings (cl 8.4.5).', { sz: 17, i: true }));
   }
 
   if (String(S.doc.incFree) === 'true') {
@@ -2842,6 +2857,717 @@ async function downloadDocx(btn) {
 }
 
 /* ============================================================
+   Word report in the Lumax house style
+   A short report on one roof: title block, purpose and result, the structure, the wind pressure
+   (input, peak pressure, zone coefficients, zone pressures with the zone views) and a conclusion.
+   The letterhead, styles and fonts come from report-template.js; this code writes the body.
+   The longer "full calculation record" above (reportSections / buildDocx) is kept as it was.
+   ============================================================ */
+
+const LX = { navy: '0F304A', blue: '3698D4', grey: '595959', fill: 'E8F1F9', line: 'A6A6A6', W: 10466 };
+let LX_T = 0, LX_F = 0, LX_ID = 0;
+
+/** Which roof the report is about: 'canopy' (the Canopies tab) or 'building' (the building's roof). */
+function focusKind() { return S.doc.focus === 'canopy' ? 'canopy' : 'building'; }
+function focusValue() { return focusKind() === 'canopy' ? 'can-' + S.can.kind : S.g.type; }
+const FOCUS_OPTIONS = [['flat', 'Flat roof'], ['mono', 'Mono-pitch roof'], ['duo', 'Duo-pitch roof'], ['hip', 'Hipped roof'],
+  ['can-mono', 'Mono-pitch canopy'], ['can-duo', 'Duo-pitch canopy']];
+function setFocus(v) {
+  if (v === 'can-mono' || v === 'can-duo') { S.doc.focus = 'canopy'; S.can.kind = v.slice(4); }
+  else if (ROOFS.some(r => r[0] === v)) { S.doc.focus = 'building'; S.g.type = v; }
+}
+function focusLabel() { return (FOCUS_OPTIONS.find(o => o[0] === focusValue()) || ['', 'Roof'])[1]; }
+
+/* ---------- text and number helpers ---------- */
+
+const lxEsc = s => String(s === null || s === undefined ? '' : s)
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g, '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+/** Plain number with a true minus sign. */
+const lxN = (v, dp = 2) => fmt(+v, dp).replace('-', '−');
+/** Signed number: +1.20, −0.80, 0.00. */
+function lxS(v, dp = 3) {
+  if (v === null || v === undefined || !isFinite(v)) return '–';
+  const a = Math.abs(v).toFixed(dp);
+  return (+a === 0 ? '' : v > 0 ? '+' : '−') + a;
+}
+/** Number without trailing zeros: 1.5, 0.5, 10. */
+const lxT = (v, dp = 2) => String(+(+v).toFixed(dp)).replace('-', '−');
+const lxDeg = v => lxT(v, 1) + '°';
+const lxInt = v => String(Math.round(+v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+/** 2026-11-12 -> 12 November 2026; anything else is returned as typed. */
+function lxDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!m) return String(iso || '');
+  const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+    'November', 'December'][+m[2] - 1];
+  return month ? `${+m[3]} ${month} ${m[1]}` : String(iso);
+}
+const lxList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+/** Largest (sign > 0) or smallest (sign < 0) of {id: value}, with every id that has it. */
+function lxGov(vals, sign) {
+  const ids = Object.keys(vals).filter(k => isFinite(vals[k]));
+  if (!ids.length) return { v: NaN, ids: [] };
+  const v = sign > 0 ? Math.max(...ids.map(k => vals[k])) : Math.min(...ids.map(k => vals[k]));
+  return { v, ids: ids.filter(k => Math.abs(vals[k] - v) < 5e-7) };
+}
+/** "D and C −1.244,  B −1.192,  A −0.933 kPa": zones grouped by value, most severe first. */
+function lxLegend(vals, sign) {
+  const ids = Object.keys(vals).filter(k => isFinite(vals[k]));
+  const groups = [];
+  ids.slice().sort((a, b) => sign > 0 ? vals[b] - vals[a] : vals[a] - vals[b]).forEach(k => {
+    const g = groups.find(q => Math.abs(q.v - vals[k]) < 5e-7);
+    if (g) g.ids.push(k); else groups.push({ v: vals[k], ids: [k] });
+  });
+  return groups.map(g => `${lxList(g.ids)} ${lxS(g.v, 3)}`).join(',  ') + ' kPa';
+}
+
+/* ---------- WordprocessingML in the template's direct formatting ---------- */
+
+/** Runs from a string or a list of strings / {t, b, i, c}. Sizes are half-points. */
+function lxRuns(parts, sz, base = {}) {
+  return (Array.isArray(parts) ? parts : [parts]).map(p => {
+    const q = (typeof p === 'object' && p !== null) ? p : { t: p };
+    const b = q.b !== undefined ? q.b : base.b, i = q.i !== undefined ? q.i : base.i, c = q.c || base.c;
+    return `<w:r><w:rPr>${b ? '<w:b/>' : ''}${i ? '<w:i/>' : ''}${c ? `<w:color w:val="${c}"/>` : ''}`
+      + `<w:sz w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${lxEsc(q.t)}</w:t></w:r>`;
+  }).join('');
+}
+function lxPPr(o) {
+  return '<w:pPr>' + (o.style ? `<w:pStyle w:val="${o.style}"/>` : '') + (o.keep ? '<w:keepNext/>' : '')
+    + (o.rule ? `<w:pBdr><w:bottom w:val="single" w:sz="12" w:space="4" w:color="${LX.blue}"/></w:pBdr>` : '')
+    + '<w:spacing' + (o.before !== undefined ? ` w:before="${o.before}"` : '')
+    + (o.after !== undefined ? ` w:after="${o.after}"` : '')
+    + (o.line ? ` w:line="${o.line}" w:lineRule="${o.exact ? 'exact' : 'auto'}"` : '') + '/>'
+    + (o.ind ? `<w:ind w:left="${o.ind}" w:hanging="${o.hanging || 0}"/>` : '')
+    + (o.align ? `<w:jc w:val="${o.align}"/>` : '')
+    + (o.mark ? `<w:rPr><w:sz w:val="${o.mark}"/></w:rPr>` : '') + '</w:pPr>';
+}
+const lxP = (parts, o = {}) => `<w:p>${lxPPr({ after: 120, line: 264, ...o })}${lxRuns(parts, o.sz || 20, o)}</w:p>`;
+const lxH1 = t => `<w:p>${lxPPr({ style: 'Heading1', before: 280, after: 100 })}${lxRuns(t, 30, { b: true, c: LX.navy })}</w:p>`;
+const lxH2 = t => `<w:p>${lxPPr({ style: 'Heading2', before: 180 })}${lxRuns(t, 23, { b: true, c: LX.blue })}</w:p>`;
+const lxNum = (n, parts) => `<w:p>${lxPPr({ after: 60, line: 264, ind: 400, hanging: 310 })}`
+  + `${lxRuns(n + '.', 20, { b: true, c: LX.blue })}<w:r><w:tab/></w:r>${lxRuns(parts, 20)}</w:p>`;
+const lxBullet = parts => `<w:p>${lxPPr({ after: 60, line: 264, ind: 360, hanging: 270 })}`
+  + `${lxRuns('•', 20, { c: LX.blue })}<w:r><w:tab/></w:r>${lxRuns(parts, 20)}</w:p>`;
+const lxNote = t => `<w:p>${lxPPr({ after: 120, line: 240 })}${lxRuns(t, 16, { i: true, c: LX.grey })}</w:p>`;
+const lxGap = (h = 120) => `<w:p>${lxPPr({ after: 0, line: h, exact: true })}</w:p>`;
+function lxTableCap(t) {
+  LX_T++;
+  return `<w:p>${lxPPr({ keep: true, before: 120, after: 60, line: 240 })}${lxRuns(`Table ${LX_T}: ${t}`, 18, { b: true, c: LX.navy })}</w:p>`;
+}
+function lxFigCap(t) {
+  LX_F++;
+  return `<w:p>${lxPPr({ after: 160, line: 240, align: 'center' })}${lxRuns(`Figure ${LX_F}: ${t}`, 18, { b: true, c: LX.navy })}</w:p>`;
+}
+
+function lxTblPr(grid, o = {}) {
+  const b = o.plain ? ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(s => `<w:${s} w:val="nil"/>`).join('')
+    : ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(s => `<w:${s} w:val="single" w:sz="4" w:space="0" w:color="${LX.line}"/>`).join('');
+  const m = o.mar || [28, 85];
+  return `<w:tblPr><w:tblW w:w="${LX.W}" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders>${b}</w:tblBorders>`
+    + `<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="${m[0]}" w:type="dxa"/><w:left w:w="${m[1]}" w:type="dxa"/>`
+    + `<w:bottom w:w="${m[0]}" w:type="dxa"/><w:right w:w="${m[1]}" w:type="dxa"/></w:tblCellMar>`
+    + `<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>`
+    + `<w:tblGrid>${grid.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>`;
+}
+function lxTc(w, inner, o = {}) {
+  return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>`
+    + (o.bar ? `<w:tcBorders><w:left w:val="single" w:sz="36" w:space="0" w:color="${LX.navy}"/></w:tcBorders>` : '')
+    + (o.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>` : '')
+    + (o.top ? '' : '<w:vAlign w:val="center"/>') + `</w:tcPr>${inner}</w:tc>`;
+}
+const lxTr = (cells, head) => `<w:tr><w:trPr><w:cantSplit/>${head ? '<w:tblHeader/>' : ''}<w:jc w:val="center"/></w:trPr>${cells}</w:tr>`;
+/** Column widths in twips that add up to the text width; weights need not. */
+function lxWidths(weights) {
+  const sum = weights.reduce((a, b) => a + b, 0), w = weights.map(x => Math.floor(LX.W * x / sum));
+  w[w.length - 1] += LX.W - w.reduce((a, b) => a + b, 0);
+  return w;
+}
+/**
+ * Data table with a navy heading row.
+ * @param cols [{w (weight), label, align}]   @param rows [[cell]]  cell: string or {t, b, align}
+ */
+function lxTable(cols, rows) {
+  const W = lxWidths(cols.map(c => c.w));
+  const cellP = (parts, o) => `<w:p>${lxPPr({ keep: o.head, after: 0, line: 240, align: o.align, mark: 17 })}${lxRuns(parts, 17, o)}</w:p>`;
+  const head = lxTr(cols.map((c, i) => lxTc(W[i], cellP(c.label, { head: true, b: true, c: 'FFFFFF', align: c.align }),
+    { fill: LX.navy })).join(''), true);
+  const together = rows.length <= 12;
+  const body = rows.map((r, n) => lxTr(r.map((cell, i) => {
+    const q = (typeof cell === 'object' && cell !== null && !Array.isArray(cell)) ? cell : { t: cell };
+    return lxTc(W[i], cellP(q.t, { b: q.b, align: q.align || cols[i].align, head: together && n < rows.length - 1 }));
+  }).join(''))).join('');
+  return `<w:tbl>${lxTblPr(W)}${head}${body}</w:tbl>`;
+}
+/** Two-column table of label and value, label column shaded. `style` puts the Table Grid style on it. */
+function lxInfo(rows, wLabel = 3300, style = false) {
+  const W = [wLabel, LX.W - wLabel];
+  // every row but the last keeps with the next, so the table stays on one page without chaining to what follows it
+  const p = (parts, o) => `<w:p>${lxPPr({ keep: o.keep, after: 0, line: 240, mark: 18 })}${lxRuns(parts, 18, o)}</w:p>`;
+  const pr = lxTblPr(W);
+  return `<w:tbl>${style ? pr.replace('<w:tblPr>', '<w:tblPr><w:tblStyle w:val="TableGrid"/>') : pr}`
+    + rows.map(([k, v], n) => { const keep = n < rows.length - 1;
+      return lxTr(lxTc(W[0], p(k, { b: true, c: LX.navy, keep }), { fill: LX.fill }) + lxTc(W[1], p(v, { keep }))); }).join('')
+    + '</w:tbl>';
+}
+/** Shaded key-statement box with a navy bar on the left. */
+function lxCallout(parts) {
+  return `<w:tbl>${lxTblPr([LX.W], { plain: true, mar: [110, 170] })}`
+    + lxTr(lxTc(LX.W, `<w:p>${lxPPr({ after: 0, line: 264 })}${lxRuns(parts, 20)}</w:p>`, { fill: LX.fill, bar: true }))
+    + '</w:tbl>' + lxGap(160);
+}
+function lxImage(fig, wCm) {
+  LX_ID++;
+  const cx = Math.round(wCm * 360000), cy = Math.round(wCm * 360000 * fig.h / fig.w);
+  const A = 'http://schemas.openxmlformats.org/drawingml/2006/main', PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture';
+  return `<w:r><w:rPr><w:noProof/></w:rPr><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">`
+    + `<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${LX_ID}" name="Picture ${LX_ID}"/>`
+    + `<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="${A}" noChangeAspect="1"/></wp:cNvGraphicFramePr>`
+    + `<a:graphic xmlns:a="${A}"><a:graphicData uri="${PIC}"><pic:pic xmlns:pic="${PIC}">`
+    + `<pic:nvPicPr><pic:cNvPr id="0" name="${lxEsc(fig.file)}"/><pic:cNvPicPr/></pic:nvPicPr>`
+    + `<pic:blipFill><a:blip r:embed="${fig.rel}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`
+    + `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`
+    + `</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+}
+/** One centred figure with its caption; nothing when the image is missing. */
+function lxFigure(fig, wCm, cap) {
+  if (!fig) return '';
+  return `<w:p>${lxPPr({ keep: true, before: 120, after: 60, line: 240, align: 'center' })}${lxImage(fig, wCm)}</w:p>` + lxFigCap(cap);
+}
+/** Two figures side by side, each with a line of text under it, and one caption for the pair. */
+function lxFigPair(items, cap) {
+  const have = items.filter(it => it && it.fig);
+  if (!have.length) return '';
+  if (have.length === 1) {
+    return `<w:p>${lxPPr({ keep: true, before: 120, after: 40, line: 240, align: 'center' })}${lxImage(have[0].fig, 8.45)}</w:p>`
+      + `<w:p>${lxPPr({ keep: true, after: 60, line: 240, align: 'center' })}${lxRuns(have[0].text, 16, { b: true, c: LX.navy })}</w:p>` + lxFigCap(cap);
+  }
+  const W = [5233, 5233];
+  const cell = it => `<w:p>${lxPPr({ keep: true, after: 40, line: 240, align: 'center' })}${lxImage(it.fig, 8.45)}</w:p>`
+    + `<w:p>${lxPPr({ after: 60, line: 240, align: 'center' })}${lxRuns(it.text, 16, { b: true, c: LX.navy })}</w:p>`;
+  return lxGap(120) + `<w:tbl>${lxTblPr(W, { plain: true, mar: [40, 60] })}`
+    + lxTr(have.map((it, i) => lxTc(W[i], cell(it), { top: true })).join('')) + '</w:tbl>' + lxFigCap(cap);
+}
+
+/* ---------- what the report says ---------- */
+
+/** Roof sets of the building, as [name, {zone: {cpe10, cpe1, cpe}}], in the order the app shows them. */
+function lxRoofSets() {
+  const c = roofCoeffs(), form = roofForm(S.g);
+  let sets;
+  if (form === 'flat') {
+    const neg = {}, f = c.flat;
+    Object.keys(f).forEach(k => { neg[k] = { cpe10: f[k].cpe10, cpe1: f[k].cpe1, cpe: f[k].cpe }; });
+    sets = [['Any direction', neg]];
+    if (f.I && isFinite(f.I.cpePos)) {
+      sets.push(['Any direction, zone I positive', { I: { cpe10: f.I.cpe10Pos, cpe1: f.I.cpe1Pos, cpe: f.I.cpePos } }]);
+    }
+  } else if (form === 'mono') {
+    sets = [['0° (suction case)', c.deg0neg], ['0° (pressure case)', c.deg0pos], ['180°', c.deg180], ['90°', c.deg90]];
+  } else if (form === 'duo') {
+    sets = [['0° (case 1)', c.deg0neg], ['0° (case 2)', c.deg0pos], ['90°', c.deg90]];
+  } else {
+    sets = [['0° (case 1)', c.deg0], ['0° (case 2)', c.deg0pos], ['90°', c.deg90]];
+  }
+  return sets.filter(([, o]) => o && Object.keys(o).length);
+}
+
+/** Everything the report needs, worked out once: the same numbers the panes show. */
+function lxModel() {
+  const kind = focusKind(), st = site(), t = TERRAIN[S.terrain], fact = hasFos(), fos = fosOf();
+  const si = siteInfo(), d = S.doc;
+  const m = { kind, st, t, fact, fos, si, label: focusLabel() };
+  if (kind === 'canopy') {
+    const c = S.can, mono = c.kind === 'mono';
+    const f = phi => mono ? canopyMono(+c.alpha, phi, 10) : canopyDuo(+c.alpha, phi);
+    m.c = c; m.mono = mono; m.table = mono ? 'Table 13' : 'Table 14';
+    m.r = f(+c.phi); m.r0 = f(0); m.r1 = f(1);
+    m.phi = clamp(+c.phi, 0, 1);
+    m.ze = +c.h; m.h = +c.h; m.b = +c.b; m.d = +c.d; m.alpha = +c.alpha;
+    m.q = st.at(m.ze);
+    m.zones = Object.keys(m.r.zones);
+    m.corner = mono ? 'D' : 'E';
+    m.down = {}; m.up = {};
+    m.zones.forEach(k => { m.down[k] = m.r.zones[k].max * m.q.qp; m.up[k] = m.r.zones[k].min * m.q.qp; });
+    m.area = m.b * m.d / Math.cos(m.alpha * Math.PI / 180);
+    m.gUp = lxGov(m.up, -1); m.gDown = lxGov(m.down, 1);
+    m.desc = `${mono ? 'mono' : 'duo'}-pitch canopy`;
+    m.pitchText = lxDeg(m.alpha);
+  } else {
+    const g = S.g, form = roofForm(g);
+    m.g = g; m.form = form; m.routed = form === 'flat' && g.type !== 'flat';
+    m.table = { flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[form];
+    m.figRef = { flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[form];
+    m.ze = zeRoof(); m.h = +g.h; m.b = +g.b; m.d = +g.d; m.alpha = +g.alpha;
+    m.q = st.at(m.ze);            // roof: h, or h + h_p with parapets
+    m.qi = st.at(m.h);            // internal pressure stays at z_e = h
+    m.sets = lxRoofSets();
+    // net pressure = external - internal, for the two internal pressure coefficients in use
+    m.rows = [];
+    m.sets.forEach(([name, obj]) => Object.keys(obj).forEach(k => {
+      const o = obj[k], we = o.cpe * m.q.qp;
+      m.rows.push({ set: name, zone: k, o, we, netP: we - m.qi.qp * +S.cpiPos, netN: we - m.qi.qp * +S.cpiNeg });
+    }));
+    m.oneCpi = Math.abs(+S.cpiPos - +S.cpiNeg) < 1e-9;
+    const all = [];
+    m.rows.forEach(r => { all.push({ r, v: r.netP, cpi: +S.cpiPos }); if (!m.oneCpi) all.push({ r, v: r.netN, cpi: +S.cpiNeg }); });
+    const pick = sign => {
+      if (!all.length) return null;
+      const v = sign > 0 ? Math.max(...all.map(a => a.v)) : Math.min(...all.map(a => a.v));
+      const hits = all.filter(a => Math.abs(a.v - v) < 5e-7);
+      const same = hits.filter(a => a.r.set === hits[0].r.set && a.cpi === hits[0].cpi);
+      const also = [...new Set(hits.filter(a => a.r.set !== hits[0].r.set).map(a => a.r.set))];
+      return { v, zones: [...new Set(same.map(a => a.r.zone))], set: hits[0].r.set, cpi: hits[0].cpi, also };
+    };
+    m.gUp = pick(-1); m.gDown = pick(1);
+    m.desc = `${(ROOFS.find(r => r[0] === g.type) || ['', 'Roof'])[1].toLowerCase()} roof`;
+    m.pitchText = g.type === 'flat' ? '' : lxDeg(m.alpha) + (g.type === 'hip' ? ` (hip ends ${lxDeg(+g.alpha90)})` : '');
+  }
+  // title block
+  m.title = (d.title || '').trim() || 'Wind Pressure Report';
+  m.location = (d.location || '').trim()
+    || (si.row ? `${S.muni}${CITY[S.muni] ? ` (${CITY[S.muni]})` : ''}, ${PROVINCES[S.province]}` : si.has ? sitePosText() : '');
+  m.name = (d.structure || '').trim();
+  m.dims = `${lxN(m.h, 2)} m high, ${lxN(m.b, 2)} m × ${lxN(m.d, 2)} m on plan`
+    + (m.pitchText ? `, roof pitch ${m.pitchText}` : '');
+  m.sub = [m.name || m.label, [d.client, d.project].map(x => (x || '').trim()).filter(Boolean).join(' – ')].filter(Boolean).join('  |  ');
+  m.std = 'SANS 10160-3:2018 (Ed 2.0)';
+  return m;
+}
+
+/** "zone F" / "zones C and D". */
+const lxZones = ids => (ids.length === 1 ? 'zone ' : 'zones ') + lxList(ids);
+const lxWind = set => /^Any/.test(set) ? 'any wind direction' : `wind at ${set}`;
+/** The result in one or two sentences, for the callout and the conclusion. */
+function lxResult(m) {
+  const fosNote = m.fact ? ` These include the factor of safety of ${lxT(m.fos)} on the wind pressure.` : '';
+  if (m.kind === 'canopy') {
+    return `the largest upward (uplift) pressure on the canopy is ${lxN(Math.abs(m.gUp.v), 2)} kPa in ${lxZones(m.gUp.ids)}, `
+      + `and the largest downward pressure is ${lxN(m.gDown.v, 2)} kPa in ${lxZones(m.gDown.ids)}.` + fosNote;
+  }
+  const where = g => `for ${lxWind(g.set)}${g.also && g.also.length ? ' and at ' + lxList(g.also) : ''}`
+    + (m.oneCpi && Math.abs(g.cpi) < 1e-9 ? '' : ` with an internal pressure coefficient of ${lxS(g.cpi, 2)}`);
+  // a hipped roof has no positive set for wind at 90 deg in the app, so "largest" is said of what is tabulated
+  const tab = m.form === 'hip' ? ' in the sets tabulated' : '';
+  const up = m.gUp && m.gUp.v < 0
+    ? `the largest net upward (uplift) pressure on the roof is ${lxN(Math.abs(m.gUp.v), 2)} kPa in ${lxZones(m.gUp.zones)}, ${where(m.gUp)}`
+    : 'there is no net upward pressure on the roof';
+  const down = m.gDown && m.gDown.v > 0
+    ? `the largest net downward pressure${tab} is ${lxN(m.gDown.v, 2)} kPa in ${lxZones(m.gDown.zones)}, ${where(m.gDown)}`
+    : 'there is no net downward pressure';
+  return `${up}; ${down}.` + fosNote;
+}
+const lxCap = t => t.charAt(0).toUpperCase() + t.slice(1);
+
+/**
+ * Body of the report as WordprocessingML. FG maps figure keys to {rel, file, w, h}; a missing figure is
+ * left out with its caption.
+ */
+function lxReportBody(FG) {
+  LX_T = 0; LX_F = 0; LX_ID = 0;
+  const m = lxModel(), d = S.doc, st = m.st, t = m.t, q = m.q, can = m.kind === 'canopy';
+  const QF = m.fact ? `${lxT(m.fos)} × qp` : 'qp';
+  let x = '';
+
+  /* --- letterhead spacer, title, title block --- */
+  x += '<w:p/><w:p/><w:p/><w:p/><w:p/>';
+  x += `<w:p>${lxPPr({ after: 40, line: 240 })}${lxRuns(m.title, 48, { b: true, c: LX.navy })}</w:p>`;
+  x += `<w:p>${lxPPr({ rule: true, after: 200, line: 240 })}${lxRuns(m.sub, 26, { c: LX.blue })}</w:p>`;
+  const block = [
+    ['Client', (d.client || '').trim() || '–'],
+    ['Project', ((d.project || '').trim() || '–') + ((d.job || '').trim() ? ` (${d.job.trim()})` : '')],
+    ['Location', m.location || '–'],
+    ['Structure', m.name ? `${m.name}: ${m.desc}, ${m.dims}` : `${lxCap(m.desc)}, ${m.dims}`],
+    ['Scope', `Wind pressure on the ${m.desc}: peak wind speed pressure, zone pressure coefficients and zone pressures`
+      + (can ? ', and the overall force on the canopy' : '')],
+    ['Reference basis', `${m.std}; Lumax Wind Actions app (lumax-energy.github.io/lumax-wind-actions)`],
+    ['Date', lxDate(d.date) || '–'],
+    ['Prepared by', (d.by || '').trim() || '–']
+  ];
+  if ((d.checked || '').trim()) block.push(['Checked by', d.checked.trim()]);
+  if ((d.rev || '').trim()) block.push(['Revision', d.rev.trim()]);
+  x += lxInfo(block, 2300, true);
+
+  /* --- 1 purpose and result --- */
+  x += lxH1('1.  Purpose and result');
+  x += lxP(`This report gives the wind pressure on the ${m.desc}${m.name ? ` of ${m.name}` : ''}`
+    + `${m.location ? ` at ${m.location}` : ''}. The pressures are for the design of the roof covering, anything fixed to the roof, `
+    + 'and their fixings.' + (can ? ' The overall force on the canopy is given for the design of the structure.' : ''));
+  x += lxP('The wind pressure is worked out in three steps, and each is set out in Section 3:');
+  x += lxNum(1, [{ t: 'The peak wind speed pressure. ', b: true },
+    'The wind speed for the site is taken from SANS 10160-3 and converted to a pressure at the height of the roof (Section 3.2).']);
+  x += lxNum(2, [{ t: 'The zone pressure coefficients. ', b: true },
+    `${m.table} of SANS 10160-3 ${/ and /.test(m.table) ? 'give' : 'gives'} a coefficient for each zone of the roof (Section 3.3).`]);
+  x += lxNum(3, [{ t: 'The zone pressures. ', b: true },
+    'Each coefficient is multiplied by the peak wind speed pressure' + (can ? '' : ', and the internal pressure is taken off') + ' (Section 3.4).']);
+  x += lxGap(60);
+  x += lxCallout([{ t: 'Result: ', b: true }, lxResult(m)]);
+
+  /* --- 2 structure --- */
+  x += lxH1('2.  Structure');
+  if (can) {
+    x += lxP(`The structure is a ${m.desc}: a roof with no permanent walls under it. The height is measured to the highest point of the roof. `
+      + 'The width b is measured across the wind and the depth d along the wind, in the direction of the slope.');
+  } else {
+    x += lxP(`The structure is a building with a ${m.desc}. The height is measured to the highest point of the roof. `
+      + 'The width b is measured across the wind at 0° and the depth d along it.'
+      + (m.routed ? ' ' + flatRouteText(m.g).replace('cl 8.3.3.1', 'SANS 10160-3 clause 8.3.3.1').replace('the zones of Figure 8', 'the zones of its Figure 8') : ''));
+  }
+  const sRows = [['Type', lxCap(m.desc) + (m.name ? ` (${m.name})` : '')],
+    ['Height h', `${lxN(m.h, 2)} m`], ['Width b', `${lxN(m.b, 2)} m`], ['Depth d', `${lxN(m.d, 2)} m`]];
+  if (m.pitchText) sRows.push(['Roof pitch α', m.pitchText]);
+  if (can) sRows.push(['Degree of blockage φ', `${lxT(m.phi)}` + (m.phi === 0 ? ' (open under the canopy)' : m.phi === 1 ? ' (fully blocked)' : ' (partly blocked)')]);
+  else {
+    if (m.form === 'flat') sRows.push(['Eaves detail', lxCap(edgeText())]);
+    sRows.push(['Loaded area A of the element', `${lxN(+m.g.A, 1)} m²`]);
+  }
+  x += lxTableCap('Structure');
+  x += lxInfo(sRows);
+
+  /* --- 3 wind pressure --- */
+  x += lxH1('3.  Wind pressure from the Lumax Wind Actions app');
+  x += lxP(`The wind pressure was determined with the Lumax Wind Actions app, which calculates wind actions to ${m.std}. `
+    + (can ? `The structure was entered on the Canopies tab as a ${m.desc} (SANS 10160-3 clause 8.4, ${m.table}).`
+      : `The structure was entered as a building with a ${m.desc} (SANS 10160-3 ${m.table}).`));
+  if (can) {
+    x += lxCallout([{ t: 'Zone pressures and overall force. ', b: true },
+      'SANS 10160-3 gives two sets of values for a canopy (clause 8.4.5). The net pressure coefficients for the zones are meant for '
+      + 'roofing elements and their fixings (Sections 3.3 and 3.4). The overall force coefficients are meant for the design of the '
+      + 'structure (Section 3.5).']);
+  }
+
+  x += lxH2('3.1  Input to the app');
+  const si = m.si;
+  const iRows = [
+    ['Site', si.row ? `${PROVINCES[S.province]}, ${S.muni}${CITY[S.muni] ? ` (${CITY[S.muni]})` : ''}`
+      : si.has ? `${sitePosText()}, set on the map` : '–'],
+    ['Fundamental basic wind speed vb,0', `${lxT(+S.vb0, 1)} m/s (3 s gust). `
+      + (si.kind === 'loading' ? 'Source not determined' : vbSourceText(si))],
+    ['Mean return period', `${lxN(+S.T, 0)} years`],
+    ['Site altitude', `${lxInt(S.altitude)} m above sea level`],
+    ['Terrain category', `${S.terrain} – ${lowerFirst(t.desc)}`],
+    ['Topography factor c0', lxN(+S.c0, 2) + (Math.abs(+S.c0 - 1) < 1e-9 ? ' (no hill or escarpment)' : '')],
+    [can ? 'Canopy type and height' : 'Roof type and height', `${lxCap(m.desc)}, h = ${lxN(m.h, 2)} m`]
+  ];
+  if (m.pitchText) iRows.push(['Roof pitch', m.pitchText]);
+  if (can) iRows.push(['Degree of blockage φ', lxT(m.phi)]);
+  else {
+    if (m.form === 'flat') iRows.push(['Eaves detail', lxCap(edgeText())]);
+    iRows.push(['Loaded area A', `${lxN(+m.g.A, 1)} m²`]);
+    iRows.push(m.oneCpi ? ['Internal pressure coefficient Cpi', lxS(+S.cpiPos, 2)]
+      : ['Internal pressure coefficients Cpi', `${lxS(+S.cpiPos, 2)} and ${lxS(+S.cpiNeg, 2)}`]);
+  }
+  if (m.fact) iRows.push(['Factor of safety on wind pressure', lxT(m.fos)]);
+  x += lxTableCap('Input entered in the Lumax Wind Actions app');
+  x += lxInfo(iRows);
+  if (si.note) x += lxGap(80) + lxNote(si.note);
+  x += lxFigure(FG.map, 11, 'SANS 10160-3 Figure 1, fundamental basic wind speed (3 s gust), with the site marked');
+
+  x += lxH2('3.2  Peak wind speed pressure');
+  x += lxP(`The app works out the peak wind speed pressure at the reference height ze = ${lxN(m.ze, 2)} m, `
+    + (can ? 'the height of the canopy.' : m.ze > m.h + 1e-9 ? 'the top of the parapet, which is where a flat roof with parapets is taken (h + hp).'
+      : 'the height of the roof.')
+    + (m.ze < t.zc ? ` This is below the cut-off height of ${lxN(t.zc, 0)} m for terrain category ${S.terrain}, so the pressure at ${lxN(t.zc, 0)} m is used.` : ''));
+  const pRows = [
+    ['Fundamental basic wind speed vb,0', 'Figure 1', lxN(+S.vb0, 1), 'm/s'],
+    [`Probability factor cprob (${lxN(+S.T, 0)} years)`, 'Clause 7.2.3, eq 2', lxN(st.cprob, 3), '–'],
+    ['Basic wind speed vb = cprob × vb,0', 'Clause 7.2.2, eq 1', lxN(st.vb, 2), 'm/s'],
+    [`Roughness factor cr (terrain ${S.terrain}: zg = ${t.zg} m, z0 = ${t.z0} m, zc = ${t.zc} m, α = ${t.a})`, 'Clause 7.3.2.1, eq 5', lxN(q.cr, 4), '–'],
+    ['Topography factor c0', 'Clause 7.3.3', lxN(+S.c0, 3), '–'],
+    ['Peak wind speed vp = cr × c0 × vb', 'Clause 7.3.1.1, eq 3', lxN(q.vp, 2), 'm/s'],
+    [`Air density ρ at ${lxInt(S.altitude)} m`, 'Table 4', lxN(st.rho, 3), 'kg/m³'],
+    [{ t: 'Peak wind speed pressure qp = ½ ρ vp²', b: true }, 'Clause 7.4, eq 6', { t: lxN(q.qp0, 4), b: true }, 'kPa']
+  ];
+  if (m.fact) {
+    pRows.push(['Factor of safety on wind pressure', 'Engineer’s input', lxT(m.fos), '–']);
+    pRows.push([{ t: `Wind pressure with the factor of safety = ${QF}`, b: true }, 'App setting', { t: lxN(q.qp, 4), b: true }, 'kPa']);
+  }
+  if (!can && Math.abs(m.qi.qp - q.qp) > 1e-9) {
+    pRows.push([`Same pressure at ze = h = ${lxN(m.h, 2)} m, used for the internal pressure`, 'Clause 8.3.9', lxN(m.qi.qp, 4), 'kPa']);
+  }
+  x += lxTableCap('Peak wind speed pressure from the app');
+  x += lxTable([{ w: 4366, label: 'Quantity' }, { w: 2600, label: 'Reference' }, { w: 1900, label: 'Value', align: 'center' },
+    { w: 1600, label: 'Unit', align: 'center' }], pRows.map(r => [r[0], r[1], typeof r[2] === 'object' ? { ...r[2], align: 'center' } : r[2], r[3]]));
+
+  if (can) {
+    /* --- canopy: coefficients, pressures, views, zone widths, overall force --- */
+    x += lxH2('3.3  Zone pressure coefficients');
+    x += lxP(`${m.table} of SANS 10160-3 gives net pressure coefficients for a ${m.desc}. A positive value is a net downward pressure `
+      + 'and a negative value is a net upward pressure (uplift). The upward values depend on the blockage under the canopy: the app '
+      + `interpolates between an empty canopy (φ = 0) and a fully blocked canopy (φ = 1)`
+      + (m.phi > 0 && m.phi < 1 ? ` for φ = ${lxT(m.phi)}` : '') + ', and between the rows of the table for the roof pitch. '
+      + 'The coefficients cover all wind directions.');
+    const zl = k => k === m.corner ? [{ t: `Zone ${k}`, b: true }, ' (corners)'] : { t: `Zone ${k}`, b: true };
+    x += lxTableCap(`Net pressure coefficients cp,net from the app (SANS 10160-3 ${m.table}), roof pitch ${m.pitchText}`);
+    x += lxTable([{ w: 2466, label: 'Zone' }, { w: 2000, label: 'Downward (all φ)', align: 'center' },
+      { w: 2000, label: 'Upward, φ = 0', align: 'center' }, { w: 2000, label: 'Upward, φ = 1', align: 'center' },
+      { w: 2000, label: `Upward, φ = ${lxT(m.phi)} (used)`, align: 'center' }],
+      m.zones.map(k => [zl(k), lxS(m.r.zones[k].max, 2), lxS(m.r0.zones[k].min, 2), lxS(m.r1.zones[k].min, 2),
+        { t: lxS(m.r.zones[k].min, 2), b: true }]));
+    x += lxGap(80) + lxNote(`Zone ${m.corner} (the corners) takes the governing value of zones B and C (${m.table}, NOTE 2).`);
+
+    x += lxH2('3.4  Zone pressures');
+    x += lxP('The zone pressure is the coefficient multiplied by the peak wind speed pressure.'
+      + (m.fact ? ` The table gives the design pressures without the factor of safety, and the same pressures multiplied by ${lxT(m.fos)} as shown by the app.` : ''));
+    x += lxTableCap(`Zone pressures on the ${m.desc} from the app (kPa)`);
+    if (m.fact) {
+      x += lxTable([{ w: 2466, label: 'Zone' }, { w: 2000, label: 'Design pressure, downward', align: 'center' },
+        { w: 2000, label: 'Design pressure, upward', align: 'center' }, { w: 2000, label: `${lxT(m.fos)} × design, downward`, align: 'center' },
+        { w: 2000, label: `${lxT(m.fos)} × design, upward`, align: 'center' }],
+        m.zones.map(k => [{ t: `Zone ${k}`, b: true }, lxS(m.r.zones[k].max * q.qp0, 3), lxS(m.r.zones[k].min * q.qp0, 3),
+          { t: lxS(m.down[k], 3), b: true }, { t: lxS(m.up[k], 3), b: true }]));
+    } else {
+      x += lxTable([{ w: 3466, label: 'Zone' }, { w: 3500, label: 'Downward pressure', align: 'center' },
+        { w: 3500, label: 'Upward pressure (uplift)', align: 'center' }],
+        m.zones.map(k => [{ t: `Zone ${k}`, b: true }, { t: lxS(m.down[k], 3), b: true }, { t: lxS(m.up[k], 3), b: true }]));
+    }
+    x += lxGap(120);
+    x += lxP('The figure shows the zone views from the app' + (m.fact ? ` with the factor of safety of ${lxT(m.fos)} applied` : '')
+      + `. Zone C runs along the windward and leeward edges, zone B along the two edges parallel to the wind, `
+      + (m.mono ? 'zone D is at the corners' : `zone D runs along each side of the ${m.alpha < 0 ? 'valley' : 'ridge'}, zone E is at the corners`)
+      + ' and zone A covers the rest of the canopy.');
+    x += lxFigPair([{ fig: FG.canUp, text: 'Maximum uplift:  ' + lxLegend(m.up, -1) },
+      { fig: FG.canDown, text: 'Maximum downward:  ' + lxLegend(m.down, 1) }],
+      `App zone views for the ${m.desc} (${lxN(m.b, 2)} m × ${lxN(m.d, 2)} m, pitch ${m.pitchText})`
+      + (m.fact ? `, pressures include the factor of safety of ${lxT(m.fos)}` : ''));
+    const wRows = [['Zone C strips along the windward and leeward edges, d/10', `${lxN(m.d / 10, 2)} m`],
+      ['Zone B strips along the edges parallel to the wind, b/10', `${lxN(m.b / 10, 2)} m`]];
+    if (!m.mono) wRows.push([`Zone D strip on each side of the ${m.alpha < 0 ? 'valley' : 'ridge'}, d/10`, `${lxN(m.d / 10, 2)} m`]);
+    wRows.push([`Zone ${m.corner} corners`, `${lxN(m.d / 10, 2)} m × ${lxN(m.b / 10, 2)} m`]);
+    x += lxTableCap('Width of the edge zones');
+    x += lxInfo(wRows, 6200);
+
+    x += lxH2('3.5  Overall force on the canopy');
+    x += lxP(`For the design of the structure, ${m.table} of SANS 10160-3 also gives overall force coefficients cf. The force is cf × ${QF} × the area of the roof. `
+      + (m.mono ? `It acts at d/4 = ${lxN(m.d / 4, 2)} m from the windward edge (clause 8.4.6).`
+        : 'The centre of pressure is taken at the centre of each slope, and the canopy must also be able to carry one slope with the '
+        + 'maximum or minimum load while the other slope is unloaded (clause 8.4.6).'));
+    x += lxTableCap('Overall force on the canopy');
+    x += lxTable([{ w: 2266, label: 'Case' }, { w: 1500, label: 'cf', align: 'center' }, { w: 1700, label: `${QF} (kPa)`, align: 'center' },
+      { w: 1700, label: `cf × ${QF} (kPa)`, align: 'center' }, { w: 1700, label: 'Roof area (m²)', align: 'center' },
+      { w: 1600, label: 'Force (kN)', align: 'center' }], [
+      ['Downward', lxS(m.r.cf.max, 2), lxN(q.qp, 4), lxS(m.r.cf.max * q.qp, 3), lxN(m.area, 1), { t: lxS(m.r.cf.max * q.qp * m.area, 1), b: true }],
+      ['Upward (uplift)', lxS(m.r.cf.min, 2), lxN(q.qp, 4), lxS(m.r.cf.min * q.qp, 3), lxN(m.area, 1), { t: lxS(m.r.cf.min * q.qp * m.area, 1), b: true }]
+    ]);
+  } else {
+    /* --- building roof: external coefficients, net pressures, views, key plans --- */
+    x += lxH2('3.3  Zone pressure coefficients');
+    x += lxP(`${m.table} of SANS 10160-3 ${/ and /.test(m.table) ? 'give' : 'gives'} external pressure coefficients Cpe for each zone of a ${m.desc}`
+      + `${m.routed ? ' taken as a flat roof' : ''}. A negative value is suction (uplift) and a positive value is pressure onto the roof. `
+      + `Cpe,10 is for loaded areas of 10 m² and more and Cpe,1 for 1 m² and less; the app interpolates between the two for the loaded area `
+      + `A = ${lxN(+m.g.A, 1)} m² (SANS 10160-3 Figure 5)` + (m.form === 'flat' ? '. The values also depend on the eaves detail.' : ', and between the rows of the table for the roof pitch.')
+      + (m.form === 'duo' && !roofCoeffs().deg0pos ? ' Table 10 gives a single set for this pitch: the second, positive set exists only '
+        + 'from α = −5° upwards, and values of opposite sign are not interpolated (NOTE 2).' : ''));
+    x += lxTableCap(`External pressure coefficients Cpe from the app (SANS 10160-3 ${m.table})`);
+    let last = '';
+    x += lxTable([{ w: 3066, label: 'Wind direction' }, { w: 1600, label: 'Zone', align: 'center' }, { w: 1900, label: 'Cpe,10', align: 'center' },
+      { w: 1900, label: 'Cpe,1', align: 'center' }, { w: 2000, label: `Cpe (A = ${lxN(+m.g.A, 1)} m²)`, align: 'center' }],
+      m.rows.map(r => { const first = r.set !== last; last = r.set;
+        return [first ? r.set : '', { t: r.zone, b: true }, lxS(r.o.cpe10, 2), lxS(r.o.cpe1, 2), { t: lxS(r.o.cpe, 2), b: true }]; }));
+
+    x += lxH2('3.4  Zone pressures');
+    x += lxP(`The external pressure is the coefficient multiplied by the peak wind speed pressure. The net pressure on the roof covering is the `
+      + `external pressure less the internal pressure, Cpi × ${QF}, `
+      + (m.oneCpi ? `for the internal pressure coefficient of ${lxS(+S.cpiPos, 2)}. ` : `for each of the two internal pressure coefficients, ${lxS(+S.cpiPos, 2)} and ${lxS(+S.cpiNeg, 2)}. `)
+      + 'A negative net pressure is uplift.'
+      + (m.fact ? ` All pressures include the factor of safety of ${lxT(m.fos)}.` : ''));
+    x += lxTableCap('Zone pressures on the roof from the app (kPa)');
+    last = '';
+    const pCols = [{ w: 3066, label: 'Wind direction' }, { w: 1400, label: 'Zone', align: 'center' }, { w: 2000, label: 'External pressure', align: 'center' },
+      { w: 2000, label: `Net, Cpi = ${lxS(+S.cpiPos, 2)}`, align: 'center' }];
+    if (!m.oneCpi) pCols.push({ w: 2000, label: `Net, Cpi = ${lxS(+S.cpiNeg, 2)}`, align: 'center' });
+    x += lxTable(pCols, m.rows.map(r => { const first = r.set !== last; last = r.set;
+      const row = [first ? r.set : '', { t: r.zone, b: true }, lxS(r.we, 3), { t: lxS(r.netP, 3), b: true }];
+      if (!m.oneCpi) row.push({ t: lxS(r.netN, 3), b: true });
+      return row; }));
+    x += lxGap(120);
+    x += lxP('The figures show the zone views from the app, coloured by external surface pressure'
+      + (m.fact ? `, with the factor of safety of ${lxT(m.fos)} applied` : '') + ', and the key plans of the roof zones with their sizes.');
+    const legend = key => FG[key] && FG[key].vals ? lxLegend(FG[key].vals, -1) : '';
+    x += lxFigPair([{ fig: FG.w0, text: 'Wind at 0°:  ' + legend('w0') }, { fig: FG.w90, text: 'Wind at 90°:  ' + legend('w90') }],
+      'App zone views of the building, external pressure on the roof zones');
+    if (FG.w180) x += lxFigPair([{ fig: FG.w180, text: 'Wind at 180°:  ' + legend('w180') }], 'App zone view for wind at 180°, onto the high eaves');
+    x += lxFigure(FG.k0, 12.6, `Key plan of the roof zones with their sizes, wind at 0° (layout to SANS 10160-3 ${m.figRef})`);
+    x += lxFigure(FG.k90, 12.6, `Key plan of the roof zones with their sizes, wind at 90° (layout to SANS 10160-3 ${m.figRef})`);
+  }
+
+  /* --- 4 conclusion --- */
+  x += lxH1('4.  Conclusion');
+  x += lxNum(1, `The site is ${si.row ? `in the ${S.muni} municipality, ${PROVINCES[S.province]}` : si.has ? `at ${sitePosText()}` : 'as entered'}, `
+    + `where the fundamental basic wind speed is ${lxT(+S.vb0, 1)} m/s. The terrain is category ${S.terrain} and the mean return period is ${lxN(+S.T, 0)} years.`);
+  x += lxNum(2, `The peak wind speed pressure at the reference height of ${lxN(m.ze, 2)} m is ${lxN(q.qp0, 3)} kPa`
+    + (m.fact ? `, and ${lxN(q.qp, 3)} kPa with the factor of safety of ${lxT(m.fos)}.` : '.'));
+  x += lxNum(3, lxCap(lxResult(m)));
+  if (can) {
+    x += lxNum(4, `For the design of the structure, the overall force on the canopy is ${lxN(Math.abs(m.r.cf.min * q.qp * m.area), 1)} kN upward `
+      + `and ${lxN(m.r.cf.max * q.qp * m.area, 1)} kN downward, `
+      + (m.mono ? `acting at ${lxN(m.d / 4, 2)} m from the windward edge.`
+        : 'taken at the centre of each slope. One slope loaded with the other unloaded is also to be checked.'));
+  }
+  x += lxH2('Basis and limits of this report');
+  const lim = [];
+  lim.push(m.fact
+    ? `The pressures are wind actions to ${m.std}, multiplied by a factor of safety of ${lxT(m.fos)} that was set by the engineer and is not part of the standard. `
+    + 'Partial factors and load combinations of SANS 10160-1 are not applied in addition.'
+    : `The pressures are wind actions to ${m.std}. Partial factors and load combinations of SANS 10160-1 are not applied.`);
+  lim.push(`The wind pressure depends on the inputs in Table 2: terrain category ${S.terrain}, `
+    + (can ? `a blockage of ${lxT(m.phi)} under the canopy, `
+      : m.oneCpi ? `an internal pressure coefficient of ${lxS(+S.cpiPos, 2)}, ` : `internal pressure coefficients of ${lxS(+S.cpiPos, 2)} and ${lxS(+S.cpiNeg, 2)}, `)
+    + `a ${lxN(+S.T, 0)}-year return period and a topography factor of ${lxN(+S.c0, 2)}. `
+    + (can ? 'If the site is more exposed than assumed, the pressures increase. The upward pressures also change with the blockage under the '
+      + 'canopy; Table 4 gives both limits (φ = 0 and φ = 1).'
+      : 'If the site is more exposed than assumed, or the building has a dominant opening, the pressures increase.'));
+  if (can) {
+    lim.push('The zone pressures apply to roofing elements, anything fixed to the roof and their fixings. The overall force applies to the structure.');
+  } else {
+    lim.push('This report covers the roof only. The walls, the overall forces on the building and friction are in the full calculation record from the app.');
+    if (m.form === 'hip') {
+      lim.push('Zone boundaries for hipped roofs are indicative and are to be set out from Figure 12 of SANS 10160-3.');
+      lim.push('For wind at 90° the app tabulates the suction set of Table 12 only. The positive set for the windward hip end is not included '
+        + 'and is to be checked where the hip end is steeper than the main slopes.');
+    }
+  }
+  lim.push('The structural factor cs·cd has not been evaluated. Structures that are sensitive to dynamic response need separate consideration.');
+  lim.push('This report is produced by a calculation aid. The input, the assumptions and the results are to be verified by the responsible engineer before use in design.');
+  lim.forEach(b => { x += lxBullet(b); });
+  return x;
+}
+
+/* ---------- figures ---------- */
+
+async function lxFigures() {
+  const out = [];
+  try {
+    const mp = mapFigureJpeg();
+    if (mp) out.push({ key: 'map', ...mp });
+  } catch (e) { /* the report goes out without the map */ }
+  const png = async (key, svg, extra) => { const p = await svgToPng(svg, 2.5); out.push({ key, bytes: p.bytes, w: p.w, h: p.h, ...extra }); };
+  if (focusKind() === 'canopy') {
+    const m = lxModel(), gg = { h: m.h, b: m.b, d: m.d, alpha: m.alpha };
+    const up = canopyScene(m.c.kind, gg, m.up), down = canopyScene(m.c.kind, gg, m.down);
+    // both views on one colour scale, as on the Canopies tab
+    const scale = { neg: Math.max(0, ...Object.values(m.up).map(v => -v)), pos: Math.max(0, ...Object.values(m.down)) };
+    const o = { wind: '0', width: 460, height: 300, mode: S.view, scale };
+    await png('canUp', renderScene(up, o).svg);
+    await png('canDown', renderScene(down, o).svg);
+  } else {
+    const q = qpRoof(), c = roofCoeffs(), form = roofForm(S.g);
+    const V = o => { const v = {}; Object.keys(o).forEach(k => v[k] = o[k].cpe * q); return v; };
+    const roofAt = dir => form === 'flat' ? V(c.flat)
+      : form === 'mono' ? V(dir === '90' ? c.deg90 : dir === '180' ? c.deg180 : c.deg0neg)
+        : form === 'duo' ? V(dir === '90' ? c.deg90 : c.deg0neg) : V(dir === '90' ? c.deg90 : c.deg0);
+    for (const sp of reportFigureSpecs().filter(s => ['w0', 'w90', 'w180', 'k0', 'k90'].includes(s.key))) {
+      if (sp.svg) {
+        // the key plan's dimension text has no font of its own: give it a sans-serif one, as in the rest of the report
+        await png(sp.key, sp.svg.replace('<svg ', '<svg font-family="Arial, Helvetica, sans-serif" '));
+      } else {
+        // legend: the roof zones that are drawn in this view
+        const r = renderScene(sp.scene, { wind: sp.wind, width: 460, height: 300, mode: S.view }), all = roofAt(sp.wind), vals = {};
+        r.zones.forEach(z => { if (z.id in all) vals[z.id] = all[z.id]; });
+        await png(sp.key, r.svg, { vals });
+      }
+    }
+  }
+  return out;
+}
+
+/* ---------- package ---------- */
+
+let LX_TPL_P = null;
+/** The letterhead parts, fetched the first time a report is made. */
+function lxLoadTemplate() {
+  if (window.LX_TPL) return Promise.resolve(window.LX_TPL);
+  if (!LX_TPL_P) {
+    LX_TPL_P = new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'report-template.js';
+      s.onload = () => { if (window.LX_TPL) res(window.LX_TPL); else { LX_TPL_P = null; s.remove(); rej(new Error('The report template is empty.')); } };
+      s.onerror = () => { LX_TPL_P = null; s.remove(); rej(new Error('The report template (report-template.js) could not be loaded. Check the connection and try again.')); };
+      document.head.appendChild(s);
+    });
+  }
+  return LX_TPL_P;
+}
+
+async function buildLumaxDocx() {
+  if (focusKind() === 'canopy') {
+    const err = canopyPitchCheck(S.can.kind, S.can.alpha);
+    if (err) throw new Error(err);
+  }
+  const T = await lxLoadTemplate();
+  if (WM.pixels === undefined) await Promise.race([WM.ready, new Promise(r => setTimeout(r, 8000))]);
+  let media = [];
+  try { media = await lxFigures(); } catch (e) { media = []; }
+  const FG = {};
+  media.forEach((f, i) => { f.file = `fig${i + 1}.${f.ext || 'png'}`; f.rel = `rId${20 + i}`; FG[f.key] = f; });
+  const body = lxReportBody(FG);
+
+  const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const sect = '<w:sectPr><w:footerReference w:type="default" r:id="rId7"/><w:headerReference w:type="first" r:id="rId8"/>'
+    + `<w:footerReference w:type="first" r:id="rId9"/>${T.page}<w:cols w:space="708"/><w:titlePg/><w:docGrid w:linePitch="360"/></w:sectPr>`;
+  const rel = (id, type, target) => `<Relationship Id="${id}" Type="${R}/${type}" Target="${target}"/>`;
+  const ov = (part, type) => `<Override PartName="/${part}" ContentType="application/vnd.openxmlformats-officedocument.${type}+xml"/>`;
+  const files = [
+    {
+      name: '[Content_Types].xml', text: `${head}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
+        + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        + '<Default Extension="xml" ContentType="application/xml"/>'
+        + '<Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/>'
+        + ov('word/document.xml', 'wordprocessingml.document.main') + ov('word/styles.xml', 'wordprocessingml.styles')
+        + ov('word/settings.xml', 'wordprocessingml.settings') + ov('word/fontTable.xml', 'wordprocessingml.fontTable')
+        + ov('word/theme/theme1.xml', 'theme') + ov('word/footnotes.xml', 'wordprocessingml.footnotes')
+        + ov('word/endnotes.xml', 'wordprocessingml.endnotes') + ov('word/header1.xml', 'wordprocessingml.header')
+        + ov('word/footer1.xml', 'wordprocessingml.footer') + ov('word/footer2.xml', 'wordprocessingml.footer') + '</Types>'
+    },
+    {
+      name: '_rels/.rels', text: `${head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+        + rel('rId1', 'officeDocument', 'word/document.xml') + '</Relationships>'
+    },
+    {
+      name: 'word/_rels/document.xml.rels', text: `${head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+        + rel('rId1', 'styles', 'styles.xml') + rel('rId2', 'settings', 'settings.xml') + rel('rId3', 'fontTable', 'fontTable.xml')
+        + rel('rId4', 'theme', 'theme/theme1.xml') + rel('rId5', 'footnotes', 'footnotes.xml') + rel('rId6', 'endnotes', 'endnotes.xml')
+        + rel('rId7', 'footer', 'footer1.xml') + rel('rId8', 'header', 'header1.xml') + rel('rId9', 'footer', 'footer2.xml')
+        + media.map(f => rel(f.rel, 'image', 'media/' + f.file)).join('') + '</Relationships>'
+    },
+    { name: 'word/document.xml', text: `${T.docOpen}<w:body>${body}${sect}</w:body></w:document>` }
+  ];
+  Object.keys(T.text).forEach(name => files.push({ name, text: T.text[name] }));
+  Object.keys(T.b64).forEach(name => {
+    const bin = atob(T.b64[name]), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    files.push({ name, bytes });
+  });
+  media.forEach(f => files.push({ name: 'word/media/' + f.file, bytes: f.bytes }));
+  return zipStore(files);
+}
+
+async function downloadLumaxDocx(btn) {
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Preparing report…'; }
+  try {
+    const bytes = await buildLumaxDocx();
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const d = S.doc, who = [d.client, d.project].map(v => (v || '').trim()).filter(Boolean).join(', ');
+    const name = (((d.title || '').trim() || 'Wind Pressure Report') + (who ? ' - ' + who : ''))
+      .replace(/[\\/:*?"<>|]/g, '-').slice(0, 110) + '.docx';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    toast('Report saved as ' + name);
+  } catch (e) {
+    toast('The report could not be made: ' + e.message, true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+
+/* ============================================================
    Project file — save and reopen a job
    ============================================================ */
 
@@ -2901,6 +3627,10 @@ function openProject(file) {
       }
       // files saved before the factor of safety existed carry none: open them unfactored
       if (o.state && typeof o.state === 'object' && !('fos' in o.state)) S.fos = 1;
+      const od = (o.state && o.state.doc && typeof o.state.doc === 'object') ? o.state.doc : {};
+      if (!('focus' in od)) S.doc.focus = 'building';
+      if (!('title' in od)) S.doc.title = '';
+      if (!('location' in od)) S.doc.location = '';
       mergeState(S, o.state);
       // Site position: files saved before the map existed carry none, and one that is missing or off the
       // map cannot be used. Fall back to the centroid of the file's municipality, or to no position.
@@ -2949,6 +3679,8 @@ const S = {
   fw: { mode: 'wall', h: 2, L: 20, Lc: 0, phi: 1, hb: 10, sh: 5, sb: 6, shg: 2 },
   fric: 'smooth', view: 'shaded', cpiMode: 'pair', preset: '',
   doc: {
+    // focus: which roof the Word report is about - 'building' (the building's roof) or 'canopy' (the Canopies tab)
+    focus: 'building', title: '', location: '',
     project: '', client: '', structure: '', job: '', by: '', checked: '', rev: 'A',
     date: new Date().toISOString().slice(0, 10), incCanopy: true, incFree: true
   }
@@ -3036,7 +3768,8 @@ function banners() {
       Every pressure and force shown is ${fmt(fosOf(), 2)} × the SANS 10160-3 value. Wind speeds are not factored.</div>`;
   }
   const g = S.g;
-  if (g.type !== 'flat' && ['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) {
+  const repCanopy = S.tab === 'report' && focusKind() === 'canopy';
+  if (g.type !== 'flat' && !repCanopy && ['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) {
     const p = profileOf(g.type, g.h, g.d, g.alpha, g.alpha90);
     if (p.he < 0) {
       h += `<div class="note warn"><b>Check the building geometry.</b> The roof rises ${fmt(p.rise, 2)} m, more than
@@ -3194,6 +3927,19 @@ function buildingFields() {
   </div>`;
 }
 
+function canopyFields() {
+  return `<div class="group"><h3>Canopy</h3>
+      <div class="pick">${[['mono', 'Mono-pitch'], ['duo', 'Duo-pitch']].map(([k, n]) =>
+      `<button data-set="can.kind" data-val="${k}" aria-pressed="${S.can.kind === k}">${canopyThumb(k)}${n}</button>`).join('')}</div>
+      ${fld('can.h', 'Height h to highest point', { unit: 'm' })}
+      ${fld('can.b', 'Width b across wind', { unit: 'm' })}
+      ${fld('can.d', 'Depth d along wind', { unit: 'm' })}
+      ${fld('can.alpha', 'Roof pitch α', { unit: '°' })}
+      ${fld('can.phi', 'Degree of blockage φ')}
+      <p class="hint">φ = 0 is a clear space under the canopy, φ = 1 is fully blocked at the downwind eaves (cl 8.4.2). Values between the two are interpolated.</p>
+    </div>`;
+}
+
 function cpiFields() {
   return `<div class="group"><h3>Internal pressure used</h3>
     ${fld('cpiMode', 'Case', { wide: true, options: CPI_MODES.map(m => [m[0], m[1].replace('__pi__', 'pi')]) })}
@@ -3232,20 +3978,28 @@ function sidebar() {
     <p class="hint">Multiplies q<sub>p</sub>, so every pressure and force scales with it. Leave at 1 for the unfactored SANS 10160-3 values.</p>
   </div>`;
 
-  if (['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) h += buildingFields();
-  if (['walls', 'roof'].includes(S.tab)) h += cpiFields();
+  // the report tab shows the inputs of the roof the report is about
+  const repCanopy = S.tab === 'report' && focusKind() === 'canopy';
+  if (repCanopy) h += canopyFields();
+  else if (['site', 'walls', 'roof', 'internal', 'friction', 'report'].includes(S.tab)) h += buildingFields();
+  if (['walls', 'roof'].includes(S.tab) || (S.tab === 'report' && !repCanopy)) h += cpiFields();
   if (S.tab === 'site') h += `<div class="group"><h3>Reference heights</h3>${fld('g.hStrip', 'Strip height when h > 2b', { unit: 'm' })}</div>`;
 
   if (S.tab === 'report') {
     h += `<div class="group"><h3>Report title block</h3>
-      ${fld('doc.project', 'Project', { text: true, ph: 'Project name' })}
+      ${fld('doc.title', 'Report title', { text: true, ph: 'Wind Pressure Report' })}
       ${fld('doc.client', 'Client', { text: true })}
-      ${fld('doc.structure', 'Structure', { text: true, ph: 'e.g. Warehouse A' })}
+      ${fld('doc.project', 'Project', { text: true, ph: 'Project name' })}
       ${fld('doc.job', 'Job number', { text: true })}
+      ${fld('doc.location', 'Location', { text: true, ph: 'Taken from the site if left empty' })}
+      ${fld('doc.structure', 'Structure', { text: true, ph: 'e.g. Carport 1' })}
       ${fld('doc.by', 'Prepared by', { text: true })}
       ${fld('doc.checked', 'Checked by', { text: true })}
       ${fld('doc.rev', 'Revision', { text: true })}
       ${fld('doc.date', 'Date', { text: true, date: true })}
+    </div>
+    <div class="group"><h3>Full calculation record</h3>
+      <p class="hint">The longer record covers the building: walls, roof, internal pressure, forces and friction.</p>
       ${fld('doc.incCanopy', 'Include canopy appendix', { wide: true, options: [[false, 'No'], [true, 'Yes']] })}
       ${fld('doc.incFree', 'Include free-standing appendix', { wide: true, options: [[false, 'No'], [true, 'Yes']] })}
     </div>`;
@@ -3259,18 +4013,7 @@ function sidebar() {
     });
     h += `</div>`;
   }
-  if (S.tab === 'canopy') {
-    h += `<div class="group"><h3>Canopy</h3>
-      <div class="pick">${[['mono', 'Mono-pitch'], ['duo', 'Duo-pitch']].map(([k, n]) =>
-      `<button data-set="can.kind" data-val="${k}" aria-pressed="${S.can.kind === k}">${canopyThumb(k)}${n}</button>`).join('')}</div>
-      ${fld('can.h', 'Height h to highest point', { unit: 'm' })}
-      ${fld('can.b', 'Width b across wind', { unit: 'm' })}
-      ${fld('can.d', 'Depth d along wind', { unit: 'm' })}
-      ${fld('can.alpha', 'Roof pitch α', { unit: '°' })}
-      ${fld('can.phi', 'Degree of blockage φ')}
-      <p class="hint">φ = 0 is a clear space under the canopy, φ = 1 is fully blocked at the downwind eaves (cl 8.4.2). Values between the two are interpolated.</p>
-    </div>`;
-  }
+  if (S.tab === 'canopy') h += canopyFields();
   if (S.tab === 'free') {
     h += `<div class="group"><h3>Element</h3>
       ${fld('fw.mode', 'Type', { wide: true, options: [['wall', 'Free-standing wall'], ['parapet', 'Parapet on a building'], ['sign', 'Signboard']] })}`;
@@ -3983,7 +4726,10 @@ function paneCanopy() {
     <tr><td class="z">Downward</td><td>${fmt(r.cf.max)}</td><td>${fmt(q, 4)}</td><td class="pos">${fmt(r.cf.max * q, 3)}</td><td>${fmt(area, 1)}</td><td class="pos">${fmt(r.cf.max * q * area, 1)}</td></tr>
     <tr><td class="z">Uplift</td><td>${fmt(r.cf.min)}</td><td>${fmt(q, 4)}</td><td class="neg">${fmt(r.cf.min * q, 3)}</td><td>${fmt(area, 1)}</td><td class="neg">${fmt(r.cf.min * q * area, 1)}</td></tr>
   </tbody></table>
-  <div class="note">Use c<sub>f</sub> with the centre of pressure at <b>d/4 = ${fmt(c.d / 4, 2)} m</b> from the windward edge for the overall design of the structure; use the zone values for roofing elements and their fixings (cl 8.4.5). A duo-pitch canopy must also be checked with one slope loaded and the other unloaded. Zones follow the key plan of ${c.kind === 'mono' ? 'Table 13' : 'Table 14'}: C along the windward and leeward edges, d/10 = ${fmt(c.d / 10, 2)} m wide; B along the two edges parallel to the wind, b/10 = ${fmt(c.b / 10, 2)} m wide; ${c.kind === 'mono' ? 'D in the corners' : 'D for d/10 on each side of the ridge and E in the corners'}; A over the rest. The corner zone takes the governing value of B and C (NOTE 2).</div>`;
+  <div class="note">${c.kind === 'mono'
+      ? `Use c<sub>f</sub> with the centre of pressure at <b>d/4 = ${fmt(c.d / 4, 2)} m</b> from the windward edge for the overall design of the structure (cl 8.4.6)`
+      : 'Use c<sub>f</sub> with the centre of pressure at the <b>centre of each slope</b> for the overall design of the structure, and also check one slope loaded with the other unloaded (cl 8.4.6)'};
+    use the zone values for roofing elements and their fixings (cl 8.4.5). Zones follow the key plan of ${c.kind === 'mono' ? 'Table 13' : 'Table 14'}: C along the windward and leeward edges, d/10 = ${fmt(c.d / 10, 2)} m wide; B along the two edges parallel to the wind, b/10 = ${fmt(c.b / 10, 2)} m wide; ${c.kind === 'mono' ? 'D in the corners' : 'D for d/10 on each side of the ridge and E in the corners'}; A over the rest. The corner zone takes the governing value of B and C (NOTE 2).</div>`;
 }
 
 function paneFree() {
@@ -4048,30 +4794,71 @@ function paneFriction() {
   <div class="note">The friction force acts along the wind, added to the pressure forces from the walls. Where A<sub>fr</sub> works out at zero the building is too short along the wind for friction to develop.</div>`;
 }
 
-function paneReport() {
-  const st = site(), q = qpRef(), qr = qpRoof(), g = S.g, fact = hasFos();
-  const a = wallP('0').w, b90 = wallP('90').w, c = roofCoeffs(), form = roofForm(g);
-  const roofTbl = () => {
-    const sets = form === 'flat' ? [['Both directions', c.flat]]
-      : form === 'mono' ? [['0° suction', c.deg0neg], ['0° pressure', c.deg0pos], ['180°', c.deg180], ['90°', c.deg90]]
-        : form === 'duo' ? [['0° case 1', c.deg0neg], ['0° case 2', c.deg0pos], ['90°', c.deg90]]
-          : [['0° case 1', c.deg0], ['0° case 2', c.deg0pos], ['90°', c.deg90]];
-    return sets.filter(([, o]) => o)
-      .map(([n, o]) => `<h3>Roof — ${n}</h3><table>${coeffHead()}<tbody>${coeffRows(o, qr, null, q)}</tbody></table>`).join('');
-  };
-  const si = siteInfo();
-  return `<h2>Summary</h2>
-  <p class="lede">Everything the tool has worked out, on one page. The Word report is a formal
-  document — title block, numbered sections and tables, clause references, page numbering and a
-  statement of assumptions and limitations — ready to be edited and issued.</p>
+/** Top of the report tab: which roof the report is about, and the downloads. */
+function reportHead() {
+  const can = focusKind() === 'canopy';
+  return `<h2>Report</h2>
+  <p class="lede">The Word report is a short document on one roof in the Lumax report format: title block, purpose and
+  result, the structure, the wind pressure with its zone views, and a conclusion. Choose the roof it is about, fill in the
+  title block on the left, and download.</p>
+  <div class="focusbar"><label for="f_focus">Roof the report is about</label>
+    <select id="f_focus" data-focus="1">${FOCUS_OPTIONS.map(o =>
+    `<option value="${o[0]}"${o[0] === focusValue() ? ' selected' : ''}>${o[1]}</option>`).join('')}</select>
+    <span>${can ? 'The canopy and its inputs are on the left; they are the same as on the Canopies tab.'
+      : 'The building and its inputs are on the left.'}</span></div>
   <div class="docbar">
-    <button class="btn big" onclick="downloadDocx(this)">Download Word report (.docx)</button>
+    <button class="btn big" onclick="downloadLumaxDocx(this)">Download Word report (.docx)</button>
+    <button class="btn ghost" onclick="downloadDocx(this)" title="The longer record of the whole building: walls, roof, internal pressure, forces and friction">Full calculation record (.docx)</button>
     <button class="btn ghost" onclick="saveProject()">Save project</button>
     <button class="btn ghost" onclick="document.getElementById('openFile').click()">Open project</button>
     <button class="btn ghost" onclick="window.print()">Print this page</button>
-    <span>Fill in the title block on the left before downloading.</span>
-  </div>
-  <h3>Input</h3>
+  </div>`;
+}
+
+/** What the report on a canopy will carry, on screen. */
+function canopyReportSummary() {
+  const c = S.can, err = canopyPitchCheck(c.kind, c.alpha);
+  if (err) {
+    return `<div class="note warn"><b>Check the pitch — no report.</b> ${esc(err)}
+      ${c.kind === 'duo' ? 'Enter a pitch from −20° to −5° (troughed) or from +5° to +30°.' : 'Enter a pitch from 0° to 30°.'}</div>`;
+  }
+  const m = lxModel(), q = m.q, si = m.si, fact = m.fact;
+  return `<h3>Input</h3>
+  <table><tbody>
+    <tr><td>Site</td><td style="text-align:left">${esc(siteLineText(si))}</td></tr>
+    <tr><td>v<sub>b,0</sub> / return period / altitude</td><td style="text-align:left">${fmt(S.vb0, 1)} m/s · ${fmt(S.T, 0)} years · ${fmt(S.altitude, 0)} m</td></tr>
+    <tr><td>Source of v<sub>b,0</sub></td><td style="text-align:left">${esc(vbSourceText(si))}</td></tr>
+    <tr><td>Terrain category / c₀</td><td style="text-align:left">${S.terrain} · ${fmt(S.c0, 2)}</td></tr>
+    ${fact ? `<tr><td>Factor of safety on wind pressure</td><td style="text-align:left">${fmt(m.fos, 2)}</td></tr>` : ''}
+    <tr><td>Canopy</td><td style="text-align:left">${m.mono ? 'Mono' : 'Duo'}-pitch, h × b × d = ${fmt(m.h, 2)} × ${fmt(m.b, 2)} × ${fmt(m.d, 2)} m, α = ${fmt(m.alpha, 1)}°, φ = ${fmt(m.phi, 2)}</td></tr>
+  </tbody></table>
+  <h3>Peak wind speed pressure at h = ${fmt(m.h, 2)} m</h3>
+  <table><tbody>
+    <tr><td>c<sub>r</sub>(z<sub>e</sub>)</td><td>${fmt(q.cr, 4)}</td><td>v<sub>p</sub>(z<sub>e</sub>)</td><td>${fmt(q.vp, 2)} m/s</td></tr>
+    <tr><td>ρ</td><td>${fmt(m.st.rho, 3)} kg/m³</td><td><b>q<sub>p</sub>(z<sub>e</sub>)</b></td><td><b>${fmt(q.qp0, 4)} kPa</b></td></tr>
+    ${fact ? `<tr><td>Factor of safety FoS</td><td>${fmt(m.fos, 2)}</td><td><b>FoS · q<sub>p</sub>(z<sub>e</sub>)</b></td><td><b>${fmt(q.qp, 4)} kPa</b></td></tr>` : ''}
+  </tbody></table>
+  <h3>Zone pressures — ${m.table}</h3>
+  <table><thead><tr><th>Zone</th><th>c<sub>p,net</sub> downward</th><th>c<sub>p,net</sub> upward</th><th>Downward, kPa</th><th>Upward, kPa</th></tr></thead><tbody>
+  ${m.zones.map(k => `<tr><td class="z">${k}</td><td>${fmt(m.r.zones[k].max)}</td><td>${fmt(m.r.zones[k].min)}</td>
+    <td class="pos">${fmt(m.down[k], 3)}</td><td class="neg">${fmt(m.up[k], 3)}</td></tr>`).join('')}
+  </tbody></table>
+  <h3>Overall force on the canopy</h3>
+  <table><thead><tr><th>Case</th><th>c<sub>f</sub></th><th>c<sub>f</sub> · ${qSym()}, kPa</th><th>Roof area, m²</th><th>Force, kN</th></tr></thead><tbody>
+    <tr><td class="z">Downward</td><td>${fmt(m.r.cf.max)}</td><td class="pos">${fmt(m.r.cf.max * q.qp, 3)}</td><td>${fmt(m.area, 1)}</td><td class="pos">${fmt(m.r.cf.max * q.qp * m.area, 1)}</td></tr>
+    <tr><td class="z">Uplift</td><td>${fmt(m.r.cf.min)}</td><td class="neg">${fmt(m.r.cf.min * q.qp, 3)}</td><td>${fmt(m.area, 1)}</td><td class="neg">${fmt(m.r.cf.min * q.qp * m.area, 1)}</td></tr>
+  </tbody></table>
+  <div class="note"><b>Result:</b> ${esc(lxResult(m))}</div>`;
+}
+
+function paneReport() {
+  if (focusKind() === 'canopy') return reportHead() + canopyReportSummary();
+  const st = site(), q = qpRef(), qr = qpRoof(), g = S.g, fact = hasFos();
+  const a = wallP('0').w, b90 = wallP('90').w, c = roofCoeffs(), form = roofForm(g);
+  const roofTbl = () => lxRoofSets().map(([n, o]) =>
+    `<h3>Roof — ${/^Any/.test(n) ? lowerFirst(n) : 'wind at ' + n}</h3><table>${coeffHead()}<tbody>${coeffRows(o, qr, null, q)}</tbody></table>`).join('');
+  const si = siteInfo();
+  return reportHead() + `<h3>Input</h3>
   <table><tbody>
     <tr><td>Site</td><td style="text-align:left">${esc(siteLineText(si))}${si.row && si.has ? ` · ${sitePosText()}` : ''}</td></tr>
     <tr><td>v<sub>b,0</sub> / return period / altitude</td><td style="text-align:left">${fmt(S.vb0, 1)} m/s · ${fmt(S.T, 0)} years · ${fmt(S.altitude, 0)} m</td></tr>
@@ -4096,7 +4883,8 @@ function paneReport() {
   <div class="note">Net pressures use C<sub>pi</sub> = ${signed(S.cpiPos)} and ${signed(S.cpiNeg)}.
   Pressure coefficients and the peak pressure are as SANS 10160-3:2018. ${fact
       ? `A factor of safety of ${fmt(st.fos, 2)} has been applied to the peak wind speed pressure, so every pressure above includes it. Partial factors and load combinations of Part 1 are not applied in addition.`
-      : 'Partial factors and load combinations are Part 1 and are not applied here.'}</div>`;
+      : 'Partial factors and load combinations are Part 1 and are not applied here.'}</div>
+  <div class="note"><b>Result in the Word report:</b> ${esc(lxCap(lxResult(lxModel())))} The walls are in the full calculation record only.</div>`;
 }
 
 const PANES = {
@@ -4198,6 +4986,12 @@ function init() {
     e.target.value = '';
   });
 
+  document.getElementById('out').addEventListener('change', e => {
+    if (!e.target.dataset || !e.target.dataset.focus) return;
+    setFocus(e.target.value);
+    renderAll();
+    const sel = document.getElementById('f_focus'); if (sel) sel.focus();
+  });
   document.getElementById('out').addEventListener('click', e => {
     if (e.target.closest('[data-act="map"]')) { pkOpen(); return; }
     const b = e.target.closest('button[data-view]'); if (!b) return;
