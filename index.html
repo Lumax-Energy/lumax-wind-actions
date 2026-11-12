@@ -247,8 +247,8 @@ TBL.T7_a = [
   [90,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,0.2,0.2]
 ];
 // Table 8 - monopitch, theta=0 & 180. Row: pitch, then 0deg-case1 [F10,F1,G10,G1,H10,H1], 180deg [F..H], 0deg-case2(+) [F..H]
+// Tables 8 to 11 start at |alpha| = 5: a roof with -5 < alpha < 5 is a flat roof (cl 8.3.3.1) and takes Table 7, see roofForm().
 TBL.T8 = [
-  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2],
   [5,-1.7,-2.5,-1.2,-2,-0.6,-1.2,-2.3,-2.5,-1.3,-2,-0.8,-1.2,0,0,0,0,0,0],
   [15,-0.9,-2,-0.8,-1.5,-0.3,-0.3,-2.5,-2.8,-1.3,-2,-0.9,-1.2,0.2,0.2,0.2,0.2,0.2,0.2],
   [30,-0.5,-1.5,-0.5,-1.5,-0.2,-0.2,-1.1,-2.3,-0.8,-1.5,-0.8,-0.8,0.7,0.7,0.7,0.7,0.4,0.4],
@@ -258,7 +258,6 @@ TBL.T8 = [
 ];
 // Table 9 - monopitch, theta=90. Row: pitch, then [Fup10,Fup1,Flow10,Flow1,G10,G1,H10,H1,I10,I1]
 TBL.T9 = [
-  [0,-1.8,-2.5,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2],
   [5,-2.1,-2.6,-2.1,-2.4,-1.8,-2,-0.6,-1.2,-0.5,-0.5],
   [15,-2.4,-2.9,-1.6,-2.4,-1.9,-2.5,-0.8,-1.2,-0.7,-1.2],
   [30,-2.1,-2.9,-1.3,-2,-1.5,-2,-1,-1.3,-0.8,-1.2],
@@ -267,12 +266,13 @@ TBL.T9 = [
   [75,-1.2,-2,-1.2,-2,-1.2,-2,-1,-1.3,-0.5,-0.5]
 ];
 // Table 10 - duopitch, theta=0. Row: pitch, then case1 [F,G,H,I,J]x(10,1), then case2 [F,G,H,I,J]x(10,1)
+// On the troughed side the standard gives a second (positive) set only at -5 deg, so case 2 is null below -5
+// (NOTE 2: interpolate only between values of the same sign). duoCpe() returns no case 2 for alpha < -5.
 TBL.T10 = [
-  [-45,-0.6,-0.6,-0.6,-0.6,-0.8,-0.8,-0.7,-0.7,-1,-1.5,-0.6,-0.6,-0.6,-0.6,-0.8,-0.8,-0.7,-0.7,-1,-1.5],
-  [-30,-1.1,-2,-0.8,-1.5,-0.8,-0.8,-0.6,-0.6,-0.8,-1.4,-1.1,-2,-0.8,-1.5,-0.8,-0.8,-0.6,-0.6,-0.8,-1.4],
-  [-15,-2.5,-2.8,-1.3,-2,-0.9,-1.2,-0.5,-0.5,-0.7,-1.2,-2.5,-2.8,-1.3,-2,-0.9,-1.2,-0.5,-0.5,-0.7,-1.2],
+  [-45,-0.6,-0.6,-0.6,-0.6,-0.8,-0.8,-0.7,-0.7,-1,-1.5,null,null,null,null,null,null,null,null,null,null],
+  [-30,-1.1,-2,-0.8,-1.5,-0.8,-0.8,-0.6,-0.6,-0.8,-1.4,null,null,null,null,null,null,null,null,null,null],
+  [-15,-2.5,-2.8,-1.3,-2,-0.9,-1.2,-0.5,-0.5,-0.7,-1.2,null,null,null,null,null,null,null,null,null,null],
   [-5,-2.3,-2.5,-1.2,-2,-0.8,-1.2,-0.6,-0.6,-0.6,-0.6,-2.3,-2.5,-1.2,-2,-0.8,-1.2,0.2,0.2,0.2,0.2],
-  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,0.2,0.2,0.2,0.2,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2,-0.2,-0.2],
   [5,-1.7,-2.5,-1.2,-2,-0.6,-1.2,-0.6,-0.6,-0.6,-0.6,0,0,0,0,0,0,-0.6,-0.6,0.2,0.2],
   [15,-0.9,-2,-0.8,-1.5,-0.3,-0.3,-0.4,-0.4,-1,-1.5,0.2,0.2,0.2,0.2,0.2,0.2,0,0,0,0],
   [30,-0.5,-1.5,-0.5,-1.5,-0.2,-0.2,-0.4,-0.4,-0.5,-0.5,0.7,0.7,0.7,0.7,0.4,0.4,0,0,0,0],
@@ -286,7 +286,6 @@ TBL.T11 = [
   [-30,-1.5,-2.1,-1.2,-2,-1,-1.3,-0.9,-1.2],
   [-15,-1.9,-2.5,-1.2,-2,-0.8,-1.2,-0.8,-1.2],
   [-5,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.6,-1.2],
-  [0,-1.8,-2.5,-1.2,-2,-0.7,-1.2,-0.2,-0.2],
   [5,-1.6,-2.2,-1.3,-2,-0.7,-1.2,-0.6,-0.6],
   [15,-1.3,-2,-1.3,-2,-0.6,-1.2,-0.5,-0.5],
   [30,-1.1,-1.5,-1.4,-2,-0.8,-1.2,-0.5,-0.5],
@@ -315,12 +314,12 @@ TBL.T13 = [
   [30,1.2,2.2,3.2,2.4,-1.8,-3,-3.8,-3.6,-1.4,-1.5,-2.2,-2.7]
 ];
 // Table 14 - duopitch canopies. Row: pitch, then max[cf,A,B,C,D], min phi=0[cf,A,B,C,D], min phi=1[cf,A,B,C,D]
+// The table has no row between -5 and +5 deg; canopyPitchCheck() refuses those pitches.
 TBL.T14 = [
   [-20,0.7,0.8,1.6,0.6,1.7,-0.7,-0.9,-1.3,-1.6,-0.6,-1.3,-1.5,-2.4,-2.4,-0.6],
   [-15,0.5,0.6,1.5,0.7,1.4,-0.6,-0.8,-1.3,-1.6,-0.6,-1.4,-1.6,-2.7,-2.6,-0.6],
   [-10,0.4,0.6,1.4,0.8,1.1,-0.6,-0.8,-1.3,-1.5,-0.6,-1.4,-1.6,-2.7,-2.6,-0.6],
   [-5,0.3,0.5,1.5,0.8,0.8,-0.5,-0.7,-1.3,-1.6,-0.6,-1.3,-1.5,-2.4,-2.4,-0.6],
-  [0,0.2,0.5,1.8,1.1,0.5,-0.5,-0.6,-1.3,-1.4,-1.5,-1.3,-1.5,-1.8,-2.2,-1.5],
   [5,0.3,0.6,1.8,1.3,0.4,-0.6,-0.6,-1.4,-1.4,-1.1,-1.3,-1.3,-2,-1.8,-1.5],
   [10,0.4,0.7,1.8,1.4,0.4,-0.7,-0.7,-1.5,-1.4,-1.4,-1.3,-1.3,-2,-1.8,-1.8],
   [15,0.4,0.9,1.9,1.4,0.4,-0.8,-0.9,-1.7,-1.4,-1.8,-1.3,-1.3,-2.2,-1.6,-2.1],
@@ -529,16 +528,27 @@ function flatRoofCpe(edge, A) {
   return out;
 }
 
+/**
+ * Roof form that sets the coefficients. cl 8.3.3.1 and NOTE 2 to Tables 10 and 11: a mono- or duo-pitch
+ * roof with -5 < alpha < 5 is a flat roof and takes Table 7 (with its eaves detail) and the Figure 8 zones.
+ */
+function roofForm(g) {
+  if ((g.type === 'mono' || g.type === 'duo') && Math.abs(+g.alpha || 0) < 5) return 'flat';
+  return g.type;
+}
+
 /* ---------- 8.3.4  monopitch roofs ---------- */
 
 function monoZones(h, b, d) {
   const e = Math.min(b, 2 * h);
+  // wind at 90 deg blows along the slope's width: the crosswind dimension is d, the along-wind one b
+  const e90 = Math.min(d, 2 * h);
   return {
-    e,
+    e, e90,
     d0: { F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 }, H: { depth: Math.max(d - e / 10, 0) } },
     d90: {
-      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
-      H: { depth: Math.max(e / 2 - e / 10, 0) }, I: { depth: Math.max(d - e / 2, 0) }
+      F: { widthEach: e90 / 4, depth: e90 / 10 }, G: { width: Math.max(d - e90 / 2, 0), depth: e90 / 10 },
+      H: { depth: Math.max(e90 / 2 - e90 / 10, 0) }, I: { depth: Math.max(b - e90 / 2, 0) }
     }
   };
 }
@@ -564,19 +574,22 @@ function monoCpe(alpha, A) {
 
 function duoZones(h, b, d) {
   const e = Math.min(b, 2 * h);
+  // wind at 90 deg blows along the ridge: the crosswind dimension is d, the along-wind one b
+  const e90 = Math.min(d, 2 * h);
   return {
-    e,
+    e, e90,
     d0: {
       F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b - e / 2, 0), depth: e / 10 },
       H: { depth: Math.max(d / 2 - e / 10, 0) }, J: { depth: e / 10 }, I: { depth: Math.max(d / 2 - e / 10, 0) }
     },
     d90: {
-      F: { widthEach: e / 4, depth: e / 10 }, G: { width: Math.max(b / 2 - e / 4, 0), depth: e / 10 },
-      H: { depth: Math.max(e / 2 - e / 10, 0) }, I: { depth: Math.max(d - e / 2, 0) }
+      F: { widthEach: e90 / 4, depth: e90 / 10 }, G: { width: Math.max(d / 2 - e90 / 4, 0), depth: e90 / 10 },
+      H: { depth: Math.max(e90 / 2 - e90 / 10, 0) }, I: { depth: Math.max(b - e90 / 2, 0) }
     }
   };
 }
 
+/** Table 10 has a second (case 2) set only from -5 deg up: below that deg0pos is null. */
 function duoCpe(alpha, A) {
   const g = (t, c10, c1) => {
     const a = tableLookup(t, alpha, c10), b = tableLookup(t, alpha, c1);
@@ -584,7 +597,8 @@ function duoCpe(alpha, A) {
   };
   return {
     deg0neg: { F: g(TBL.T10, 1, 2), G: g(TBL.T10, 3, 4), H: g(TBL.T10, 5, 6), I: g(TBL.T10, 7, 8), J: g(TBL.T10, 9, 10) },
-    deg0pos: { F: g(TBL.T10, 11, 12), G: g(TBL.T10, 13, 14), H: g(TBL.T10, 15, 16), I: g(TBL.T10, 17, 18), J: g(TBL.T10, 19, 20) },
+    deg0pos: alpha < -5 ? null
+      : { F: g(TBL.T10, 11, 12), G: g(TBL.T10, 13, 14), H: g(TBL.T10, 15, 16), I: g(TBL.T10, 17, 18), J: g(TBL.T10, 19, 20) },
     deg90: { F: g(TBL.T11, 1, 2), G: g(TBL.T11, 3, 4), H: g(TBL.T11, 5, 6), I: g(TBL.T11, 7, 8) }
   };
 }
@@ -669,7 +683,27 @@ function canopyCorner(z) {
   return { max: Math.max(z.B.max, z.C.max), min: Math.min(z.B.min, z.C.min) };
 }
 
+/**
+ * Pitch range of the canopy tables, so nothing is clamped silently: Table 13 runs 0 to 30 deg; Table 14 runs
+ * -20 to +30 deg with no row between -5 and +5 deg. Returns null when the pitch is covered, else the reason.
+ */
+function canopyPitchCheck(kind, alpha) {
+  const a = +alpha;
+  if (!isFinite(a)) return 'Enter the roof pitch α.';
+  const A = (a < 0 ? '−' : '') + Math.abs(a);
+  if (kind === 'mono') {
+    if (a < 0 || a > 30) return `Table 13 covers mono-pitch canopies from 0° to 30°. α = ${A}° is outside the table.`;
+    return null;
+  }
+  if (a < -20 || a > 30) return `Table 14 covers duo-pitch canopies from −20° to +30°. α = ${A}° is outside the table.`;
+  if (a > -5 && a < 5) return `CHECK PITCH — Table 14 has no 0° row: its rows run −20° to −5° and +5° to +30°. `
+    + `α = ${A}° lies between −5° and +5°, where the standard gives no duo-pitch canopy values.`;
+  return null;
+}
+
 function canopyMono(alpha, phi, A) {
+  const err = canopyPitchCheck('mono', alpha);
+  if (err) throw new Error(err);
   const L = (c) => tableLookup(TBL.T13, alpha, c);
   const mn = (c0, c1) => lerp(L(c0), L(c1), clamp(phi, 0, 1));
   const zones = {
@@ -682,6 +716,8 @@ function canopyMono(alpha, phi, A) {
 }
 
 function canopyDuo(alpha, phi) {
+  const err = canopyPitchCheck('duo', alpha);
+  if (err) throw new Error(err);
   const L = (c) => tableLookup(TBL.T14, alpha, c);
   const mn = (c0, c1) => lerp(L(c0), L(c1), clamp(phi, 0, 1));
   const zones = {
@@ -1386,26 +1422,36 @@ function buildingScene(g, dir, W, P) {
   const e = Math.min(dir === '90' ? d : b, 2 * h);
   const e4 = e / 4, e10 = e / 10, e2 = e / 2;
   const rect = [[0, 0], [d, 0], [d, b], [0, b]];
+  // Figure 8 zones F, G, H, I over one roof surface; zoneRect clips each zone to the surface's plan
+  const flatZones = (s, plan, zf) => {
+    if (dir === '90') {
+      zoneRect(s, plan, zf, 'F', R.F, 0, e4, 0, e10);
+      zoneRect(s, plan, zf, 'F', R.F, d - e4, d, 0, e10);
+      zoneRect(s, plan, zf, 'G', R.G, e4, d - e4, 0, e10);
+      zoneRect(s, plan, zf, 'H', R.H, null, null, e10, e2);
+      zoneRect(s, plan, zf, 'I', R.I, null, null, e2, b);
+    } else {
+      zoneRect(s, plan, zf, 'F', R.F, 0, e10, 0, e4);
+      zoneRect(s, plan, zf, 'F', R.F, 0, e10, b - e4, b);
+      zoneRect(s, plan, zf, 'G', R.G, 0, e10, e4, b - e4);
+      zoneRect(s, plan, zf, 'H', R.H, e10, e2);
+      zoneRect(s, plan, zf, 'I', R.I, e2, d);
+    }
+  };
+  // a mono- or duo-pitch roof flatter than 5 deg is drawn at its true pitch but zoned as a flat roof
+  const asFlat = roofForm(g) === 'flat';
 
   if (type === 'hip') {
     hipRoofSurfaces(surfaces, g, dir, R, prof, e);
   } else if (type === 'flat') {
     const s = surface(lift(rect, () => h), [0, 0, 1]);
     surfaces.push(s);
-    const zf = () => h;
-    if (dir === '90') {
-      zoneRect(s, rect, zf, 'F', R.F, 0, e4, 0, e10);
-      zoneRect(s, rect, zf, 'F', R.F, d - e4, d, 0, e10);
-      zoneRect(s, rect, zf, 'G', R.G, e4, d - e4, 0, e10);
-      zoneRect(s, rect, zf, 'H', R.H, null, null, e10, e2);
-      zoneRect(s, rect, zf, 'I', R.I, null, null, e2, b);
-    } else {
-      zoneRect(s, rect, zf, 'F', R.F, 0, e10, 0, e4);
-      zoneRect(s, rect, zf, 'F', R.F, 0, e10, b - e4, b);
-      zoneRect(s, rect, zf, 'G', R.G, 0, e10, e4, b - e4);
-      zoneRect(s, rect, zf, 'H', R.H, e10, e2);
-      zoneRect(s, rect, zf, 'I', R.I, e2, d);
-    }
+    flatZones(s, rect, () => h);
+  } else if (type === 'mono' && asFlat) {
+    const zf = x => prof.zAt(x);
+    const s = surface(lift(rect, zf), [-prof.t, 0, 1]);
+    surfaces.push(s);
+    flatZones(s, rect, zf);
   } else if (type === 'mono') {
     const zf = x => prof.zAt(x);
     const s = surface(lift(rect, zf), [-prof.t, 0, 1]);
@@ -1434,7 +1480,10 @@ function buildingScene(g, dir, W, P) {
     const sw = surface(lift(planW, zw), [-prof.t, 0, 1]);
     const sl = surface(lift(planL, zl), [prof.t, 0, 1]);
     surfaces.push(sw, sl);
-    if (dir === '90') {
+    if (asFlat) {
+      flatZones(sw, planW, zw);
+      flatZones(sl, planL, zl);
+    } else if (dir === '90') {
       zoneRect(sw, planW, zw, 'F', R.F, 0, e4, 0, e10);
       zoneRect(sw, planW, zw, 'G', R.G, e4, d / 2, 0, e10);
       zoneRect(sw, planW, zw, 'H', R.H, null, null, e10, e2);
@@ -1861,11 +1910,11 @@ function svgToPng(svg, scale) {
 
 /** Which illustrations the report carries, in order. */
 function reportFigureSpecs() {
-  const g = S.g, q = qpRoof(), c = roofCoeffs();
+  const g = S.g, q = qpRoof(), c = roofCoeffs(), form = roofForm(g);
   const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * q); return m; };
-  const roofAt = dir => g.type === 'flat' ? V(c.flat)
-    : g.type === 'mono' ? V(dir === '90' ? c.deg90 : dir === '180' ? c.deg180 : c.deg0neg)
-      : g.type === 'duo' ? V(dir === '90' ? c.deg90 : c.deg0neg)
+  const roofAt = dir => form === 'flat' ? V(c.flat)
+    : form === 'mono' ? V(dir === '90' ? c.deg90 : dir === '180' ? c.deg180 : c.deg0neg)
+      : form === 'duo' ? V(dir === '90' ? c.deg90 : c.deg0neg)
         : V(dir === '90' ? c.deg90 : c.deg0);
   const specs = [
     { key: 'w0', wind: '0', scene: buildingScene(g, '0', wallP('0').p, roofAt('0')),
@@ -1873,14 +1922,15 @@ function reportFigureSpecs() {
     { key: 'w90', wind: '90', scene: buildingScene(g, '90', wallP('90').p, roofAt('90')),
       cap: 'External pressure zones — wind at 90°' }
   ];
-  if (g.type === 'mono') specs.push({ key: 'w180', wind: '180',
+  if (form === 'mono') specs.push({ key: 'w180', wind: '180',
     scene: buildingScene(g, '180', wallP('0').p, roofAt('180')), cap: 'External pressure zones — wind at 180°' });
-  const figRef = { flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type];
+  const figRef = { flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[form];
   specs.push({ key: 'k0', svg: renderZoneKey(g, '0', roofAt('0'), { width: 440, height: 300 }),
     cap: `Roof zone key, wind at 0° — layout to ${figRef}` });
   specs.push({ key: 'k90', svg: renderZoneKey(g, '90', roofAt('90'), { width: 440, height: 300 }),
     cap: `Roof zone key, wind at 90° — layout to ${figRef}` });
-  if (String(S.doc.incCanopy) === 'true') {
+  // no canopy figure when the pitch is outside Table 13 or 14: the appendix then carries the warning only
+  if (String(S.doc.incCanopy) === 'true' && !canopyPitchCheck(S.can.kind, S.can.alpha)) {
     const cn = S.can, qc = qpAt(cn.h);
     const r = cn.kind === 'mono' ? canopyMono(+cn.alpha, +cn.phi, 10) : canopyDuo(+cn.alpha, +cn.phi);
     const Z = {}; Object.keys(r.zones).forEach(k => Z[k] = r.zones[k].min * qc);
@@ -1947,7 +1997,7 @@ function reportSections(FG) {
   const g = S.g, st = site(), q = qpRef(), t = TERRAIN[S.terrain];
   const parts = referenceHeights(g.h, g.b, g.hStrip);
   const w0 = wallZones(g.h, g.b, g.d, g.A), w90 = wallZones(g.h, g.d, g.b, g.A);
-  const c = roofCoeffs();
+  const c = roofCoeffs(), form = roofForm(g);
   const d = S.doc;
   const F = (v, dp) => fmt(v, dp);
   // q (z_e = h) serves walls and internal pressure; qr is the roof's own (h + h_p with parapets).
@@ -2040,7 +2090,8 @@ function reportSections(FG) {
     ['Depth d (along wind at 0°)', `${F(g.d, 3)} m`],
     ['Roof form', (ROOFS.find(r => r[0] === g.type) || ['', ''])[1]
       + (g.type !== 'flat' ? `, pitch α = ${F(g.alpha, 1)}°` : '')
-      + (g.type === 'hip' ? `, hip end α90 = ${F(g.alpha90, 1)}°` : '')],
+      + (g.type === 'hip' ? `, hip end α90 = ${F(g.alpha90, 1)}°` : '')
+      + (form === 'flat' && g.type !== 'flat' ? ' — taken as a flat roof, cl 8.3.3.1' : '')],
     ['e = min(b, 2h), wind at 0°', `${F(w0.e, 3)} m`],
     ['e = min(d, 2h), wind at 90°', `${F(w90.e, 3)} m`],
     ['h/d, wind at 0° / 90°', `${F(w0.hd, 3)} / ${F(w90.hd, 3)}`]
@@ -2073,14 +2124,18 @@ function reportSections(FG) {
 
   /* --- 5 roof --- */
   x += wHead(1, '5  External pressure coefficients — roof');
-  const sets = g.type === 'flat' ? [['Both directions', c.flat]]
-    : g.type === 'mono' ? [['Wind at 0°, suction case', c.deg0neg], ['Wind at 0°, pressure case', c.deg0pos],
+  const sets = (form === 'flat' ? [['Both directions', c.flat]]
+    : form === 'mono' ? [['Wind at 0°, suction case', c.deg0neg], ['Wind at 0°, pressure case', c.deg0pos],
     ['Wind at 180°', c.deg180], ['Wind at 90°', c.deg90]]
-      : g.type === 'duo' ? [['Wind at 0°, case 1', c.deg0neg], ['Wind at 0°, case 2', c.deg0pos], ['Wind at 90°', c.deg90]]
-        : [['Wind at 0°, case 1', c.deg0], ['Wind at 0°, case 2', c.deg0pos], ['Wind at 90°', c.deg90]];
-  const src = { flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[g.type];
+      : form === 'duo' ? [['Wind at 0°, case 1', c.deg0neg], ['Wind at 0°, case 2', c.deg0pos], ['Wind at 90°', c.deg90]]
+        : [['Wind at 0°, case 1', c.deg0], ['Wind at 0°, case 2', c.deg0pos], ['Wind at 90°', c.deg90]])
+    .filter(([, o]) => o);
+  const src = { flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[form];
   x += wPara(wRun(`Coefficients from ${src}, interpolated on `
-    + (g.type === 'flat' ? 'the eaves detail' : 'roof pitch') + ` and on the loaded area A = ${F(g.A, 1)} m².`, { sz: 18 }));
+    + (form === 'flat' ? 'the eaves detail' : 'roof pitch') + ` and on the loaded area A = ${F(g.A, 1)} m².`
+    + (form === 'flat' && g.type !== 'flat' ? ' ' + flatRouteText(g) : '')
+    + (form === 'duo' && !c.deg0pos ? ' Table 10 gives a single set for this pitch: the second, positive set (case 2) '
+      + 'exists only from α = −5° upwards, and values of opposite sign are not interpolated (NOTE 2).' : ''), { sz: 18 }));
   x += wFigure(FG.w180);
   x += wFigure(FG.k0);
   x += wFigure(FG.k90);
@@ -2090,7 +2145,7 @@ function reportSections(FG) {
       + `at ze = h.`, { sz: 18 }));
   }
   sets.forEach(([name, obj]) => { x += wCaption(`Roof — ${name}`); x += wTable(coefCols, coefRows(obj, null, qr)); });
-  if (g.type === 'flat' && c.flat && c.flat.I) {
+  if (form === 'flat' && c.flat && c.flat.I) {
     x += wPara(wRun(`Zone I carries both signs: ${F(c.flat.I.cpe, 2)} and +${F(c.flat.I.cpePos, 2)}. `
       + 'Both cases are to be checked.', { sz: 17, i: true }));
   }
@@ -2129,13 +2184,13 @@ function reportSections(FG) {
     + 'envelope, so a pitched roof keeps the correct split between vertical and horizontal components. '
     + 'Positive vertical force is uplift. Internal pressure is included. Friction from section 9 is '
     + 'additional to the along-wind totals.', { sz: 18 }));
-  const rv0 = g.type === 'flat' ? Vq(c.flat) : g.type === 'mono' ? Vq(c.deg0neg)
-    : g.type === 'duo' ? Vq(c.deg0neg) : Vq(c.deg0);
-  const rv90 = g.type === 'flat' ? Vq(c.flat) : Vq(c.deg90);
+  const rv0 = form === 'flat' ? Vq(c.flat) : form === 'mono' ? Vq(c.deg0neg)
+    : form === 'duo' ? Vq(c.deg0neg) : Vq(c.deg0);
+  const rv90 = form === 'flat' ? Vq(c.flat) : Vq(c.deg90);
   const ef0 = envelopeForces(g, '0', wallP('0').p, rv0, q, S.cpiPos, S.cpiNeg);
   const ef90 = envelopeForces(g, '90', wallP('90').p, rv90, q, S.cpiPos, S.cpiNeg);
   // a mono-pitch roof has its own coefficients with the wind onto the high eaves
-  const ef180 = g.type === 'mono' ? envelopeForces(g, '180', wallP('0').p, Vq(c.deg180), q, S.cpiPos, S.cpiNeg) : null;
+  const ef180 = form === 'mono' ? envelopeForces(g, '180', wallP('0').p, Vq(c.deg180), q, S.cpiPos, S.cpiNeg) : null;
   const efAll = [ef0, ef90].concat(ef180 ? [ef180] : []);
   const fr = (n, ee) => [{ t: n, b: true }, F(ee.cpi, 2), F(ee.areaRoof, 1),
   { t: F(ee.roofVert, 1), b: true }, F(ee.roofAlong, 1), F(ee.wallAlong, 1), F(ee.totalAlong, 1)];
@@ -2169,7 +2224,16 @@ function reportSections(FG) {
 
   /* --- optional appendices --- */
   let app = 0;
-  if (String(S.doc.incCanopy) === 'true') {
+  const canErr = String(S.doc.incCanopy) === 'true' ? canopyPitchCheck(S.can.kind, S.can.alpha) : null;
+  if (canErr) {
+    app++;
+    const cn = S.can;
+    x += wBreak();
+    x += wHead(1, `Appendix ${String.fromCharCode(64 + app)}  Canopy roof`);
+    x += wPara(wRun('CHECK PITCH — no canopy results. ', { b: true, sz: 18, color: 'A33A1F' })
+      + wRun(`${cn.kind === 'mono' ? 'Mono' : 'Duo'}-pitch canopy, α = ${F(+cn.alpha, 1)}°. ${canErr} `
+        + 'The canopy is to be re-entered with a pitch the table covers before this appendix is issued.', { sz: 18 }));
+  } else if (String(S.doc.incCanopy) === 'true') {
     app++;
     const cn = S.can, qc = qpAt(cn.h);
     const r = cn.kind === 'mono' ? canopyMono(+cn.alpha, +cn.phi, 10) : canopyDuo(+cn.alpha, +cn.phi);
@@ -2533,7 +2597,7 @@ function qpAt(z) { return site().at(z).qp; }
 function qpRef() { return qpAt(S.g.h); }
 /** Roof reference height: h, or h + h_p for a flat roof with parapets (Figure 9). */
 function zeRoof() {
-  const par = S.g.type === 'flat' && S.edge.type === 'parapet';
+  const par = roofForm(S.g) === 'flat' && S.edge.type === 'parapet';
   return S.g.h + (par ? Math.max(+S.edge.hp || 0, 0) : 0);
 }
 function qpRoof() { return qpAt(zeRoof()); }
@@ -2559,7 +2623,7 @@ function banners() {
 /** roof coefficients for the active roof type, keyed by wind direction */
 function roofCoeffs() {
   const { type, alpha, alpha90, A } = S.g;
-  if (type === 'flat') {
+  if (roofForm(S.g) === 'flat') {
     const e = S.edge;
     const spec = e.type === 'parapet' ? { type: 'parapet', hp_h: e.hp / S.g.h }
       : e.type === 'curved' ? { type: 'curved', r_h: e.r / S.g.h }
@@ -2570,6 +2634,23 @@ function roofCoeffs() {
   if (type === 'mono') return monoCpe(alpha, A);
   if (type === 'duo') return duoCpe(alpha, A);
   return hipCpe(alpha, alpha90, A);
+}
+
+/** The Table 7 eaves detail in words, for notes and the report. */
+function edgeText() {
+  const e = S.edge, h = +S.g.h;
+  if (e.type === 'parapet') return `parapets, hp = ${fmt(+e.hp, 2)} m (hp/h = ${fmt(e.hp / h, 3)})`;
+  if (e.type === 'curved') return `curved eaves, r = ${fmt(+e.r, 2)} m (r/h = ${fmt(e.r / h, 3)})`;
+  if (e.type === 'mansard') return `mansard eaves at ${fmt(+e.mansard, 1)}°`;
+  return 'sharp eaves';
+}
+/** Why a mono- or duo-pitch roof is being taken as flat (roofForm). Plain text: used on screen and in Word. */
+function flatRouteText(g) {
+  // up to two decimals, so 4.99 is not shown as 5.0
+  const a = +(+g.alpha).toFixed(2);
+  return `α = ${a < 0 ? '−' + -a : a}° lies between −5° and +5°, so cl 8.3.3.1 and NOTE 2 to Tables 10 and 11 make this `
+    + `${g.type === 'mono' ? 'mono' : 'duo'}-pitch roof a flat roof: Table 7 and the zones of Figure 8 apply, with ${edgeText()}. `
+    + 'Tables 8 to 11 give no values between −5° and +5°.';
 }
 
 function wallP(dir) {
@@ -2652,7 +2733,23 @@ function fld(path, label, opts = {}) {
     <input id="${id}" type="number" step="${opts.step || 'any'}" value="${v}" data-path="${path}" data-num="1"></div>`;
 }
 
+/** Table 7 eaves detail. A mono- or duo-pitch roof needs it too once |α| < 5°, so there it sits in a
+ *  block that the pitch input shows and hides (see showFlatEdge) without redrawing the sidebar. */
+function edgeFields() {
+  return `${fld('edge.type', 'Eaves detail', {
+    wide: true, options: [['sharp', 'Sharp eaves'], ['parapet', 'With parapet'], ['curved', 'Curved eaves'], ['mansard', 'Mansard eaves']]
+  })}
+    ${S.edge.type === 'parapet' ? fld('edge.hp', 'Parapet height h<sub>p</sub>', { unit: 'm' }) : ''}
+    ${S.edge.type === 'curved' ? fld('edge.r', 'Eaves radius r', { unit: 'm' }) : ''}
+    ${S.edge.type === 'mansard' ? fld('edge.mansard', 'Mansard angle α', { unit: '°' }) : ''}`;
+}
+function showFlatEdge() {
+  const el = document.getElementById('flatEdge');
+  if (el) el.hidden = roofForm(S.g) !== 'flat';
+}
+
 function buildingFields() {
+  const pitched = S.g.type === 'mono' || S.g.type === 'duo';
   return `<div class="group"><h3>Building</h3>
     ${fld('preset', 'Preset', { wide: true, options: PRESETS })}
     <div class="pick">${ROOFS.map(([k, n]) =>
@@ -2662,12 +2759,10 @@ function buildingFields() {
     ${fld('g.d', 'Depth d — along wind at 0°', { unit: 'm' })}
     ${S.g.type !== 'flat' ? fld('g.alpha', 'Roof pitch α', { unit: '°' }) : ''}
     ${S.g.type === 'hip' ? fld('g.alpha90', 'Hip end pitch α₉₀', { unit: '°' }) : ''}
-    ${S.g.type === 'flat' ? fld('edge.type', 'Eaves detail', {
-      wide: true, options: [['sharp', 'Sharp eaves'], ['parapet', 'With parapet'], ['curved', 'Curved eaves'], ['mansard', 'Mansard eaves']]
-    }) : ''}
-    ${S.g.type === 'flat' && S.edge.type === 'parapet' ? fld('edge.hp', 'Parapet height h<sub>p</sub>', { unit: 'm' }) : ''}
-    ${S.g.type === 'flat' && S.edge.type === 'curved' ? fld('edge.r', 'Eaves radius r', { unit: 'm' }) : ''}
-    ${S.g.type === 'flat' && S.edge.type === 'mansard' ? fld('edge.mansard', 'Mansard angle α', { unit: '°' }) : ''}
+    ${S.g.type === 'flat' ? edgeFields() : ''}
+    ${pitched ? `<div id="flatEdge"${roofForm(S.g) === 'flat' ? '' : ' hidden'}>
+      <p class="hint">−5° &lt; α &lt; 5°: cl 8.3.3.1 treats this as a flat roof, so Table 7 applies with the eaves detail below.</p>
+      ${edgeFields()}</div>` : ''}
     ${fld('g.A', 'Loaded area A of the element', { unit: 'm²' })}
     <p class="hint">A ≤ 1 m² uses C<sub>pe,1</sub>, A ≥ 10 m² uses C<sub>pe,10</sub>, between the two it is interpolated on log A (Figure 5).</p>
   </div>`;
@@ -2908,23 +3003,24 @@ function paneWalls() {
 
 function paneRoof() {
   // q at z_e = h serves the walls and internal pressure; qr is the roof's own (h + h_p with parapets)
-  const q = qpRef(), qr = qpRoof(), g = S.g, c = roofCoeffs();
+  const q = qpRef(), qr = qpRoof(), g = S.g, c = roofCoeffs(), form = roofForm(g);
   const wp0 = wallP('0').p, wp90 = wallP('90').p;
   const V = o => { const m = {}; Object.keys(o).forEach(k => m[k] = o[k].cpe * qr); return m; };
   let figList = [], tabs = '';
   const T = (title, obj, cap) => `<h3>${title}</h3>${cap ? `<p class="ref">${cap}</p>` : ''}
     <table>${coeffHead()}<tbody>${coeffRows(obj, qr, null, q)}</tbody></table>`;
 
-  if (g.type === 'flat') {
+  if (form === 'flat') {
     const z = flatRoofZones(g.h, g.b, g.d), z90 = flatRoofZones(g.h, g.d, g.b);
     const p = V(c.flat);
     figList = [{ t: 'Wind at 0°', c: 'Zones F, G, H, I measured back from the windward eaves', scene: buildingScene(g, '0', wp0, p), w: '0' },
                { t: 'Wind at 90°', c: 'The same zoning rotated through 90°', scene: buildingScene(g, '90', wp90, p), w: '90' }];
-    tabs = T('Coefficients — both directions', c.flat, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.F.widthEach, 2)} m · F, G depth ${fmt(z.F.depth, 2)} m · H depth ${fmt(z.H.depth, 2)} m · I depth ${fmt(z.I.depth, 2)} m`)
+    tabs = (g.type !== 'flat' ? `<div class="note warn"><b>Treated as a flat roof.</b> ${flatRouteText(g)}</div>` : '')
+      + T('Coefficients — both directions', c.flat, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.F.widthEach, 2)} m · F, G depth ${fmt(z.F.depth, 2)} m · H depth ${fmt(z.H.depth, 2)} m · I depth ${fmt(z.I.depth, 2)} m`)
       + `<div class="note">Zone I carries <b>both</b> signs: ${fmt(c.flat.I.cpe, 2)} and +${fmt(c.flat.I.cpePos, 2)}. Both cases must be checked.</div>`
       + (zeRoof() > g.h ? `<div class="note">With parapets the roof takes its reference height at the top of the parapet (Figure 9):
           z<sub>e</sub> = h + h<sub>p</sub> = ${fmt(zeRoof(), 2)} m, ${qSym()} = ${fmt(qr, 4)} kPa. The walls and the internal pressure stay at z<sub>e</sub> = h (${fmt(q, 4)} kPa).</div>` : '');
-  } else if (g.type === 'mono') {
+  } else if (form === 'mono') {
     const z = monoZones(g.h, g.b, g.d);
     figList = [{ t: 'Wind at 0° — onto the low eaves', c: 'Suction case, Table 8', scene: buildingScene(g, '0', wp0, V(c.deg0neg)), w: '0' },
                { t: 'Wind at 180° — onto the high eaves', c: 'Table 8', scene: buildingScene(g, '180', wp0, V(c.deg180)), w: '180' },
@@ -2932,14 +3028,15 @@ function paneRoof() {
     tabs = T('Wind at 0° — suction case', c.deg0neg, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.d0.F.widthEach, 2)} m · F, G depth ${fmt(z.d0.F.depth, 2)} m · H depth ${fmt(z.d0.H.depth, 2)} m`)
       + T('Wind at 0° — pressure case', c.deg0pos, 'Table 8 gives a second, positive set for pitches above 5°. Check both.')
       + T('Wind at 180°', c.deg180)
-      + T('Wind at 90°', c.deg90);
-  } else if (g.type === 'duo') {
+      + T('Wind at 90°', c.deg90, `e = min(d, 2h) = ${fmt(z.e90, 2)} m · F<sub>up</sub>, F<sub>low</sub> width ${fmt(z.d90.F.widthEach, 2)} m · G width ${fmt(z.d90.G.width, 2)} m · F, G depth ${fmt(z.d90.F.depth, 2)} m · H depth ${fmt(z.d90.H.depth, 2)} m · I depth ${fmt(z.d90.I.depth, 2)} m`);
+  } else if (form === 'duo') {
     const z = duoZones(g.h, g.b, g.d);
     figList = [{ t: 'Wind at 0° — suction case', c: 'Zone J is the strip just leeward of the ridge', scene: buildingScene(g, '0', wp0, V(c.deg0neg)), w: '0' },
                { t: 'Wind at 90°', c: 'Wind along the ridge', scene: buildingScene(g, '90', wp90, V(c.deg90)), w: '90' }];
     tabs = T('Wind at 0° — case 1', c.deg0neg, `e = ${fmt(z.e, 2)} m · F width ${fmt(z.d0.F.widthEach, 2)} m · F, G depth ${fmt(z.d0.F.depth, 2)} m · H depth ${fmt(z.d0.H.depth, 2)} m · J depth ${fmt(z.d0.J.depth, 2)} m`)
-      + T('Wind at 0° — case 2', c.deg0pos, 'Table 10 lists two sets for pitches between −5° and +45°. Neither may be mixed with the other.')
-      + T('Wind at 90°', c.deg90, `F width ${fmt(z.d90.F.widthEach, 2)} m · G width ${fmt(z.d90.G.width, 2)} m · H depth ${fmt(z.d90.H.depth, 2)} m`);
+      + (c.deg0pos ? T('Wind at 0° — case 2', c.deg0pos, 'Table 10 lists two sets for pitches from −5° to +45°. Neither may be mixed with the other.')
+        : `<div class="note">Table 10 gives a single set for this pitch: the second, positive set (case 2) exists only from α = −5° upwards, and values of opposite sign are not interpolated (NOTE 2).</div>`)
+      + T('Wind at 90°', c.deg90, `e = min(d, 2h) = ${fmt(z.e90, 2)} m · F width ${fmt(z.d90.F.widthEach, 2)} m · G width ${fmt(z.d90.G.width, 2)} m each side of the ridge · F, G depth ${fmt(z.d90.F.depth, 2)} m · H depth ${fmt(z.d90.H.depth, 2)} m · I depth ${fmt(z.d90.I.depth, 2)} m`);
   } else {
     figList = [{ t: 'Wind at 0°', c: 'Zone boundaries indicative — confirm against Figure 12', scene: buildingScene(g, '0', wp0, V(c.deg0)), w: '0' },
                { t: 'Wind at 90°', c: 'Onto the hip end', scene: buildingScene(g, '90', wp90, V(c.deg90)), w: '90' }];
@@ -2949,13 +3046,13 @@ function paneRoof() {
       + `<div class="note">Zone K is listed in the table but not drawn — it is a small region at the head of the windward hip. Read the zone boundaries off Figure 12 of the code.</div>`;
   }
   // resultant forces on the envelope
-  const rv0 = g.type === 'flat' ? V(c.flat) : g.type === 'mono' ? V(c.deg0neg)
-    : g.type === 'duo' ? V(c.deg0neg) : V(c.deg0);
-  const rv90 = g.type === 'flat' ? V(c.flat) : V(c.deg90);
+  const rv0 = form === 'flat' ? V(c.flat) : form === 'mono' ? V(c.deg0neg)
+    : form === 'duo' ? V(c.deg0neg) : V(c.deg0);
+  const rv90 = form === 'flat' ? V(c.flat) : V(c.deg90);
   const ef0 = envelopeForces(g, '0', wp0, rv0, q, S.cpiPos, S.cpiNeg);
   const ef90 = envelopeForces(g, '90', wp90, rv90, q, S.cpiPos, S.cpiNeg);
   // a mono-pitch roof has its own coefficients with the wind onto the high eaves
-  const ef180 = g.type === 'mono' ? envelopeForces(g, '180', wp0, V(c.deg180), q, S.cpiPos, S.cpiNeg) : null;
+  const ef180 = form === 'mono' ? envelopeForces(g, '180', wp0, V(c.deg180), q, S.cpiPos, S.cpiNeg) : null;
   const efAll = [ef0, ef90].concat(ef180 ? [ef180] : []);
   const fRow = (n, e) => `<tr><td class="z">${n}</td>
     <td>${fmt(e.cpi, 2)}</td><td>${fmt(e.areaRoof, 1)}</td>
@@ -2982,15 +3079,15 @@ function paneRoof() {
   <p class="ref">Plan on the roof, set out from the same clipped geometry as the 3D views.</p>
   <div class="figs">
     <div class="fig" style="flex:1 1 380px"><h4>Wind at 0°</h4>
-      <div class="cap">${{ flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type]} · zone layout</div>
+      <div class="cap">${{ flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[form]} · zone layout</div>
       ${renderZoneKey(g, '0', rv0, { width: 430, height: 300 })}</div>
     <div class="fig" style="flex:1 1 380px"><h4>Wind at 90°</h4>
-      <div class="cap">${{ flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[g.type]} · zone layout</div>
+      <div class="cap">${{ flat: 'Figure 8', mono: 'Figure 9', duo: 'Figure 11', hip: 'Figure 12' }[form]} · zone layout</div>
       ${renderZoneKey(g, '90', rv90, { width: 430, height: 300 })}</div>
   </div>`;
 
   return `<h2>${ROOFS.find(r => r[0] === g.type)[1]} roof</h2>
-    <p class="lede">External pressure coefficients from ${{ flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[g.type]}, interpolated on ${g.type === 'flat' ? 'the eaves detail' : 'the roof pitch'} and on the loaded area A = ${fmt(g.A, 1)} m².</p>
+    <p class="lede">External pressure coefficients from ${{ flat: 'Table 7', mono: 'Tables 8 and 9', duo: 'Tables 10 and 11', hip: 'Table 12' }[form]}, interpolated on ${form === 'flat' ? 'the eaves detail' : 'the roof pitch'} and on the loaded area A = ${fmt(g.A, 1)} m².</p>
     ${figs(figList)}${tabs}
     ${keyFig}${forces}
     <div class="note">Vaulted and domed roofs (cl 8.3.8) are not covered by this tool.</div>`;
@@ -3036,6 +3133,14 @@ function paneInternal() {
 
 function paneCanopy() {
   const c = S.can, q = qpAt(c.h);
+  const pitchErr = canopyPitchCheck(c.kind, c.alpha);
+  if (pitchErr) {
+    return `<h2>${c.kind === 'mono' ? 'Mono' : 'Duo'}-pitch canopy roof</h2>
+    <p class="lede">cl 8.4 and ${c.kind === 'mono' ? 'Table 13' : 'Table 14'}.</p>
+    <div class="note warn"><b>Check the pitch — no results.</b> ${esc(pitchErr)}
+      ${c.kind === 'duo' ? 'Enter a pitch from −20° to −5° (troughed) or from +5° to +30°.' : 'Enter a pitch from 0° to 30°.'}
+      The tool does not extrapolate or clamp to the nearest row.</div>`;
+  }
   const r = c.kind === 'mono' ? canopyMono(+c.alpha, +c.phi, 10) : canopyDuo(+c.alpha, +c.phi);
   const zones = Object.keys(r.zones);
   const maxV = {}, minV = {};
@@ -3126,13 +3231,14 @@ function paneFriction() {
 
 function paneReport() {
   const st = site(), q = qpRef(), qr = qpRoof(), g = S.g, fact = hasFos();
-  const a = wallP('0').w, b90 = wallP('90').w, c = roofCoeffs();
+  const a = wallP('0').w, b90 = wallP('90').w, c = roofCoeffs(), form = roofForm(g);
   const roofTbl = () => {
-    const sets = g.type === 'flat' ? [['Both directions', c.flat]]
-      : g.type === 'mono' ? [['0° suction', c.deg0neg], ['0° pressure', c.deg0pos], ['180°', c.deg180], ['90°', c.deg90]]
-        : g.type === 'duo' ? [['0° case 1', c.deg0neg], ['0° case 2', c.deg0pos], ['90°', c.deg90]]
+    const sets = form === 'flat' ? [['Both directions', c.flat]]
+      : form === 'mono' ? [['0° suction', c.deg0neg], ['0° pressure', c.deg0pos], ['180°', c.deg180], ['90°', c.deg90]]
+        : form === 'duo' ? [['0° case 1', c.deg0neg], ['0° case 2', c.deg0pos], ['90°', c.deg90]]
           : [['0° case 1', c.deg0], ['0° case 2', c.deg0pos], ['90°', c.deg90]];
-    return sets.map(([n, o]) => `<h3>Roof — ${n}</h3><table>${coeffHead()}<tbody>${coeffRows(o, qr, null, q)}</tbody></table>`).join('');
+    return sets.filter(([, o]) => o)
+      .map(([n, o]) => `<h3>Roof — ${n}</h3><table>${coeffHead()}<tbody>${coeffRows(o, qr, null, q)}</tbody></table>`).join('');
   };
   return `<h2>Summary</h2>
   <p class="lede">Everything the tool has worked out, on one page. The Word report is a formal
@@ -3152,7 +3258,7 @@ function paneReport() {
     <tr><td>Terrain category / c₀</td><td style="text-align:left">${S.terrain} · ${fmt(S.c0, 2)}</td></tr>
     ${fact ? `<tr><td>Factor of safety on wind pressure</td><td style="text-align:left">${fmt(st.fos, 2)}</td></tr>` : ''}
     <tr><td>Building h × b × d</td><td style="text-align:left">${fmt(g.h, 2)} × ${fmt(g.b, 2)} × ${fmt(g.d, 2)} m</td></tr>
-    <tr><td>Roof</td><td style="text-align:left">${ROOFS.find(r => r[0] === g.type)[1]}${g.type !== 'flat' ? `, α = ${fmt(g.alpha, 1)}°` : ''}${g.type === 'hip' ? `, α₉₀ = ${fmt(g.alpha90, 1)}°` : ''}</td></tr>
+    <tr><td>Roof</td><td style="text-align:left">${ROOFS.find(r => r[0] === g.type)[1]}${g.type !== 'flat' ? `, α = ${fmt(g.alpha, 1)}°` : ''}${g.type === 'hip' ? `, α₉₀ = ${fmt(g.alpha90, 1)}°` : ''}${form === 'flat' && g.type !== 'flat' ? ` — flat roof to cl 8.3.3.1 (−5° &lt; α &lt; 5°), Table 7 with ${edgeText()}` : ''}</td></tr>
     <tr><td>Loaded area A</td><td style="text-align:left">${fmt(g.A, 1)} m²</td></tr>
   </tbody></table>
   <h3>Peak wind speed pressure</h3>
@@ -3245,6 +3351,7 @@ function init() {
       renderAll(); return;
     }
     if (['terrain', 'useTopo', 'edge.type', 'fw.mode'].includes(t.dataset.path)) { renderAll(); return; }
+    if (t.dataset.path === 'g.alpha') showFlatEdge();
     renderResults();
   });
   side.addEventListener('click', e => {
